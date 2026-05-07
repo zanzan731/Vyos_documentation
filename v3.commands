@@ -1,0 +1,140 @@
+set firewall ipv4 forward filter rule 10 action 'accept'
+set firewall ipv4 forward filter rule 10 description 'allow-wireguard'
+set firewall ipv4 forward filter rule 10 destination address '192.168.11.106'
+set firewall ipv4 forward filter rule 10 destination port '51820'
+set firewall ipv4 forward filter rule 10 inbound-interface name 'eth0'
+set firewall ipv4 forward filter rule 10 outbound-interface name 'eth1'
+set firewall ipv4 forward filter rule 10 protocol 'udp'
+set firewall ipv4 input filter rule 5 action 'accept'
+set firewall ipv4 input filter rule 10 action 'accept'
+set firewall ipv4 input filter rule 10 description 'allow-ssh'
+set firewall ipv4 input filter rule 10 destination port '22'
+set firewall ipv4 input filter rule 10 inbound-interface name 'eth0'
+set firewall ipv4 input filter rule 10 protocol 'tcp'
+set firewall ipv6 forward filter rule 10 action 'accept'
+set firewall ipv6 forward filter rule 10 description 'allow-wireguard'
+set firewall ipv6 forward filter rule 10 destination port '51820'
+set firewall ipv6 forward filter rule 10 inbound-interface name 'eth0'
+set firewall ipv6 forward filter rule 10 protocol 'udp'
+set firewall ipv6 input filter rule 5 action 'accept'
+set firewall ipv6 input filter rule 10 action 'accept'
+set firewall ipv6 input filter rule 10 description 'allow-ssh'
+set firewall ipv6 input filter rule 10 destination port '22'
+set firewall ipv6 input filter rule 10 inbound-interface name 'eth0'
+set firewall ipv6 input filter rule 10 protocol 'tcp'
+set interfaces ethernet eth0 address '88.200.24.241/25'
+set interfaces ethernet eth0 address '2001:1470:fffd:a8::2/64'
+set interfaces ethernet eth0 description 'public_internet'
+set interfaces ethernet eth0 hw-id '00:0c:29:57:f2:14'
+set interfaces ethernet eth1 address '192.168.11.1/24'
+set interfaces ethernet eth1 address '2001:1470:fffd:a9::1/64'
+set interfaces ethernet eth1 description 'dmz'
+set interfaces ethernet eth1 hw-id '00:0c:29:57:f2:1e'
+set interfaces ethernet eth2 address '10.11.0.1/24'
+set interfaces ethernet eth2 address '2001:1470:fffd:aa::1/64'
+set interfaces ethernet eth2 description 'internal'
+set interfaces ethernet eth2 hw-id '00:0c:29:57:f2:28'
+set interfaces ethernet eth3 address 'fd11:11:11::1/64'
+set interfaces ethernet eth3 description 'ipv6only'
+set interfaces ethernet eth3 hw-id '00:0c:29:57:f2:32'
+set interfaces loopback lo
+set nat destination rule 20 description 'wireguard-dnat'
+set nat destination rule 20 destination port '51820'
+set nat destination rule 20 inbound-interface name 'eth0'
+set nat destination rule 20 protocol 'udp'
+set nat destination rule 20 translation address '192.168.11.106'
+set nat source rule 100 outbound-interface name 'eth0'
+set nat source rule 100 source address '10.11.0.0/24'
+set nat source rule 100 translation address 'masquerade'
+set nat source rule 110 outbound-interface name 'eth0'
+set nat source rule 110 source address '192.168.11.0/24'
+set nat source rule 110 translation address 'masquerade'
+set nat66 source rule 10 outbound-interface name 'eth0'
+set nat66 source rule 10 source prefix 'fd11:11:11::/64'
+set nat66 source rule 10 translation address '2001:1470:fffd:ab::/64'
+set protocols static route 0.0.0.0/0 next-hop 88.200.24.129
+set protocols static route6 ::/0 next-hop 2001:1470:fffd:a8::1
+set service dhcp-server shared-network-name SERVERS authoritative
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 default-router '192.168.11.1'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 domain-name 'startup11.local'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 lease '600'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 name-server '192.168.11.1'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 range 0 start '192.168.11.100'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 range 0 stop '192.168.11.200'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping dmz-windows-AD ip-address '192.168.11.201'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping dmz-windows-AD mac-address '00:0c:29:07:cf:1c'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping dns-srv ip-address '192.168.11.105'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping dns-srv mac-address '00:0c:29:4a:b1:99'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping raft1 ip-address '192.168.11.101'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping raft1 mac-address '00:0c:29:15:42:6f'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping raft2 ip-address '192.168.11.102'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping raft2 mac-address '00:0c:29:2b:64:27'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping raft3 ip-address '192.168.11.103'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping raft3 mac-address '00:0c:29:a2:5c:63'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping rest ip-address '192.168.11.104'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping rest mac-address '00:0c:29:17:1a:72'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping wireguard ip-address '192.168.11.106'
+set service dhcp-server shared-network-name SERVERS subnet 192.168.11.0/24 static-mapping wireguard mac-address '00:0c:29:c4:d1:52'
+set service dhcp-server shared-network-name USERS authoritative
+set service dhcp-server shared-network-name USERS subnet 10.11.0.0/24 default-router '10.11.0.1'
+set service dhcp-server shared-network-name USERS subnet 10.11.0.0/24 domain-name 'startup11.local'
+set service dhcp-server shared-network-name USERS subnet 10.11.0.0/24 lease '600'
+set service dhcp-server shared-network-name USERS subnet 10.11.0.0/24 name-server '10.11.0.1'
+set service dhcp-server shared-network-name USERS subnet 10.11.0.0/24 range 0 start '10.11.0.100'
+set service dhcp-server shared-network-name USERS subnet 10.11.0.0/24 range 0 stop '10.11.0.200'
+set service dhcpv6-server shared-network-name DMZ6 subnet 2001:1470:fffd:a9::/64 address-range start 2001:1470:fffd:a9::100 stop '2001:1470:fffd:a9::1ff'
+set service dhcpv6-server shared-network-name DMZ6 subnet 2001:1470:fffd:a9::/64 domain-search 'startup11.local'
+set service dhcpv6-server shared-network-name DMZ6 subnet 2001:1470:fffd:a9::/64 lease-time default '600'
+set service dhcpv6-server shared-network-name DMZ6 subnet 2001:1470:fffd:a9::/64 lease-time maximum '1200'
+set service dhcpv6-server shared-network-name DMZ6 subnet 2001:1470:fffd:a9::/64 lease-time minimum '300'
+set service dhcpv6-server shared-network-name DMZ6 subnet 2001:1470:fffd:a9::/64 name-server '2001:1470:fffd:a9::1'
+set service dns forwarding allow-from '10.11.0.0/24'
+set service dns forwarding allow-from '192.168.11.0/24'
+set service dns forwarding allow-from '2001:1470:fffd:aa::/64'
+set service dns forwarding allow-from '2001:1470:fffd:a9::/64'
+set service dns forwarding allow-from 'fd11:11:11::/64'
+set service dns forwarding domain startup11.local name-server 192.168.11.105
+set service dns forwarding domain startup11.local recursion-desired
+set service dns forwarding listen-address '10.11.0.1'
+set service dns forwarding listen-address '192.168.11.1'
+set service dns forwarding listen-address '2001:1470:fffd:aa::1'
+set service dns forwarding listen-address '2001:1470:fffd:a9::1'
+set service dns forwarding listen-address 'fd11:11:11::1'
+set service dns forwarding name-server 1.1.1.1
+set service dns forwarding name-server 193.2.1.66
+set service dns forwarding name-server 2001:1470:8000::66
+set service dns forwarding name-server 2606:4700:4700::1111
+set service dns forwarding system
+set service ntp server ntp.arnes.si
+set service ntp server time1.vyos.net
+set service ntp server time2.vyos.net
+set service ntp server time3.vyos.net
+set service router-advert interface eth1 managed-flag
+set service router-advert interface eth1 prefix 2001:1470:fffd:a9::/64 no-autonomous-flag
+set service router-advert interface eth2 prefix 2001:1470:fffd:aa::/64
+set service router-advert interface eth3 name-server 'fd11:11:11::1'
+set service router-advert interface eth3 prefix fd11:11:11::/64
+set service ssh disable-password-authentication
+set service ssh port '22'
+set system config-management commit-revisions '100'
+set system conntrack modules ftp
+set system conntrack modules h323
+set system conntrack modules nfs
+set system conntrack modules pptp
+set system conntrack modules sip
+set system conntrack modules sqlnet
+set system conntrack modules tftp
+set system console device ttyS0 speed '115200'
+set system domain-name 'startup11.local'
+set system host-name 'startup11-vyos'
+set system login user vyos authentication encrypted-password '$6$rounds=656000$03Q21tfzIovLwWlg$Sd.RnM/23ffqe35DadmZaMpsfgu7VTFoKgZ3PnLUbJGMwAh2buDO530F5LzWUUk/NlmBRPhqq9057/IzfOfA30'
+set system login user vyos authentication public-keys pavle key 'AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h'
+set system login user vyos authentication public-keys pavle type 'ssh-ed25519'
+set system login user vyos authentication public-keys zanzan key 'AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL'
+set system login user vyos authentication public-keys zanzan type 'ssh-ed25519'
+set system name-server '193.2.1.66'
+set system name-server '2001:1470:8000::66'
+set system name-server '1.1.1.1'
+set system name-server '2606:4700:4700::1111'
+set system syslog global facility all level 'info'
+set system syslog global facility local7 level 'debug'
