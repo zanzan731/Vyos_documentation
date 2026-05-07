@@ -91,4 +91,63 @@ sk11-dmz-windows & 192.168.11.110 & Windows & Administrator \\
 \boxed{\texttt{123NajboljseGeslo456!}}
 \end{center}
 
+\section{Active Directory (Windows Server)}
+\subsection{Osnovne informacije}
+Active Directory domena je nastavljena na strežniku \textbf{sk11-dmz-windows}. Strežnik deluje kot primarni Domain Controller (PDC) za domeno \texttt{startup11.local}.
+
+\begin{itemize}
+    \item \textbf{Ime strežnika:} sk11-dmz-windows
+    \item \textbf{Domena:} startup11.local
+    \item \textbf{NetBIOS ime:} startup11
+    \item \textbf{OS:} Windows Server (Core)
+    \item \textbf{Vloga:} Domain Controller
+\end{itemize}
+
+\subsection{Ustvarjanje uporabnikov v Active Directory}
+Uporabnike v domeni ustvarjamo s PowerShell ukazi neposredno na Domain Controllerju.
+
+\textbf{Primer: Ustvarjanje uporabnika}
+\begin{lstlisting}[language=bash, breaklines=true]
+$password = Read-Host "Enter password for User" -AsSecureString
+New-ADUser -Name "Ime Priimek" `
+           -GivenName Ime `
+           -Surname Priimek `
+           -SamAccountName imepriimek `
+           -UserPrincipalName ime.priimek@startup11.local `
+           -Enabled $true `
+           -AccountPassword $password `
+           -PassThru
+\end{lstlisting}
+
+\subsection{Upravljanje uporabnikov}
+\textbf{Prikaz vseh uporabnikov v domeni:}
+\begin{lstlisting}[language=bash, breaklines=true]
+Get-ADUser -Filter * | Select-Object Name, SamAccountName, Enabled
+\end{lstlisting}
+
+\textbf{Onemogočanje uporabniškega računa:}
+\begin{lstlisting}[language=bash, breaklines=true]
+Disable-ADAccount -Identity "ime"
+\end{lstlisting}
+
+\textbf{Brisanje uporabniškega računa:}
+\begin{lstlisting}[language=bash, breaklines=true]
+Remove-ADUser -Identity "ime" -Confirm:$false
+\end{lstlisting}
+
+\subsection{Prijava v domeno}
+Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko priklopimo v domeno \texttt{startup11.local}. Po uspešnem priklopu se uporabniki prijavljajo z:
+
+\begin{itemize}
+    \item \textbf{Uporabniško ime:} \texttt{startup11\textbackslash ime} (npr. \texttt{startup11\textbackslash jdoe})
+    \item \textbf{Geslo:} (geslo, nastavljeno ob ustvarjanju uporabnika)
+\end{itemize}
+
+\subsection{Dodatne informacije}
+\begin{itemize}
+    \item Administrator domene: \texttt{startup11\textbackslash Administrator} z enakim geslom kot lokalni Administrator na strežniku
+\end{itemize}
+
+\end{document}
+
 \end{document}
