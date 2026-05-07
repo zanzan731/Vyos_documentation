@@ -42,54 +42,341 @@ eth1 & DMZ & 192.168.11.1/24 & 2001:1470:fffd:a9::1/64 \\
 \hline
 eth2 & interna LAN & 10.11.0.1/24 & 2001:1470:fffd:aa::1/64 \\
 \hline
-eth3 & IPv6-only & – & fd11:11:11::1/64 \\
+eth3 & IPv6-only & - & fd11:11:11::1/64 \\
 \hline
 \end{longtable}
 
-\section{Default usmeritve (static routes)}
-\begin{lstlisting}
-set protocols static route 0.0.0.0/0 next-hop 88.200.24.129
-set protocols static route6 ::/0 next-hop 2001:1470:fffd:a8::1
-\end{lstlisting}
+\section{Privzete usmeritve (statične usmeritve)}
+\begin{longtable}{|l|l|}
+\hline
+\textbf{Destinacija} & \textbf{Naslednji hop} \\
+\hline
+0.0.0.0/0 & 88.200.24.129 \\
+\hline
+::/0 & 2001:1470:fffd:a8::1 \\
+\hline
+\end{longtable}
 
 \section{NAT (IPv4)}
-\begin{lstlisting}
-# Interna LAN (10.11.0.0/24) -> javni internet
-set nat source rule 100 outbound-interface name 'eth0'
-set nat source rule 100 source address '10.11.0.0/24'
-set nat source rule 100 translation address 'masquerade'
-
-# DMZ (192.168.11.0/24) -> javni internet
-set nat source rule 110 outbound-interface name 'eth0'
-set nat source rule 110 source address '192.168.11.0/24'
-set nat source rule 110 translation address 'masquerade'
-\end{lstlisting}
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Vrsta} & \textbf{Viri / kriterij} & \textbf{Prevod / opomba} \\
+\hline
+Izvorni NAT (SNAT) & 10.11.0.0/24, izhodni vmesnik eth0 & maskiranje (masquerade) \\
+\hline
+Izvorni NAT (SNAT) & 192.168.11.0/24, izhodni vmesnik eth0 & maskiranje (masquerade) \\
+\hline
+\end{longtable}
 
 \section{DMZ strežniki (vsi v omrežju 192.168.11.0/24)}
 
 \subsection{Pregled strežnikov}
 \begin{longtable}{|l|l|l|l|}
 \hline
-\textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{OS} & \textbf{Uporabniško ime} \\
+\textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{MAC naslov} & \textbf{Namen} \\
 \hline
-sk11-dmz-linux-01 & 192.168.11.101 & Linux & zanzan01 \\
+raft1 & 192.168.11.101 & 00:0c:29:15:42:6f & Raft (cluster node) \\
 \hline
-sk11-dmz-linux-02 & 192.168.11.102 & Linux & zanzan02 \\
+raft2 & 192.168.11.102 & 00:0c:29:2b:64:27 & Raft (cluster node) \\
 \hline
-sk11-dmz-linux-03 & 192.168.11.103 & Linux & zanzan03 \\
+raft3 & 192.168.11.103 & 00:0c:29:a2:5c:63 & Raft (cluster node) \\
 \hline
-sk11-dmz-linux-04 & 192.168.11.104 & Linux & zanzan04 \\
+rest & 192.168.11.104 & 00:0c:29:17:1a:72 & REST API / ostali servisi \\
 \hline
-sk11-dmz-linux-05 & 192.168.11.105 & Linux & zanzan05 \\
+dns-srv & 192.168.11.105 & 00:0c:29:4a:b1:99 & DNS strežnik (lokalni) \\
 \hline
-sk11-dmz-windows & 192.168.11.110 & Windows & Administrator \\
+wireguard & 192.168.11.106 & 00:0c:29:c4:d1:52 & WireGuard VPN končna točka \\
+\hline
+AD (dmz windows 1) & 192.168.11.201 & 00:0c:29:07:cf:1c & Active Directory (Domain Controller) \\
 \hline
 \end{longtable}
+
+\subsection{DHCP - statične mape}
+Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Ime} & \textbf{MAC naslov} & \textbf{IP naslov} \\
+\hline
+raft1 & 00:0c:29:15:42:6f & 192.168.11.101 \\
+\hline
+raft2 & 00:0c:29:2b:64:27 & 192.168.11.102 \\
+\hline
+raft3 & 00:0c:29:a2:5c:63 & 192.168.11.103 \\
+\hline
+rest & 00:0c:29:17:1a:72 & 192.168.11.104 \\
+\hline
+dns-srv & 00:0c:29:4a:b1:99 & 192.168.11.105 \\
+\hline
+wireguard & 00:0c:29:c4:d1:52 & 192.168.11.106 \\
+\hline
+AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
+\hline
+\end{longtable}
+
+\section{NAT in preusmeritve vrat}
+\subsection{IPv4 DNAT (port forwarding)}
+\begin{itemize}
+    \item \textbf{Pravila:} zunanja vmesnik \texttt{eth0}, UDP port \texttt{51820} preusmerjen na \texttt{192.168.11.106} (WireGuard).
+\end{itemize}
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Tip} & \textbf{Kriterij} & \textbf{Cilj / opomba} \\
+\hline
+DNAT (preusmeritev vrat) & vhod: eth0, proto UDP, dst port 51820 & 192.168.11.106 (WireGuard) \\
+\hline
+SNAT / maskiranje & 10.11.0.0/24 -> izhod eth0 & maskiranje (masquerade) \\
+\hline
+SNAT / maskiranje & 192.168.11.0/24 -> izhod eth0 & maskiranje (masquerade) \\
+\hline
+NAT66 & fd11:11:11::/64 -> izhod eth0 & 2001:1470:fffd:ab::/64 \\
+\hline
+\end{longtable}
+
+\subsection{IPv4 source NAT (masquerade)}
+Masquerade je nastavljen za notranji in DMZ promet, ki gre preko javnega vmesnika \texttt{eth0}.
+\begin{lstlisting}
+# 10.11.0.0/24 -> eth0 (masquerade)
+set nat source rule 100 outbound-interface name 'eth0'
+set nat source rule 100 source address '10.11.0.0/24'
+set nat source rule 100 translation address 'masquerade'
+
+# 192.168.11.0/24 -> eth0 (masquerade)
+set nat source rule 110 outbound-interface name 'eth0'
+set nat source rule 110 source address '192.168.11.0/24'
+set nat source rule 110 translation address 'masquerade'
+\end{lstlisting}
+
+\subsection{NAT66 (NPTv6, IPv6-to-IPv6 Network Prefix Translation - RFC 6296)}
+Prevod naslovov: \texttt{fd11:11:11::/64} se prevaja na \texttt{2001:1470:fffd:ab::/64} za promet, ki izhaja prek \texttt{eth0}.
+
+\section{Varnost (firewall)}
+\subsection{IPv4 - vhodni promet (input)}
+\begin{itemize}
+    \item Pravilo za ohranjanje stanj: dovoli \texttt{established} in \texttt{related} povezave.
+    \item Pravilo za SSH: na javnem vmesniku \texttt{eth0} je dovoljeno TCP dst port \texttt{22} za novo povezavo.
+\end{itemize}
+\begin{longtable}{|l|l|p{8cm}|}
+\hline
+\textbf{IP verzija} & \textbf{Veriga} & \textbf{Ključno pravilo / opis} \\
+\hline
+IPv4 & INPUT & Dovoli vzpostavljene in sorodne povezave (established, related). \\
+\hline
+IPv4 & INPUT & Dovoli nove TCP povezave na port 22 na vmesniku eth0 (SSH). \\
+\hline
+IPv4 & FORWARD & Dovoli nove UDP povezave iz eth0 proti 192.168.11.106:51820 (WireGuard). \\
+\hline
+IPv6 & INPUT & Dovoli vzpostavljene in sorodne povezave; dovoli nove TCP povezave na port 22 na eth0. \\
+\hline
+IPv6 & FORWARD & Dovoli nove UDP povezave na port 51820 na vhodnem vmesniku eth0 (WireGuard). \\
+\hline
+\end{longtable}
+
+\subsection{IPv4 - forward (posredovanje)}
+\begin{itemize}
+    \item Pravilo za WireGuard: dovoli novo UDP povezavo iz \texttt{eth0} proti \texttt{192.168.11.106:51820} s prehodi na \texttt{eth1}.
+\end{itemize}
+% Forward rule summary already in firewall table above.
+
+\subsection{IPv6 - vhodni promet in posredovanje}
+IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \texttt{eth0}) ter forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku \texttt{eth0}).
+% IPv6 firewall rules summarized in the firewall table above.
+
+\section{Storitve}
+\subsection{DHCP (IPv4)}
+DHCP server ima dve skupini: \textbf{SERVERS} (192.168.11.0/24) z navedenimi statičnimi mapami in \textbf{USERS} (10.11.0.0/24) za uporabniške naprave z avtomatskim razponom.
+\begin{longtable}{|l|l|}
+\hline
+\textbf{Skupina} & \textbf{Subnet / opomba} \\
+\hline
+SERVERS & 192.168.11.0/24 (statične mape) \\
+\hline
+USERS & 10.11.0.0/24 (dinamični range 10.11.0.100-200) \\
+\hline
+\end{longtable}
+
+\subsection{DHCPv6}
+DHCPv6 podeljuje naslove v subnetu \texttt{2001:1470:fffd:a9::/64} z range \texttt{::100} - \texttt{::1ff}. Ime strežnika za DHCPv6 je \texttt{2001:1470:fffd:a9::1}.
+
+\subsection{DNS (posredovanje in split DNS)}
+DNS posredovanje sprejema poizvedbe iz notranjih omrežij in uporablja kombinacijo lokalnega DNS strežnika (192.168.11.105) za domeno \texttt{startup11.local} ter javne upstream strežnike.
+
+\textbf{Lokalni name-server:} 192.168.11.105 (domena \texttt{startup11.local})
+
+\textbf{Upstream DNS strežniki:}
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Ponudnik} & \textbf{IPv4} & \textbf{IPv6} \\
+\hline
+\endhead
+\hline
+\endlastfoot
+ARNES & 193.2.1.66 & 2001:1470:8000::66 \\
+\hline
+Cloudflare & 1.1.1.1 & 2606:4700:4700::1111 \\
+\hline
+\end{longtable}
+
+\subsubsection{Split DNS (dnsmasq)}
+Split DNS je implementiran na strežniku \texttt{dns-srv} (192.168.11.105) z \textbf{dnsmasq} storitev. Ta storitev omogoča lokalnim uporabnikom razrešitev domene \texttt{startup11.local} na interne naslove, zunanji uporabniki pa dobijo druge odgovore.
+
+\textbf{Trenutna konfiguracija:}
+\begin{itemize}
+    \item dnsmasq posluša na: \texttt{192.168.11.105:53} (DMZ naslov)
+    \item startup11.local (IPv4): \texttt{192.168.11.105}
+    \item startup11.local (IPv6): \texttt{2001:1470:fffd:a9::10}
+    \item Konfiguracija: \verb|/etc/dnsmasq.d/startup11.conf|
+\end{itemize}
+
+\textbf{Sprememba konfiguracije:}
+\begin{lstlisting}
+# Edit configuration file
+sudo nano /etc/dnsmasq.d/startup11.conf
+
+# Test configuration
+sudo dnsmasq --test
+
+# Restart service
+sudo systemctl restart dnsmasq
+
+# Check service status
+sudo systemctl status dnsmasq
+
+# Check listening on port 53
+ss -ltnup '( sport = :53 )'
+
+# Test DNS response
+dig startup11.local @192.168.11.105 +short
+\end{lstlisting}
+
+\textbf{Dodajanje nove domene:}
+V datoteko \verb|/etc/dnsmasq.d/startup11.conf| dodaj vrstico:
+\begin{lstlisting}
+address=/nova-domena.local/192.168.11.x
+\end{lstlisting}
+Nato ponovno zaženi storitev in testiraj z \texttt{dig nova-domena.local @192.168.11.105}.
+
+\subsection{NTP}
+Konfigurirani NTP strežniki so:
+\begin{itemize}
+    \item ntp.arnes.si
+    \item time1.vyos.net
+    \item time2.vyos.net
+    \item time3.vyos.net
+\end{itemize}
+
+\subsection{Router Advertisements (RA)}
+RA so omogočeni na:
+\begin{itemize}
+    \item \texttt{eth1}: prefix \texttt{2001:1470:fffd:a9::/64} (managed flag, no-autonomous)
+    \item \texttt{eth2}: prefix \texttt{2001:1470:fffd:aa::/64}
+    \item \texttt{eth3}: prefix \texttt{fd11:11:11::/64}, name-server \texttt{fd11:11:11::1}
+\end{itemize}
+
+\subsection{SSH}
+SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Če želite začasno omogočiti prijavo z geslom, uredite datoteko \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}, nato ponovno zaženite \texttt{sshd}.
+
+\section{Sistem}
+\subsection{Uporabniki in ključi}
+Glavni lokalni uporabnik na napravi je \texttt{vyos}. V konfiguraciji so vpisani javni ključi za uporabnika \texttt{vyos}:
+\begin{itemize}
+    \item \textbf{pavle}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h}
+    \item \textbf{zanzan}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL}
+\end{itemize}
+
+Za začasno ponovno omogočanje SSH gesel: uredite \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}.
+
+\subsection{Uporabniška imena}
+Uporabniki na dmz virtualkag so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke.
+Na klientih TODO.
 
 \subsection{Splošno geslo}
 \begin{center}
 \boxed{\texttt{123NajboljseGeslo456!}}
 \end{center}
+
+\section{Upravljanje s konfiguracijami}
+
+\subsection{Nalaganje celotne konfiguracije}
+Če želite naložiti celotno konfiguracijo iz datoteke (npr. \verb|v3.conf|), uporabite:
+\begin{lstlisting}
+configure
+load v3.conf
+commit
+save
+\end{lstlisting}
+
+\subsection{Apliciranje seznama ukazov}
+Če želite aplicirati seznam ukazov iz datoteke (npr. \verb|v1.commands|), uporabite:
+\begin{lstlisting}
+configure
+source v1.commands
+commit
+save
+\end{lstlisting}
+
+\subsection{Opozorilo pri uporabi}
+Pri apliciranju ukazov je potrebna pazljivost — nekateri ukazi ne delujejo kot pričakovano:
+\begin{itemize}
+    \item Ukaz \verb|set| pri vmesnikih (\verb|interface|) ne nastavlja vrednosti, ampak jo dodaja (deluje kot \verb|add|). To lahko vodi do podvajanja nastavitev.
+    \item Originalna konfiguracija \verb|v1.commands| je bila osnutek in je zastarela.
+    \item Najnovejšo in pravilno konfiguracijo (\verb|v3.commands|) generirajte avtomatsko z ukazom (zunaj \verb|configure| moda):
+\end{itemize}
+\begin{lstlisting}
+show configuration commands > v3.commands
+\end{lstlisting}
+
+Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenutnih nastavitev.
+
+\section{WireGuard}
+
+\subsection{Splošne informacije}
+WireGuard VPN je nastavljeno na napravi na IP naslovu \texttt{192.168.11.106} v DMZ omrežju. Konfiguracija je bila avtomatsko generirana s \textbf{pivpn} skripto, ki poenostavi upravljanje in vzpostavitev WireGuard VPN strežnika.
+
+\subsection{Dostop in port}
+\begin{itemize}
+    \item \textbf{Notranji naslov:} 192.168.11.106
+    \item \textbf{Javni port:} UDP 51820 (preusmeran prek NAT/DNAT na eth0)
+    \item \textbf{Storitev:} Aktivna in dostopna iz javnega interneta
+\end{itemize}
+
+\subsection{Upravljanje VPN uporabnikov}
+WireGuard uporabnike upravljate s pivpn ukazom. Osnovni koraki:
+\begin{lstlisting}
+# Dodaj novega VPN uporabnika
+pivpn add
+
+# Ogled aktivnih povezav
+pivpn -c
+
+# Ogled konfiguracije in QR koda
+pivpn -qr
+
+# Brisanje uporabnika
+pivpn remove
+\end{lstlisting}
+
+\subsection{Konfiguracija in nastavitve}
+Privzete pivpn nastavitve:
+\begin{itemize}
+    \item Podatkovna mapa: \verb|/etc/wireguard/|
+    \item Datoteka strežnika: \verb|/etc/wireguard/wg0.conf|
+    \item Konfiguracije VPN uporabnikov (QR kode, ključi): \verb|~/configs/| (domača mapa pivpn skripty)
+    \item VPN subnet v našem sistemu: \texttt{10.4.103.0/24}
+\end{itemize}
+
+\subsection{Odpravljanje težav}
+Če WireGuard ni dostopen ali se ne povezuje:
+\begin{lstlisting}
+# Preverka stanja vmesnika
+ip link show wg0
+
+# Preverka aktivnih povezav
+wg show
+
+# Resetiranje WireGuard vmesnika
+sudo ip link delete wg0
+sudo systemctl restart wg-quick@wg0
+\end{lstlisting}
 
 \section{Active Directory (Windows Server)}
 \subsection{Osnovne informacije}
@@ -147,7 +434,5 @@ Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko prik
 \begin{itemize}
     \item Administrator domene: \texttt{startup11\textbackslash Administrator} z enakim geslom kot lokalni Administrator na strežniku
 \end{itemize}
-
-\end{document}
 
 \end{document}
