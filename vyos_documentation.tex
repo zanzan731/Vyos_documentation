@@ -1,0 +1,94 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{amsmath}
+
+\geometry{margin=1in}
+
+\lstset{
+backgroundcolor=\color{gray!10},
+basicstyle=\ttfamily\small,
+breaklines=true,
+frame=single
+}
+
+\title{Dokumentacija VyOS usmerjevalnika - startup11}
+\author{}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Osnovne informacije}
+\begin{itemize}
+    \item \textbf{Ime naprave:} startup11-vyos
+    \item \textbf{Domena:} startup11.local
+    \item \textbf{Uporabnik:} vyos (prijava prek SSH ključa)
+\end{itemize}
+
+\section{Omrežni vmesniki}
+\begin{longtable}{|l|l|l|l|}
+\hline
+\textbf{Vmesnik} & \textbf{Opis} & \textbf{IPv4} & \textbf{IPv6} \\
+\hline
+eth0 & javni internet & 88.200.24.241/25 & 2001:1470:fffd:a8::2/64 \\
+\hline
+eth1 & DMZ & 192.168.11.1/24 & 2001:1470:fffd:a9::1/64 \\
+\hline
+eth2 & interna LAN & 10.11.0.1/24 & 2001:1470:fffd:aa::1/64 \\
+\hline
+eth3 & IPv6-only & – & fd11:11:11::1/64 \\
+\hline
+\end{longtable}
+
+\section{Default usmeritve (static routes)}
+\begin{lstlisting}
+set protocols static route 0.0.0.0/0 next-hop 88.200.24.129
+set protocols static route6 ::/0 next-hop 2001:1470:fffd:a8::1
+\end{lstlisting}
+
+\section{NAT (IPv4)}
+\begin{lstlisting}
+# Interna LAN (10.11.0.0/24) -> javni internet
+set nat source rule 100 outbound-interface name 'eth0'
+set nat source rule 100 source address '10.11.0.0/24'
+set nat source rule 100 translation address 'masquerade'
+
+# DMZ (192.168.11.0/24) -> javni internet
+set nat source rule 110 outbound-interface name 'eth0'
+set nat source rule 110 source address '192.168.11.0/24'
+set nat source rule 110 translation address 'masquerade'
+\end{lstlisting}
+
+\section{DMZ strežniki (vsi v omrežju 192.168.11.0/24)}
+
+\subsection{Pregled strežnikov}
+\begin{longtable}{|l|l|l|l|}
+\hline
+\textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{OS} & \textbf{Uporabniško ime} \\
+\hline
+sk11-dmz-linux-01 & 192.168.11.101 & Linux & zanzan01 \\
+\hline
+sk11-dmz-linux-02 & 192.168.11.102 & Linux & zanzan02 \\
+\hline
+sk11-dmz-linux-03 & 192.168.11.103 & Linux & zanzan03 \\
+\hline
+sk11-dmz-linux-04 & 192.168.11.104 & Linux & zanzan04 \\
+\hline
+sk11-dmz-linux-05 & 192.168.11.105 & Linux & zanzan05 \\
+\hline
+sk11-dmz-windows & 192.168.11.110 & Windows & Administrator \\
+\hline
+\end{longtable}
+
+\subsection{Splošno geslo}
+\begin{center}
+\boxed{\texttt{123NajboljseGeslo456!}}
+\end{center}
+
+\end{document}
