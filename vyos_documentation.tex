@@ -489,12 +489,12 @@ docker run -d \
 \end{lstlisting}
 
 \subsection{Preverjanje delovanja}
-Ko imate enkrat zagnano bi morala biti spletna stran dostopna preko vseh računalnikov znotraj omrežja na url{https://192.168.11.104:3443/} in url{http://192.168.11.104:3000/}.
+Ko imate enkrat zagnano bi morala biti spletna stran dostopna preko vseh računalnikov znotraj omrežja na \url{https://192.168.11.104:3443/} in \url{http://192.168.11.104:3000/}.
 
 \subsubsection{Javni GET zahtevek}
 \begin{lstlisting}
 curl -k -i https://192.168.11.104:3443/authors
-curl --http2 -k -i https://192.168.11.104:3443/authors (za http2 rabite to zahtevat)
+curl --http2 -k -i https://192.168.11.104:3443/authors
 curl -i http://192.168.11.104:3000/authors
 \end{lstlisting}
 
@@ -542,5 +542,62 @@ PATCH /books/:id/availability  - toggle availability (requires librarian or admi
 DELETE /books/:id  - delete (requires admin only)
 \end{lstlisting}
 
+\subsubsection{LDAP avtorizacija}
+Rabis userja pod librarian ali admin za dodaten dostop.
+
+\begin{itemize}
+  \item branje (GET) avtorjev in knjig — javno dostopno brez prijave
+  \item ustvarjanje (POST) avtorjev in knjig
+  \item posodabljanje (PUT) avtorjev in knjig
+  \item brisanje (DELETE) je rezervirano za admin uporabnike
+\end{itemize}
+
+Za windows PowerShell:
+\begin{lstlisting}
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+
+$b64 = [Convert]::ToBase64String(
+  [Text.Encoding]::ASCII.GetBytes(
+    'username:password'
+  )
+)
+
+$headers = @{
+  Authorization = "Basic $b64"
+  'Content-Type'='application/json'
+}
+
+# Če želite enovrstični zapis, mora biti med pari znak za ločevanje:
+# $headers = @{ Authorization = "Basic $b64"; 'Content-Type' = 'application/json' }
+
+$body = @{
+  name = 'Test Author'
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri 'https://192.168.11.104:3443/authors' `
+  -Method Post `
+  -Headers $headers `
+  -Body $body
+\end{lstlisting}
+
+Za linux:
+\begin{lstlisting}
+
+curl -i -X POST http://192.168.11.104:3000/authors \
+  -H "Content-Type: application/json" \
+  -u username:password \
+  -d '{"name":"Test Author from Linux"}'
+
+curl -i -X DELETE http://192.168.11.104:3000/authors/5 \
+  -u username:password
+\end{lstlisting}
+
+\subsubsection{Potrditev TLS certifikata}
+Za certifikat:
+\begin{lstlisting}
+openssl s_client -connect 127.0.0.1:3443 -servername 192.168.11.104 -showcerts
+curl -vkI https://192.168.11.104:3443/
+\end{lstlisting}
 
 \end{document}
