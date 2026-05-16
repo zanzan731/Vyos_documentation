@@ -6,6 +6,7 @@
 \usepackage{xcolor}
 \usepackage{longtable}
 \usepackage{amsmath}
+\usepackage{hyperref}
 
 \geometry{margin=1in}
 
@@ -434,5 +435,112 @@ Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko prik
 \begin{itemize}
     \item Administrator domene: \texttt{startup11\textbackslash Administrator} z enakim geslom kot lokalni Administrator na strežniku
 \end{itemize}
+
+\section{REST}
+Vse datoteke se nahajajo na sk11-dmz-linux-04 v home directoriju od zanzan04. Imamo dve rest storitvi in sicer Scriptum\_kp in library-api. V tem delu bom govoril o library-api za probleme s Scriptum\_kp pa se obrnite na github dokumentacijo projekta \url{https://github.com/zanzan731/Scriptum\_kp}.
+
+\subsection{Arhitektura}
+Komponente:
+\begin{itemize}
+  \item Node.js Express aplikacija (\texttt{server.js})
+  \item SQLite baza (\texttt{library.db})
+  \item TLS certifikati
+  \item Docker in Docker Compose
+  \item LDAP povezava proti Active Directory
+\end{itemize}
+
+\subsection{Konfiguracija}
+Pomembne okoljske spremenljivke  (\texttt{server.js}):
+
+\begin{lstlisting}
+LDAP_URL=ldap://192.168.11.201:389
+AD_DOMAIN=startup11.local
+AD_BASE_DN=DC=startup11,DC=local
+AD_LIBRARIAN_GROUP_DN=CN=LIBRARIAN,CN=Users,DC=startup11,DC=local
+AD_ADMIN_USERS=zan_admin,other.user
+\end{lstlisting}
+
+Opis:
+\begin{itemize}
+  \item \texttt{LDAP\_URL} določa LDAP strežnik
+  \item \texttt{AD\_BASE\_DN} določa osnovni DN
+  \item \texttt{AD\_LIBRARIAN\_GROUP\_DN} določa skupino z dovoljenji
+\end{itemize}
+
+\subsection{Docker zagon}
+Kljub temu da je možen lokalni zagon z \texttt{npm} (\texttt{npm install}, \texttt{npm run dev}), kar vam omogoča lokalno testiranje na \url{https://localhost:3443/} in \url{http://localhost:3000/} na serverju vedno buildamo to z dockerjem.
+
+Build slike:
+\begin{lstlisting}
+docker build -t library-api-ad:latest .
+\end{lstlisting}
+
+Zagon kontejnerja:
+\begin{lstlisting}
+docker run -d \
+  --name library-api-ad-test \
+  -p 3000:3000 \
+  -p 3443:3443 \
+  -e LDAP_URL=ldap://192.168.11.201:389 \
+  -e AD_DOMAIN=startup11.local \
+  -e AD_BASE_DN=DC=startup11,DC=local \
+  -e AD_LIBRARIAN_GROUP_DN=CN=LIBRARIAN,CN=Users,DC=startup11,DC=local \
+  library-api-ad:latest
+\end{lstlisting}
+
+\subsection{Preverjanje delovanja}
+Ko imate enkrat zagnano bi morala biti spletna stran dostopna preko vseh računalnikov znotraj omrežja na url{https://192.168.11.104:3443/} in url{http://192.168.11.104:3000/}.
+
+\subsubsection{Javni GET zahtevek}
+\begin{lstlisting}
+curl -k -i https://192.168.11.104:3443/authors
+curl --http2 -k -i https://192.168.11.104:3443/authors (za http2 rabite to zahtevat)
+curl -i http://192.168.11.104:3000/authors
+\end{lstlisting}
+
+Pričakovan rezultat:
+\begin{itemize}
+  \item HTTP/2 200
+  \item JSON seznam avtorjev
+\end{itemize}
+
+\subsubsection{Vsebinsko pogajanje in podprti formati}
+JSON:
+
+\begin{lstlisting}
+curl -k -H "Accept: application/json" \
+https://192.168.11.104:3443/authors
+\end{lstlisting}
+
+XML:
+
+\begin{lstlisting}
+curl -k -H "Accept: application/xml" \
+https://192.168.11.104:3443/authors
+\end{lstlisting}
+
+HTML:
+
+\begin{lstlisting}
+curl -k \
+"https://192.168.11.104:3443/authors?format=html"
+\end{lstlisting}
+
+To je samo za authors imas pa tudi veliko drugih poti:
+\begin{lstlisting}
+GET /authors  - list all (public)
+GET /authors/:id  - single author (public)
+GET /authors/:id/books  - books by author (public)
+POST /authors  - create (requires librarian or admin)
+PUT /authors/:id  - update (requires librarian or admin)
+DELETE /authors/:id  - delete (requires admin only)
+GET /books  - list all, optional ?genre= filter (public)
+GET /books/:id  - single book (public)
+POST /books  - create (requires librarian or admin)
+PUT /books/:id  - update (requires librarian or admin)
+PATCH /books/:id/availability  - toggle availability (requires librarian or admin)
+DELETE /books/:id  - delete (requires admin only)
+\end{lstlisting}
+
 
 \end{document}
