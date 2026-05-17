@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2026.2.28)  17 MAY 2026 00:58
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2026.2.28)  17 MAY 2026 03:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -468,87 +468,6 @@ LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
 
 [9]
 
-! LaTeX Error: Invalid UTF-8 byte sequence (�\lst@FillFixed@).
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.570 # Če 
-            želite enovrstični zapis, mora biti med pari znak za ločevanje:
-? 
-
-! LaTeX Error: Invalid UTF-8 byte "8C.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.570 # Če 
-            želite enovrstični zapis, mora biti med pari znak za ločevanje:
-? 
-
-! LaTeX Error: Invalid UTF-8 byte sequence (�\lst@FillFixed@).
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.570 # Če želite 
-                    enovrstični zapis, mora biti med pari znak za ločevanje:
-? 
-
-! LaTeX Error: Invalid UTF-8 byte "BE.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.570 # Če želite 
-                    enovrstični zapis, mora biti med pari znak za ločevanje:
-? 
-
-! LaTeX Error: Invalid UTF-8 byte sequence (�\expandafter).
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.570 # Če želite enovrstični 
-                                 zapis, mora biti med pari znak za ločevanje:
-? 
-
-! LaTeX Error: Invalid UTF-8 byte "8D.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.570 # Če želite enovrstični 
-                                 zapis, mora biti med pari znak za ločevanje:
-? 
-
-! LaTeX Error: Invalid UTF-8 byte sequence (�\expandafter).
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.570 ...s, mora biti med pari znak za ločevanje:
-                                                  
-? 
-
-! LaTeX Error: Invalid UTF-8 byte "8D.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.570 ...s, mora biti med pari znak za ločevanje:
-                                                  
-? 
-
-
 [10]
 
 [11] (vyos_documentation.aux)
@@ -556,17 +475,24 @@ l.570 ...s, mora biti med pari znak za ločevanje:
 LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-07-19>
  ***********
-Package rerunfilecheck Info: File `vyos_documentation.out' has not changed.
-(rerunfilecheck)             Checksum: 594234AE4CEE6ACE7CEBB9792A7B5AE0;8914.
+
+
+Package rerunfilecheck Warning: File `vyos_documentation.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `vyos_documentation.out':
+(rerunfilecheck)             Before: A87D139E9B048F4B81142A3A9F98BB10;9139
+(rerunfilecheck)             After:  B72EEE9730D003D982F8E64BCA179F20;9147.
  ) 
 Here is how much of TeX's memory you used:
- 12215 strings out of 468149
- 181904 string characters out of 5431566
- 1062792 words of memory out of 5000000
- 40466 multiletter control sequences out of 15000+600000
+ 12225 strings out of 468149
+ 182110 string characters out of 5431566
+ 1041792 words of memory out of 5000000
+ 40461 multiletter control sequences out of 15000+600000
  640665 words of font info for 71 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,6n,79p,473b,1966s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,79p,473b,1972s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\žan\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1
 000.pk> <C:\Users\žan\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\
 ectt1095.pk> <C:\Users\žan\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dp
@@ -577,9 +503,9 @@ ppen/ec/dpi600\ecbx1095.pk> <C:\Users\žan\AppData\Local\MiKTeX\fonts/pk/ljfour
 jfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\žan\AppData\Local\MiKTeX\fonts
 /pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\žan\AppData\Local\MiKTeX\
 fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1728.pk>
-Output written on vyos_documentation.pdf (11 pages, 235585 bytes).
+Output written on vyos_documentation.pdf (11 pages, 241422 bytes).
 PDF statistics:
- 966 PDF objects out of 1000 (max. 8388607)
- 235 named destinations out of 1000 (max. 500000)
- 417 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 995 PDF objects out of 1000 (max. 8388607)
+ 250 named destinations out of 1000 (max. 500000)
+ 433 words of extra memory for PDF output out of 10000 (max. 10000000)
 

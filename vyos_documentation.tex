@@ -567,9 +567,6 @@ $headers = @{
   'Content-Type'='application/json'
 }
 
-# Če želite enovrstični zapis, mora biti med pari znak za ločevanje:
-# $headers = @{ Authorization = "Basic $b64"; 'Content-Type' = 'application/json' }
-
 $body = @{
   name = 'Test Author'
 } | ConvertTo-Json
@@ -599,5 +596,32 @@ Za certifikat:
 openssl s_client -connect 127.0.0.1:3443 -servername 192.168.11.104 -showcerts
 curl -vkI https://192.168.11.104:3443/
 \end{lstlisting}
+
+\subsubsection{GraphQL}
+
+Primer javnega GraphQL poizvedovanja:
+\begin{lstlisting}
+curl -k -X POST "https://192.168.11.104:30443/graphql" \
+  -H "Content-Type: application/json" \
+  -d "{\"query\":\"{ authors { id name } }\"}"
+\end{lstlisting}
+
+Primer zaščitene GraphQL mutacije z LDAP uporabnikom:
+\begin{lstlisting}
+$b64 = [Convert]::ToBase64String(
+  [Text.Encoding]::ASCII.GetBytes('zanzan:123NajboljseGeslo456!')
+)
+
+$body = @{ query = 'mutation { createAuthor(name: "GraphQL Test") { id name } }' } | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri 'https://192.168.11.104:30443/graphql' `
+  -Method Post `
+  -Headers @{ Authorization = "Basic $b64"; 'Content-Type'='application/json' } `
+  -Body $body
+\end{lstlisting}
+
+\subsubsection{Scriptum\_kp}
+Scriptum je dostopen na spletnem mestu \url{192.168.11.104:8080} ne uporablja LDAP uporabnikov ampak uporabnike na MongoDB bazi. Frontend je Angular,, backend je REST API, Node.js, Express. MongoDB baza ni na tem serverju ampak je na zunanjih mongo DB strežnikih.
 
 \end{document}
