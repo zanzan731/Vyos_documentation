@@ -413,6 +413,12 @@ New-ADUser -Name "Ime Priimek" `
 Get-ADUser -Filter * | Select-Object Name, SamAccountName, Enabled
 \end{lstlisting}
 
+\textbf{Dodajanje grupe in dodajanje uporabnika grupi:}
+\begin{lstlisting}
+New-ADGroup -Name "Group name" -GroupScope Global -GroupCategory Security
+Add-ADGroupMember -Identity "Group name" -Members "account name"
+\end{lstlisting}
+
 \textbf{Onemogočanje uporabniškega računa:}
 \begin{lstlisting}[language=bash, breaklines=true]
 Disable-ADAccount -Identity "ime"
@@ -497,12 +503,6 @@ curl -k -i https://192.168.11.104:3443/authors
 curl --http2 -k -i https://192.168.11.104:3443/authors
 curl -i http://192.168.11.104:3000/authors
 \end{lstlisting}
-
-Pričakovan rezultat:
-\begin{itemize}
-  \item HTTP/2 200
-  \item JSON seznam avtorjev
-\end{itemize}
 
 \subsubsection{Vsebinsko pogajanje in podprti formati}
 JSON:
@@ -593,29 +593,37 @@ curl -i -X DELETE http://192.168.11.104:3000/authors/5 \
 \subsubsection{Potrditev TLS certifikata}
 Za certifikat:
 \begin{lstlisting}
-openssl s_client -connect 127.0.0.1:3443 -servername 192.168.11.104 -showcerts
+openssl s_client -connect 192.168.11.104:3443 -servername 192.168.11.104 -showcerts
 curl -vkI https://192.168.11.104:3443/
+\end{lstlisting}
+Certifikati so self-signed zato če jim želiš zaupat jih rabiš naložiti v napravi:
+\begin{lstlisting}
+openssl s_client -connect 192.168.11.104:3443 -showcerts </dev/null \
+  | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /tmp/library-192-168-11-104.crt
+
+sudo cp /tmp/library-192-168-11-104.crt /usr/local/share/ca-certificates/library-192-168-11-104.crt
+sudo update-ca-certificates
 \end{lstlisting}
 
 \subsubsection{GraphQL}
 
 Primer javnega GraphQL poizvedovanja:
 \begin{lstlisting}
-curl -k -X POST "https://192.168.11.104:30443/graphql" \
+curl -k -X POST "https://192.168.11.104:32484/graphql" \
   -H "Content-Type: application/json" \
-  -d "{\"query\":\"{ authors { id name } }\"}"
+  -d '{"query":"{ authors { id name } }"}'
 \end{lstlisting}
 
 Primer zaščitene GraphQL mutacije z LDAP uporabnikom:
 \begin{lstlisting}
 $b64 = [Convert]::ToBase64String(
-  [Text.Encoding]::ASCII.GetBytes('zanzan:123NajboljseGeslo456!')
+  [Text.Encoding]::ASCII.GetBytes('username:password')
 )
 
 $body = @{ query = 'mutation { createAuthor(name: "GraphQL Test") { id name } }' } | ConvertTo-Json
 
 Invoke-RestMethod `
-  -Uri 'https://192.168.11.104:30443/graphql' `
+  -Uri 'https://192.168.11.104:32484/graphql' `
   -Method Post `
   -Headers @{ Authorization = "Basic $b64"; 'Content-Type'='application/json' } `
   -Body $body
@@ -623,5 +631,28 @@ Invoke-RestMethod `
 
 \subsubsection{Scriptum\_kp}
 Scriptum je dostopen na spletnem mestu \url{192.168.11.104:8080} ne uporablja LDAP uporabnikov ampak uporabnike na MongoDB bazi. Frontend je Angular,, backend je REST API, Node.js, Express. MongoDB baza ni na tem serverju ampak je na zunanjih mongo DB strežnikih.
+
+\section{Raft} 
+Raft storitev poteka na treh serverjih 192.168.11.101, 192.168.11.102, 192.168.11.103. Vse spremembe so sihronizirane preko etcd kljucov, vsaka ima svojo lokalno bazo ki se sinhronizira. To je update Rest storitve saj ta sedaj pošilja svojo bazo RAFT podatkovni bazi.
+Na serverju boste imeli veliko datotek:
+
+\begin{itemize}
+  \item \texttt{raft-api-integration.js} -  ta datoteka pomaga pri replikaciji in temu da se domenijo o vodji
+  \item \texttt{sync-watcher.js} -  gleda etcd sync ključe in jih doda v localno library-ha.db za nek razlog etcd se ni znal sam zmenit za ključe
+  \item \texttt{query-ha-db.js} -  node.js script da bere library-ha.db in sprinta autorje, uporabno za testiranje
+  \item \texttt{test-graphql.js} -  test samo za lokalno da preveri če je možno POST request narediti na qraphql
+  \item \texttt{create-author.js}, \texttt{manual-replicate.js} -  pomožne skripte za pomoč pri testiranju pisanja in repliciranja
+\end{itemize}
+
+\subsection{Branje baze}
+Če želite manualno prebrati bazo predvsem za testiranje in če se vam zdi da niso sinhornizirane.
+\begin{lstlisting}
+cd ~/library-api
+node query-ha-db.js
+\end{lstlisting}
+To vam bo izpisalo vsebino baze.
+
+
+
 
 \end{document}
