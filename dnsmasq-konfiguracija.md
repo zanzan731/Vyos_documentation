@@ -101,3 +101,24 @@ server=2606:4700:4700::1111
 ## Opomba
 
 Ta zapis odraža trenutno preverjeno stanje in je namenjen ponovni postavitvi istega DNS vedenja na isti napravi ali na napravi z enakim naslovom `192.168.11.105`.
+
+## mDNS / systemd-resolved - opomba
+
+Na nekaterih Ubuntu gostiteljih je domena `.local` rezervirana za mDNS (Avahi) in `systemd-resolved` lahko zavrne običajne DNS poizvedbe za takšne domene. Če imate težave z reševanjem `startup11.local` na gostitelju, uporabite naslednje ukaze, da usmerite to domeno k omrežnemu resolverju:
+
+```bash
+# Nastavi routing domain na vmesniku (primer: ens160)
+sudo resolvectl domain ens160 ~startup11.local
+
+# Onemogoči mdns na vmesniku
+sudo resolvectl mdns ens160 no
+
+# Počisti predpomnilnik
+sudo resolvectl flush-caches
+
+# Preizkusi
+resolvectl query startup11.local
+dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
+```
+
+Ta popravek smo uporabili pri konfiguraciji gostitelja, kjer teče `wg-portal`, da so DNS poizvedbe za `startup11.local` pravilno posredovane na AD DNS preko omrežnega resolverja (VyOS / DHCP-provided DNS).

@@ -1,0 +1,452 @@
+PS C:\Users\Administrator> Get-ADGroup -Filter *
+
+
+DistinguishedName : CN=Administrators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Administrators
+ObjectClass       : group
+ObjectGUID        : 554c77c8-caf0-402c-b003-f883b04ae773
+SamAccountName    : Administrators
+SID               : S-1-5-32-544
+
+DistinguishedName : CN=Users,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Users
+ObjectClass       : group
+ObjectGUID        : 6e9d3dbf-49d0-48b0-9769-4c190dd140d3
+SamAccountName    : Users
+SID               : S-1-5-32-545
+
+DistinguishedName : CN=Guests,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Guests
+ObjectClass       : group
+ObjectGUID        : 0aec5fbf-9cc2-40e5-a0f5-e3424f45206a
+SamAccountName    : Guests
+SID               : S-1-5-32-546
+
+DistinguishedName : CN=Print Operators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Print Operators
+ObjectClass       : group
+ObjectGUID        : afceeab8-ce4f-4510-b846-53b49e9d5ef2
+SamAccountName    : Print Operators
+SID               : S-1-5-32-550
+
+DistinguishedName : CN=Backup Operators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Backup Operators
+ObjectClass       : group
+ObjectGUID        : d7f2469e-a5d5-40d3-810f-bcaf5d5e6c21
+SamAccountName    : Backup Operators
+SID               : S-1-5-32-551
+
+DistinguishedName : CN=Replicator,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Replicator
+ObjectClass       : group
+ObjectGUID        : d1449894-eaba-471f-bd8e-121482275d4c
+SamAccountName    : Replicator
+SID               : S-1-5-32-552
+
+DistinguishedName : CN=Remote Desktop Users,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Remote Desktop Users
+ObjectClass       : group
+ObjectGUID        : 89717aa5-801f-4be9-96d0-418d40578189
+SamAccountName    : Remote Desktop Users
+SID               : S-1-5-32-555
+
+DistinguishedName : CN=Network Configuration Operators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Network Configuration Operators
+ObjectClass       : group
+ObjectGUID        : 0b0b7003-adab-4fd9-829d-78d5e00a71d8
+SamAccountName    : Network Configuration Operators
+SID               : S-1-5-32-556
+
+DistinguishedName : CN=Performance Monitor Users,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Performance Monitor Users
+ObjectClass       : group
+ObjectGUID        : ee65474a-46c1-4913-9a11-cc4d364cd899
+SamAccountName    : Performance Monitor Users
+SID               : S-1-5-32-558
+
+DistinguishedName : CN=Performance Log Users,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Performance Log Users
+ObjectClass       : group
+ObjectGUID        : 801dd39e-f754-4972-b542-526fcdc1cf48
+SamAccountName    : Performance Log Users
+SID               : S-1-5-32-559
+
+DistinguishedName : CN=Distributed COM Users,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Distributed COM Users
+ObjectClass       : group
+ObjectGUID        : cd2a2fb0-3100-42a6-bf63-ff1c5a1e8c42
+SamAccountName    : Distributed COM Users
+SID               : S-1-5-32-562
+
+DistinguishedName : CN=IIS_IUSRS,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : IIS_IUSRS
+ObjectClass       : group
+ObjectGUID        : 5a8bd218-f14e-4d84-9880-f1f755950f10
+SamAccountName    : IIS_IUSRS
+SID               : S-1-5-32-568
+
+DistinguishedName : CN=Cryptographic Operators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Cryptographic Operators
+ObjectClass       : group
+ObjectGUID        : f7f2754c-2caf-48af-b612-aa0584cf8a7a
+SamAccountName    : Cryptographic Operators
+SID               : S-1-5-32-569
+
+DistinguishedName : CN=Event Log Readers,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Event Log Readers
+ObjectClass       : group
+ObjectGUID        : bd0c2b1b-a3f2-424b-a2fd-edba114f038e
+SamAccountName    : Event Log Readers
+SID               : S-1-5-32-573
+
+DistinguishedName : CN=Certificate Service DCOM Access,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Certificate Service DCOM Access
+ObjectClass       : group
+ObjectGUID        : 2490f5de-9bcd-41d5-8998-116651e84117
+SamAccountName    : Certificate Service DCOM Access
+SID               : S-1-5-32-574
+
+DistinguishedName : CN=RDS Remote Access Servers,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : RDS Remote Access Servers
+ObjectClass       : group
+ObjectGUID        : be77ba5f-6ef3-43bc-94ab-c02ca213e669
+SamAccountName    : RDS Remote Access Servers
+SID               : S-1-5-32-575
+
+DistinguishedName : CN=RDS Endpoint Servers,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : RDS Endpoint Servers
+ObjectClass       : group
+ObjectGUID        : aa0827df-0bf3-4a3c-ab9d-b844d5e054c7
+SamAccountName    : RDS Endpoint Servers
+SID               : S-1-5-32-576
+
+DistinguishedName : CN=RDS Management Servers,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : RDS Management Servers
+ObjectClass       : group
+ObjectGUID        : dd77e9e1-cbf7-4bf1-8354-d51c58278d33
+SamAccountName    : RDS Management Servers
+SID               : S-1-5-32-577
+
+DistinguishedName : CN=Hyper-V Administrators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Hyper-V Administrators
+ObjectClass       : group
+ObjectGUID        : 3cfbf52a-c454-4757-9c2a-a152399a512b
+SamAccountName    : Hyper-V Administrators
+SID               : S-1-5-32-578
+
+DistinguishedName : CN=Access Control Assistance Operators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Access Control Assistance Operators
+ObjectClass       : group
+ObjectGUID        : 45882ca0-bbe5-4460-be35-b8f084b41582
+SamAccountName    : Access Control Assistance Operators
+SID               : S-1-5-32-579
+
+DistinguishedName : CN=Remote Management Users,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Remote Management Users
+ObjectClass       : group
+ObjectGUID        : 3d8de5ff-a06a-43d2-8090-5f170282853a
+SamAccountName    : Remote Management Users
+SID               : S-1-5-32-580
+
+DistinguishedName : CN=Storage Replica Administrators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Storage Replica Administrators
+ObjectClass       : group
+ObjectGUID        : baafbdb3-fd42-43f3-9c4f-4e9a0be3d5ae
+SamAccountName    : Storage Replica Administrators
+SID               : S-1-5-32-582
+
+DistinguishedName : CN=Domain Computers,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Domain Computers
+ObjectClass       : group
+ObjectGUID        : 4fa4f8be-d7fb-495b-8946-8ff95f90c8d1
+SamAccountName    : Domain Computers
+SID               : S-1-5-21-3339018165-2759185450-2593027312-515
+
+DistinguishedName : CN=Domain Controllers,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Domain Controllers
+ObjectClass       : group
+ObjectGUID        : 5c14ccb9-e9d3-45d9-b160-063bd6fd5a2b
+SamAccountName    : Domain Controllers
+SID               : S-1-5-21-3339018165-2759185450-2593027312-516
+
+DistinguishedName : CN=Schema Admins,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Universal
+Name              : Schema Admins
+ObjectClass       : group
+ObjectGUID        : d0dc906e-96c5-4221-8479-aba1813ac3ae
+SamAccountName    : Schema Admins
+SID               : S-1-5-21-3339018165-2759185450-2593027312-518
+
+DistinguishedName : CN=Enterprise Admins,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Universal
+Name              : Enterprise Admins
+ObjectClass       : group
+ObjectGUID        : cab32cd2-5635-4bbd-864c-af559636e459
+SamAccountName    : Enterprise Admins
+SID               : S-1-5-21-3339018165-2759185450-2593027312-519
+
+DistinguishedName : CN=Cert Publishers,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Cert Publishers
+ObjectClass       : group
+ObjectGUID        : e177cb68-faf8-45be-8282-0eb1e5bb99d2
+SamAccountName    : Cert Publishers
+SID               : S-1-5-21-3339018165-2759185450-2593027312-517
+
+DistinguishedName : CN=Domain Admins,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Domain Admins
+ObjectClass       : group
+ObjectGUID        : 493228cc-9de1-45a5-be9b-1a39a4117185
+SamAccountName    : Domain Admins
+SID               : S-1-5-21-3339018165-2759185450-2593027312-512
+
+DistinguishedName : CN=Domain Users,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Domain Users
+ObjectClass       : group
+ObjectGUID        : acf94336-21f4-41fc-b99b-1a22c45d4d4a
+SamAccountName    : Domain Users
+SID               : S-1-5-21-3339018165-2759185450-2593027312-513
+
+DistinguishedName : CN=Domain Guests,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Domain Guests
+ObjectClass       : group
+ObjectGUID        : e53f0976-50c1-4611-9763-8b43d2c037f2
+SamAccountName    : Domain Guests
+SID               : S-1-5-21-3339018165-2759185450-2593027312-514
+
+DistinguishedName : CN=Group Policy Creator Owners,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Group Policy Creator Owners
+ObjectClass       : group
+ObjectGUID        : 58607ff4-d8f1-4151-b48b-3d5851117da7
+SamAccountName    : Group Policy Creator Owners
+SID               : S-1-5-21-3339018165-2759185450-2593027312-520
+
+DistinguishedName : CN=RAS and IAS Servers,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : RAS and IAS Servers
+ObjectClass       : group
+ObjectGUID        : 2329b886-54b7-4689-9ec5-6e80a35af35a
+SamAccountName    : RAS and IAS Servers
+SID               : S-1-5-21-3339018165-2759185450-2593027312-553
+
+DistinguishedName : CN=Server Operators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Server Operators
+ObjectClass       : group
+ObjectGUID        : bafb824d-58da-4457-ade8-a7f701500457
+SamAccountName    : Server Operators
+SID               : S-1-5-32-549
+
+DistinguishedName : CN=Account Operators,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Account Operators
+ObjectClass       : group
+ObjectGUID        : 6502441b-db31-4814-931c-2f565d0c250f
+SamAccountName    : Account Operators
+SID               : S-1-5-32-548
+
+DistinguishedName : CN=Pre-Windows 2000 Compatible Access,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Pre-Windows 2000 Compatible Access
+ObjectClass       : group
+ObjectGUID        : 6341c0db-8ab7-42c0-a352-d087ffcfe4cf
+SamAccountName    : Pre-Windows 2000 Compatible Access
+SID               : S-1-5-32-554
+
+DistinguishedName : CN=Incoming Forest Trust Builders,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Incoming Forest Trust Builders
+ObjectClass       : group
+ObjectGUID        : 0ee83737-6208-4ed2-9de7-930f6df873be
+SamAccountName    : Incoming Forest Trust Builders
+SID               : S-1-5-32-557
+
+DistinguishedName : CN=Windows Authorization Access Group,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Windows Authorization Access Group
+ObjectClass       : group
+ObjectGUID        : 41611888-c5cb-4f3d-9cd0-12b1d6ecd764
+SamAccountName    : Windows Authorization Access Group
+SID               : S-1-5-32-560
+
+DistinguishedName : CN=Terminal Server License Servers,CN=Builtin,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Terminal Server License Servers
+ObjectClass       : group
+ObjectGUID        : 17f5dce0-8e27-43ad-8185-0befcda951c3
+SamAccountName    : Terminal Server License Servers
+SID               : S-1-5-32-561
+
+DistinguishedName : CN=Allowed RODC Password Replication Group,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Allowed RODC Password Replication Group
+ObjectClass       : group
+ObjectGUID        : 272e1a48-2e9a-49f0-bc1b-554aff190107
+SamAccountName    : Allowed RODC Password Replication Group
+SID               : S-1-5-21-3339018165-2759185450-2593027312-571
+
+DistinguishedName : CN=Denied RODC Password Replication Group,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : Denied RODC Password Replication Group
+ObjectClass       : group
+ObjectGUID        : 6d3c6e1f-d4af-4a82-9118-9ab0e62f2250
+SamAccountName    : Denied RODC Password Replication Group
+SID               : S-1-5-21-3339018165-2759185450-2593027312-572
+
+DistinguishedName : CN=Read-only Domain Controllers,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Read-only Domain Controllers
+ObjectClass       : group
+ObjectGUID        : 6dc81178-fbb1-4b16-a0fa-ff5fd62f95a4
+SamAccountName    : Read-only Domain Controllers
+SID               : S-1-5-21-3339018165-2759185450-2593027312-521
+
+DistinguishedName : CN=Enterprise Read-only Domain Controllers,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Universal
+Name              : Enterprise Read-only Domain Controllers
+ObjectClass       : group
+ObjectGUID        : 852ed56d-90b5-40ef-a7a2-5f4e8af17702
+SamAccountName    : Enterprise Read-only Domain Controllers
+SID               : S-1-5-21-3339018165-2759185450-2593027312-498
+
+DistinguishedName : CN=Cloneable Domain Controllers,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Cloneable Domain Controllers
+ObjectClass       : group
+ObjectGUID        : e8534b79-5b72-4c6b-bff1-2446b2f17b09
+SamAccountName    : Cloneable Domain Controllers
+SID               : S-1-5-21-3339018165-2759185450-2593027312-522
+
+DistinguishedName : CN=Protected Users,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Protected Users
+ObjectClass       : group
+ObjectGUID        : 52e8795d-d2a1-4698-8ab1-d399d3aacefd
+SamAccountName    : Protected Users
+SID               : S-1-5-21-3339018165-2759185450-2593027312-525
+
+DistinguishedName : CN=Key Admins,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Key Admins
+ObjectClass       : group
+ObjectGUID        : 38cd46b6-2777-4b92-a4df-917087b2d699
+SamAccountName    : Key Admins
+SID               : S-1-5-21-3339018165-2759185450-2593027312-526
+
+DistinguishedName : CN=Enterprise Key Admins,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Universal
+Name              : Enterprise Key Admins
+ObjectClass       : group
+ObjectGUID        : b9e35dfe-b289-4ef2-849c-23529f20dad3
+SamAccountName    : Enterprise Key Admins
+SID               : S-1-5-21-3339018165-2759185450-2593027312-527
+
+DistinguishedName : CN=DnsAdmins,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : DomainLocal
+Name              : DnsAdmins
+ObjectClass       : group
+ObjectGUID        : 8b8ce423-1aec-4ccc-b4a3-3bfc3590ea11
+SamAccountName    : DnsAdmins
+SID               : S-1-5-21-3339018165-2759185450-2593027312-1101
+
+DistinguishedName : CN=DnsUpdateProxy,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : DnsUpdateProxy
+ObjectClass       : group
+ObjectGUID        : aec59934-5309-407e-865f-5449c3059ded
+SamAccountName    : DnsUpdateProxy
+SID               : S-1-5-21-3339018165-2759185450-2593027312-1102
+
+DistinguishedName : CN=LIBRARIAN,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : LIBRARIAN
+ObjectClass       : group
+ObjectGUID        : dd9352aa-9a23-40b7-9566-27ffd77b0e7c
+SamAccountName    : LIBRARIAN
+SID               : S-1-5-21-3339018165-2759185450-2593027312-1109
+
+DistinguishedName : CN=Admin,CN=Users,DC=startup11,DC=local
+GroupCategory     : Security
+GroupScope        : Global
+Name              : Admin
+ObjectClass       : group
+ObjectGUID        : 3e3b8bd1-6e24-4d55-bbe3-88acff7fd247
+SamAccountName    : Admin
+SID               : S-1-5-21-3339018165-2759185450-2593027312-1111

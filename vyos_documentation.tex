@@ -13,7 +13,9 @@
 \lstset{
 backgroundcolor=\color{gray!10},
 basicstyle=\ttfamily\small,
-breaklines=true,
+breaklines=false,
+ columns=fullflexible,
+ keepspaces=true,
 frame=single
 }
 
@@ -331,6 +333,65 @@ dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
 dig +short example.com @192.168.11.105
   \end{lstlisting}
 \end{enumerate}
+
+\subsubsection{mDNS in systemd-resolved: rešitev za .local}
+
+Na nekaterih Ubuntu gostiteljih storitev \texttt{systemd-resolved} obravnava domeno \texttt{.local} kot mDNS (Avahi). Posledično lahko DNS poizvedbe za \texttt{startup11.local} prejmejo odgovor \texttt{REFUSED} ali pa jih sistem poskuša obdelati z mDNS namesto prek omrežnega DNS resolverja.
+
+Na gostitelju, kjer teče \texttt{wg-portal}, smo uporabili preprost popravek: za vmesnik smo nastavili routing domain in onemogočili mDNS, tako da se poizvedbe za \texttt{startup11.local} pošljejo na DHCP-provided resolver (192.168.11.1) in dosežejo AD DNS.
+
+\begin{lstlisting}
+# Nastavi routing domain (tilde pomeni routing domain)
+sudo resolvectl domain ens160 ~startup11.local
+
+# Onemogoci mdns na vmesniku
+sudo resolvectl mdns ens160 no
+
+# Pocisti predpomnilnik, ce je potrebno
+sudo resolvectl flush-caches
+
+# Preizkus
+resolvectl query startup11.local
+dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
+\end{lstlisting}
+
+Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za \texttt{startup11.local} dosežejo avtoritativni AD DNS.
+
+\subsection{wg-portal (WireGuard portal) in integracija z Active Directory}
+
+\textbf{Kaj je wg-portal:} \texttt{wg-portal} je spletna aplikacija za upravljanje WireGuard konfiguracij, dovoljenj in omogočanje samopostrežnega ustvarjanja peer konfiguracij za uporabnike.
+
+\textbf{Kje teče:} Aplikacija je dosegljiva na \texttt{http://192.168.11.106:8888}. Lokacije ostalih storitev so navedene v razdelku "DMZ strežniki" zgoraj.
+
+\textbf{Kako se poveže z AD:}
+\begin{itemize}
+  \item Aplikacija uporablja LDAP bind račun za poizvedbe uporabnikov in preverjanje članstev v skupinah.
+  \item Avtentikacija poteka z bindanjem (bind) in iskanjem vnosa, ki ustreza \texttt{sAMAccountName} ali \texttt{userPrincipalName}.
+  \item Atribute AD lahko preslikamo, npr. uporabimo \texttt{userPrincipalName} kot \texttt{email}, kadar je \texttt{mail} prazen.
+  \item Administratorske pravice se določijo preko članstva v AD skupini (npr. \texttt{Domain Admins}).
+\end{itemize}
+
+Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneeru/complete-guide-installing-and-configuring-wireguard-portal-on-linux-d23261027520 z nekaj lokalnimi modifikacijami prilagoditvami za naš okolje. Konfiguracija, ki smo jo uporabili v tem repozitoriju, je na voljo v datoteki \texttt{wgportal.yaml}.
+
+\textbf{Opombe:}
+\begin{itemize}
+  \item Privzeta podatkovna shramba aplikacije je SQLite (\texttt{data/sqlite.db}). Če aplikacija poroča o napaki \texttt{unable to open database file}, preverite, da mapa \texttt{data} obstaja in ima pravilne pravice/lastništvo (npr. \texttt{/opt/wg-portal/data}).
+  \item Primer ukazov za ustvarjanje bind uporabnika v AD (PowerShell):
+\end{itemize}
+\begin{lstlisting}
+# Ustvari servisnega uporabnika (prilagodi geslo varno)
+New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
+
+# Po potrebi dodaj uporabnike v administratorsko skupino
+Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
+\end{lstlisting}
+
+\textbf{Preizkusi in dnevniški pregledi:}
+\begin{itemize}
+  \item Testirajte LDAP poizvedbe z orodjem \texttt{ldapsearch} kjer je na voljo.
+  \item Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
+  \item Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve \verb|create_default_peer_on_login| in \verb|self_provisioning_allowed|.
+\end{itemize}
 
 \textbf{Opomba:} Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
 

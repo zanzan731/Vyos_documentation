@@ -1,0 +1,68 @@
+PS C:\Users\Administrator> Get-ADUser -Filter *
+
+
+DistinguishedName : CN=Administrator,CN=Users,DC=startup11,DC=local
+Enabled           : True
+GivenName         :
+Name              : Administrator
+ObjectClass       : user
+ObjectGUID        : b20457d9-247b-4c43-b055-ec330c517ee3
+SamAccountName    : Administrator
+SID               : S-1-5-21-3339018165-2759185450-2593027312-500
+Surname           :
+UserPrincipalName :
+
+DistinguishedName : CN=Guest,CN=Users,DC=startup11,DC=local
+Enabled           : False
+GivenName         :
+Name              : Guest
+ObjectClass       : user
+ObjectGUID        : eaf904f1-4934-4810-be32-f4d8871d01db
+SamAccountName    : Guest
+SID               : S-1-5-21-3339018165-2759185450-2593027312-501
+Surname           :
+UserPrincipalName :
+
+DistinguishedName : CN=krbtgt,CN=Users,DC=startup11,DC=local
+Enabled           : False
+GivenName         :
+Name              : krbtgt
+ObjectClass       : user
+ObjectGUID        : e465437d-e47c-4b61-859d-7224d8a9a509
+SamAccountName    : krbtgt
+SID               : S-1-5-21-3339018165-2759185450-2593027312-502
+Surname           :
+UserPrincipalName :
+
+DistinguishedName : CN=Zan Perat,CN=Users,DC=startup11,DC=local
+Enabled           : True
+GivenName         : Zan
+Name              : Zan Perat
+ObjectClass       : user
+ObjectGUID        : 64f21501-b577-4e26-888c-7052cf6e8244
+SamAccountName    : zanzan
+SID               : S-1-5-21-3339018165-2759185450-2593027312-1104
+Surname           : Perat
+UserPrincipalName : zan@startup11.local
+
+DistinguishedName : CN=Pavle Dosen,CN=Users,DC=startup11,DC=local
+Enabled           : True
+GivenName         : Pavle
+Name              : Pavle Dosen
+ObjectClass       : user
+ObjectGUID        : 11d09ef4-b9ee-47b2-85a3-2ce1fde36e62
+SamAccountName    : pavlogal
+SID               : S-1-5-21-3339018165-2759185450-2593027312-1106
+Surname           : Dosen
+UserPrincipalName : pavle.dosen@startup11.local
+
+DistinguishedName : CN=zan_admin,CN=Users,DC=startup11,DC=local
+Enabled           : True
+GivenName         : Zan
+Name              : zan_admin
+ObjectClass       : user
+ObjectGUID        : 51770fd9-cc8c-4d0d-a530-71b16826bdad
+SamAccountName    : zanadmin
+SID               : S-1-5-21-3339018165-2759185450-2593027312-1110
+Surname           : Admin
+UserPrincipalName : zan.admin@startup11.local
