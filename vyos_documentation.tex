@@ -88,6 +88,8 @@ dns-srv & 192.168.11.105 & 00:0c:29:4a:b1:99 & DNS strežnik (lokalni) \\
 \hline
 wireguard & 192.168.11.106 & 00:0c:29:c4:d1:52 & WireGuard VPN končna točka \\
 \hline
+snmp & 192.168.11.107 & 00:0c:29:69:75:09 & SNMP / monitoring cilj \\
+\hline
 AD (dmz windows 1) & 192.168.11.201 & 00:0c:29:07:cf:1c & Active Directory (Domain Controller) \\
 \hline
 \end{longtable}
@@ -111,6 +113,8 @@ dns-srv & 00:0c:29:4a:b1:99 & 192.168.11.105 \\
 wireguard & 00:0c:29:c4:d1:52 & 192.168.11.106 \\
 \hline
 AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
+\hline
+snmp & 00:0c:29:69:75:09 & 192.168.11.107 \\
 \hline
 \end{longtable}
 
@@ -174,12 +178,13 @@ IPv6 & FORWARD & Dovoli nove UDP povezave na port 51820 na vhodnem vmesniku eth0
 
 \subsection{IPv4 - forward (posredovanje)}
 \begin{itemize}
-    \item Pravilo za WireGuard: dovoli novo UDP povezavo iz \texttt{eth0} proti \texttt{192.168.11.106:51820} s prehodi na \texttt{eth1}.
+  \item Pravilo za WireGuard: dovoli novo UDP povezavo iz \texttt{eth0} proti \texttt{192.168.11.106:51820} s prehodi na \texttt{eth1}.
+  \item Pravila 210-241 eksplicitno dovolijo dostop iz \texttt{eth2} do AD DNS/DC na \texttt{192.168.11.201} (DNS, Kerberos, LDAP, Global Catalog, SMB/RPC, dynamic RPC).
 \end{itemize}
 % Forward rule summary already in firewall table above.
 
 \subsection{IPv6 - vhodni promet in posredovanje}
-IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \texttt{eth0}) ter forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku \texttt{eth0}).
+IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \texttt{eth0}), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku \texttt{eth0}) in pravila 210-241 za dostop do AD strežnika na \texttt{2001:1470:fffd:a9::185}.
 % IPv6 firewall rules summarized in the firewall table above.
 
 \section{Storitve}
@@ -199,9 +204,34 @@ USERS & 10.11.0.0/24 (dinamični range 10.11.0.100-200) \\
 DHCPv6 podeljuje naslove v subnetu \texttt{2001:1470:fffd:a9::/64} z range \texttt{::100} - \texttt{::1ff}. Ime strežnika za DHCPv6 je \texttt{2001:1470:fffd:a9::1}.
 
 \subsection{DNS (posredovanje in split DNS)}
-DNS posredovanje sprejema poizvedbe iz notranjih omrežij in uporablja kombinacijo lokalnega DNS strežnika (192.168.11.105) za domeno \texttt{startup11.local} ter javne upstream strežnike.
+DNS posredovanje na VyOS sprejema poizvedbe iz notranjih omrežij in uporablja conditional forward za AD domeno.
 
-\textbf{Lokalni name-server:} 192.168.11.105 (domena \texttt{startup11.local})
+\textbf{Ključna split-DNS logika:}
+\begin{itemize}
+  \item poizvedbe za \texttt{startup11.local} se na VyOS preusmerijo na AD DNS \texttt{192.168.11.201};
+  \item vse ostale poizvedbe gredo na javne upstream DNS strežnike (ARNES + Cloudflare).
+\end{itemize}
+
+\textbf{AD DNS server (authoritative):} \texttt{192.168.11.201} / \texttt{2001:1470:fffd:a9::185}
+
+\subsubsection{Trenutno stanje AD DNS}
+Trenutna AD zona \texttt{startup11.local} vsebuje klju\v{c}ne notranje zapise za domeno, DC in DMZ stre\v{z}nike:
+
+\begin{itemize}
+  \item korenski zapis \texttt{@} vsebuje A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::185};
+  \item NS in SOA na vrhu cone kažeta na \texttt{win-sgi52j8519e.startup11.local.};
+  \item standardni AD SRV zapisi so prisotni za \verb|_gc._tcp|, \verb|_kerberos._tcp|, \verb|_kerberos._udp|, \verb|_ldap._tcp| in \verb|_kpasswd._tcp| ter ustrezne \verb|Default-First-Site-Name| in \verb|ForestDnsZones| / \verb|DomainDnsZones| podcone;
+  \item glavni DC gostitelj \texttt{win-sgi52j8519e} ima A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::185};
+  \item dodatna notranja zapisa sta \texttt{rest.startup11.local} \textrightarrow{} \texttt{192.168.11.104} in \texttt{snmp.startup11.local} \textrightarrow{} \texttt{192.168.11.107}.
+\end{itemize}
+
+\textbf{Forwarderji na AD DNS:}
+\begin{itemize}
+  \item IPv4: \texttt{193.2.1.66}, \texttt{1.1.1.1}
+  \item IPv6: \texttt{2001:1470:8000::66}, \texttt{2606:4700:4700::1111}
+\end{itemize}
+
+\textbf{Dovoljena omrežja za VyOS DNS forwarding:} 10.11.0.0/24, 192.168.11.0/24, 2001:1470:fffd:aa::/64, 2001:1470:fffd:a9::/64, fd11:11:11::/64.
 
 \textbf{Upstream DNS strežniki:}
 \begin{longtable}{|l|l|l|}
@@ -218,15 +248,20 @@ Cloudflare & 1.1.1.1 & 2606:4700:4700::1111 \\
 \end{longtable}
 
 \subsubsection{Split DNS (dnsmasq)}
-Split DNS je implementiran na strežniku \texttt{dns-srv} (192.168.11.105) z \textbf{dnsmasq} storitev. Ta storitev omogoča lokalnim uporabnikom razrešitev domene \texttt{startup11.local} na interne naslove, zunanji uporabniki pa dobijo druge odgovore.
+Strežnik \texttt{dns-srv} (192.168.11.105) z \textbf{dnsmasq} je opcijski notranji resolver. Trenutna pravilna konfiguracija uporablja \texttt{server=/.../} in ne \texttt{address=/.../} za AD domeno, da se ohranijo SRV zapisi za AD prijavo.
 
 \textbf{Trenutna konfiguracija:}
 \begin{itemize}
     \item dnsmasq posluša na: \texttt{192.168.11.105:53} (DMZ naslov)
-    \item startup11.local (IPv4): \texttt{192.168.11.105}
-    \item startup11.local (IPv6): \texttt{2001:1470:fffd:a9::10}
+    \item \texttt{startup11.local} se posreduje na AD DNS: \texttt{192.168.11.201} in \texttt{2001:1470:fffd:a9::185}
     \item Konfiguracija: \verb|/etc/dnsmasq.d/startup11.conf|
 \end{itemize}
+
+\textbf{Pomembno za AD prijavo:} notranji odjemalci morajo za \texttt{startup11.local} dobiti SRV zapise iz AD DNS, ne samo A/AAAA zapisov. Zato je v VyOS nastavljen:
+\begin{lstlisting}
+set service dns forwarding domain startup11.local name-server 192.168.11.201
+set service dns forwarding domain startup11.local recursion-desired
+\end{lstlisting}
 
 \textbf{Sprememba konfiguracije:}
 \begin{lstlisting}
@@ -246,17 +281,104 @@ sudo systemctl status dnsmasq
 ss -ltnup '( sport = :53 )'
 
 # Test DNS response
-dig startup11.local @192.168.11.105 +short
+dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
+dig +short example.com @192.168.11.105
 \end{lstlisting}
 
-\textbf{Dodajanje nove domene:}
-V datoteko \verb|/etc/dnsmasq.d/startup11.conf| dodaj vrstico:
+\subsubsection{dnsmasq - aktivna konfiguracija in ponovna postavitev}
+Spodaj je preverjena konfiguracija, ki trenutno teče na \texttt{192.168.11.105:53}.
+
 \begin{lstlisting}
-address=/nova-domena.local/192.168.11.x
+# /etc/dnsmasq.d/startup11.conf
+# Bind only to the DMZ address to avoid conflicts with systemd-resolved on localhost
+listen-address=192.168.11.105
+bind-interfaces
+
+# Forward AD domain to AD DNS (preserves SRV records)
+server=/startup11.local/192.168.11.201
+server=/startup11.local/2001:1470:fffd:a9::185
+
+# Upstream resolvers for non-local domains
+server=1.1.1.1
+server=193.2.1.66
+server=2001:1470:8000::66
+server=2606:4700:4700::1111
 \end{lstlisting}
-Nato ponovno zaženi storitev in testiraj z \texttt{dig nova-domena.local @192.168.11.105}.
+
+Koraki za ponovno postavitev:
+\begin{enumerate}
+  \item Namesti pakete.
+  \begin{lstlisting}
+sudo apt update
+sudo apt install -y dnsmasq dnsutils
+  \end{lstlisting}
+  \item Ustvari konfiguracijsko datoteko.
+  \begin{lstlisting}
+sudo tee /etc/dnsmasq.d/startup11.conf > /dev/null << 'EOF'
+# (vsebina kot zgoraj)
+EOF
+  \end{lstlisting}
+  \item Preveri sintakso in ponovno zaženi storitev.
+  \begin{lstlisting}
+sudo dnsmasq --test
+sudo systemctl restart dnsmasq
+sudo systemctl enable dnsmasq
+  \end{lstlisting}
+  \item Preveri delovanje.
+  \begin{lstlisting}
+ss -ltnup '( sport = :53 )'
+dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
+dig +short example.com @192.168.11.105
+  \end{lstlisting}
+\end{enumerate}
+
+\textbf{Opomba:} Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
 
 \subsection{NTP}
+\subsection{SNMP in monitoring}
+SNMP je omogočen na VyOS in služi kot vir metrike za orodja za monitoring (Prometheus + Grafana).
+
+\textbf{VyOS konfiguracija (primer iz v4.commands):}
+\begin{lstlisting}
+set service snmp community startup11 authorization 'ro'
+set service snmp contact 'pd43760@student.uni-lj.si'
+set service snmp listen-address 192.168.11.1
+set service snmp location 'FRI'
+\end{lstlisting}
+
+\textbf{Kako pobrati metrike (pregledno):}
+\begin{itemize}
+  \item Preveri dostop z: \texttt{snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0}
+  \item Pri uspehu bo vrnil \texttt{sysUpTime} in podobne OID vrednosti.
+\end{itemize}
+
+\textbf{Monitoring stack (kratka navodila)}
+\begin{itemize}
+  \item Uporabi \texttt{snmp\_exporter} (port 9116), \texttt{prometheus} in \texttt{grafana} (npr. Docker Compose stack).
+  \item Priporočen potek: pripravite \texttt{generator.yml} s modulom \texttt{vyos} (walk: ifTable, ifXTable, sysUpTime), zaženite generator in pridobite \texttt{snmp.yml}.
+  \item Preizkus exporterja (primer):
+  \begin{lstlisting}
+curl "http://<snmp_exporter>:9116/snmp?module=vyos&target=192.168.11.1"
+  \end{lstlisting}
+  \item Primer Prometheus scrape job (poenostavljeno):
+  \begin{lstlisting}
+scrape_configs:
+  - job_name: 'snmp'
+    static_configs:
+      - targets: ['192.168.11.1']
+    metrics_path: /snmp
+    params:
+      module: [vyos]
+      auth: [vyos_auth]
+    relabel_configs: ...
+  \end{lstlisting}
+\end{itemize}
+
+\textbf{Hitri nasveti:}
+\begin{itemize}
+  \item Namestite MIB datoteke, če generator potrebuje lokalne MIB‑e (paket \texttt{snmp-mibs-downloader}).
+  \item Če exporter vrne napako \texttt{Unknown auth}, preverite, da so v \texttt{snmp.yml} in Prometheus parametri usklajeni (auth ime in modul).
+\end{itemize}
 Konfigurirani NTP strežniki so:
 \begin{itemize}
     \item ntp.arnes.si
@@ -298,19 +420,19 @@ Na klientih TODO.
 \section{Upravljanje s konfiguracijami}
 
 \subsection{Nalaganje celotne konfiguracije}
-Če želite naložiti celotno konfiguracijo iz datoteke (npr. \verb|v3.conf|), uporabite:
+Če želite naložiti celotno konfiguracijo iz datoteke (npr. \verb|v4.conf|), uporabite:
 \begin{lstlisting}
 configure
-load v3.conf
+load v4.conf
 commit
 save
 \end{lstlisting}
 
 \subsection{Apliciranje seznama ukazov}
-Če želite aplicirati seznam ukazov iz datoteke (npr. \verb|v1.commands|), uporabite:
+Če želite aplicirati seznam ukazov iz datoteke (npr. \verb|v4.commands|), uporabite:
 \begin{lstlisting}
 configure
-source v1.commands
+source v4.commands
 commit
 save
 \end{lstlisting}
@@ -319,11 +441,11 @@ save
 Pri apliciranju ukazov je potrebna pazljivost — nekateri ukazi ne delujejo kot pričakovano:
 \begin{itemize}
     \item Ukaz \verb|set| pri vmesnikih (\verb|interface|) ne nastavlja vrednosti, ampak jo dodaja (deluje kot \verb|add|). To lahko vodi do podvajanja nastavitev.
-    \item Originalna konfiguracija \verb|v1.commands| je bila osnutek in je zastarela.
-    \item Najnovejšo in pravilno konfiguracijo (\verb|v3.commands|) generirajte avtomatsko z ukazom (zunaj \verb|configure| moda):
+  \\item Originalne konfiguracije \\verb|v1.commands| in \\verb|v3.commands| so zgodovinski osnutki; za trenutno stanje uporabljaj \\verb|v4.conf| in \\verb|v4.commands|.
+  \item Najnovejšo in pravilno konfiguracijo (\verb|v4.commands|) generirajte avtomatsko z ukazom (zunaj \verb|configure| moda):
 \end{itemize}
 \begin{lstlisting}
-show configuration commands > v3.commands
+show configuration commands > v4.commands
 \end{lstlisting}
 
 Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenutnih nastavitev.
@@ -354,6 +476,15 @@ pivpn -qr
 
 # Brisanje uporabnika
 pivpn remove
+\end{lstlisting}
+
+\subsection{Poskus z wg-portal}
+Poskusil sem postaviti tudi \texttt{wg-portal}, ker podpira LDAP avtentikacijo, vendar se je zagon ustavil pri odpiranju SQLite baze z napako \texttt{out of memory (14)}. Zaradi tega je ostalo upravljanje WireGuard uporabnikov na \texttt{pivpn}.
+
+\begin{lstlisting}
+2026/05/21 23:16:51 INFO Starting WireGuard Portal V2... version=v2.2.3-1c3eacb
+time=2026-05-21T23:16:51.752Z level=INFO msg="Configuration loaded!" logLevel=info
+panic: failed to open sqlite database: unable to open database file: out of memory (14)
 \end{lstlisting}
 
 \subsection{Konfiguracija in nastavitve}
@@ -441,6 +572,46 @@ Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko prik
 \begin{itemize}
     \item Administrator domene: \texttt{startup11\textbackslash Administrator} z enakim geslom kot lokalni Administrator na strežniku
 \end{itemize}
+
+\subsection{Upravljanje AD DNS streznika}
+AD DNS je avtoritativen za \texttt{startup11.local} in vraca AD SRV zapise (npr. \verb|_ldap._tcp.dc._msdcs.startup11.local|).
+
+\textbf{Preverjanje forwarderjev:}
+\begin{lstlisting}[language=bash, breaklines=true]
+Get-DnsServerForwarder
+\end{lstlisting}
+
+\textbf{Preverjanje, da je DNS na AD strezniku lokalen:}
+\begin{lstlisting}[language=bash, breaklines=true]
+Get-DnsClientServerAddress
+Get-DnsServerZone
+\end{lstlisting}
+
+\textbf{Izpis DNS zapisov v AD zoni:}
+\begin{lstlisting}[language=bash, breaklines=true]
+Get-DnsServerResourceRecord -ZoneName "startup11.local" |
+  Select-Object HostName, RecordType, RecordData
+\end{lstlisting}
+
+\textbf{Preverjanje SRV zapisov na AD DNS:}
+\begin{lstlisting}[language=bash, breaklines=true]
+Resolve-DnsName _ldap._tcp.dc._msdcs.startup11.local -Type SRV -Server 127.0.0.1
+nslookup -type=SRV _ldap._tcp.dc._msdcs.startup11.local 192.168.11.201
+\end{lstlisting}
+
+\textbf{Dodajanje notranjih zapisov za DMZ streznike (primer):}
+\begin{lstlisting}[language=bash, breaklines=true]
+Add-DnsServerResourceRecordA -ZoneName "startup11.local" -Name "rest" -IPv4Address "192.168.11.104"
+Add-DnsServerResourceRecordA -ZoneName "startup11.local" -Name "snmp" -IPv4Address "192.168.11.107"
+\end{lstlisting}
+
+\textbf{Test novih zapisov po dodajanju:}
+\begin{lstlisting}[language=bash, breaklines=true]
+Resolve-DnsName rest.startup11.local -Type A -Server 127.0.0.1
+Resolve-DnsName snmp.startup11.local -Type A -Server 127.0.0.1
+\end{lstlisting}
+
+\textbf{Opomba o split DNS:} VyOS izvaja DNS posredovanje in conditional forward na AD DNS za \texttt{startup11.local}, AD DNS pa ostane avtoritativni vir notranjih zapisov.
 
 \section{REST}
 Vse datoteke se nahajajo na sk11-dmz-linux-04 v home directoriju od zanzan04. Imamo dve rest storitvi in sicer Scriptum\_kp in library-api. V tem delu bom govoril o library-api za probleme s Scriptum\_kp pa se obrnite na github dokumentacijo projekta \url{https://github.com/zanzan731/Scriptum\_kp}.
@@ -656,3 +827,5 @@ To vam bo izpisalo vsebino baze.
 
 
 \end{document}
+
+%

@@ -1,0 +1,172 @@
+Osnovna konfiguracija
+QuickStart Guide, Vyatta_BasicSystem (poglavja 1,2,3)
+
+spremenite uporabniško ime/geslo
+(opcijsko) preimenuj vmesnike iz ethX v eth0, eth1, eth2, eth3 (če so originalno slučajno preimenovani v kaj drugega)
+nastavi statični IP(v4), prehod,  ime usmerjevalnika, domeno
+preveri povezljivost (npr. ping na Arnesov 193.2.1.66 ali Cloudflare DNS 1.1.1.1)
+Nastavite DNS, recimo na Arnesov (primarni) in Cloudflare (sekundarni) DNS strežnik. Preveri, ali deluje. v kakšni situaciji bi bil koristeno DNS posredovanje (DNS Forwarding)?
+Nastavite NTP na Arnesove NTP strežnike (Ali je v omrežju zelo pomembno, da imajo vsi računalniki nastavljen točen čas? Kako je s točnostjo ure v virtualnih okoljih, torej znotraj virtualnih računalnikov? NTP protokol, za VM-je uporaba ure gostitelja (host) preko dodatkov (razširitev) v hipervizorju)
+Nastavi IPv6, nastavi privzeto usmerjanje za IPv6 paketke ("IPv6 privzeti prehod"). Preveri IPv6 povezljivost (ping6).
+SSH
+Vyatta Services
+
+Vklopi SSH. Dovolite, da se oddaljeno poveže tudi root uporabnik (to je že prednastavljeno na vaših sistemih). Poglejte si, kako zamenjamo SSH vrata (port number). Zakaj bi hoteli spremeniti privzeta vrata za SSH protokol?
+
+DHCP
+Vyatta_Services
+
+Nastavi storitev DHCP za segment uporabnikov (IP pool, dns-server, default-router). IPji naj bodo dani v uporabo (lease time) za 10 minut (privzeto so 1 dan). Preveri tako, da nastaviš DHCP odjemalca na Linuxu in/ali Windowsih. Na Vyatti si poglej  listo zasedenih IPjev.
+
+DHCP - statično dodeljevanje IP številk
+Včasih želimo, da določen računalnik dobi vedno isto IP številko (npr v strežniškem segmentu). Nastavi DHCP stežnik tako, da bo Windows računalnik vedno dobil isto IP številko. Kje lahko pogledate strojni MAC naslov vaših računalnikov? Kako ga lahko spremenite?
+
+(dodatno) Preberi si o dhcp-relay-u. Kdaj pride v poštev? Nastavi ga tako, da bo (tu boste potrebovali povezljivost med segmenti strežnik in odjemalec!) uporabljal DHCP strežnik na enem izmed računalnikov (Linux ali Windows). Lahko tudi namestite še en Vyatta router, ki ga nato vključite v topologijo vašega omrežja in si v živo namestite/stestirate DHCP-Relay.
+
+Statično usmerjanje med segmenti
+Vyatta_BasicRouting
+
+Do sedaj imamo znotraj omrežja našega podjetja dva popolnoma ločena segmenta (uporabniki in strežniki). Poglejte si usmerjevalno tabelo na usmerjevalniku Vyatta (show ip route, show ipv6 route). Kateri zapisi so v njej? Kakšnega tipa so? Zakaj moramo nastaviti privzeti prehod/privzeto usmerjanje? Računalniki v našem uporabniškem segmentu lahko preko usmerjevalnika dostopajo do računalnikov v strežniškem segmentu. Kaj pa bi morali nastaviti, če bi imeli dva usmerjevalnika: v uporabniškem delu omrežja bi imeli še več segmentov, ki so priklopljeni na usmerjevalnik, ki je sedaj priklopljen na našo Vyatto. Razmisli, v kakšnem primeru bi zadeve delovale, v kakšnem primeru pa bi morali nastavljati t.i. statično usmerjanje (statični vnos v usmerjevalno tabelo - enako, kot smo to naredili s privzetim prehodom).
+
+Poglej si tudi, kako se nastavlja usmerjanje za IPv6 naslove, kjer nimamo privzetega prehoda in moramo eksplicitno nastaviti privzeto statično usmerjanje.
+
+(dodatno) Ali gre skozi usmerjevalnik tudi broadcast/multicast promet? Kaj bi morali skonfigurirati, če bi to želeli (namig: razlika med Layer 2 (L2) in Layer 3 (L3) povezljivostjo, router/bridge (most)?)
+
+NAT (Network Address Translation)
+Vyatta_NAT
+
+Sedaj se računalniki sicer vidijo med seboj (torej lahko uporabniki dostopajo do storitev na strežnikih), vendar bodo uporabniki še vedno nezadovoljni, saj ne morejo uporabljati interneta. Nastavite storitev NAT tako, da bodo uporabniki lahko dostopali do interneta.
+
+Tipi NAT-a:
+
+Source NAT (SNAT), Masquerade NAT (zamenja izvorni IP z primarnim IPjem "zunanjega" vmesnika)
+Destination NAT (DNAT),
+Bidirectional NAT (SNAT in DNAT hkrati)
+Poglej si, kako potujejo paketki skozi Vyatta router, če je vklopljen NAT in kako to vpliva na routing? (poglej si 1. poglavje v Vyatta_NAT).
+
+SNAT (1:1, N:1, N:M, 1:N)
+
+Masquerade NAT
+
+Kakšna je razlika med SNAT N:1 in Masquerade NAT?
+
+(dodatno) DNAT: poglej si, kako bi izpostavil storitev na računalnik, ki je za NATom (npr. iz faksa bi radi dostopali do svojega računalnika doma za NATom preko Remote Dektop Protokola RDP).
+
+Zajemanje prometa, pregled dnevniških datotek (logging)
+Vyatta_BasicSystem
+
+uporaba tcpdump, prenos datoteke na računalnik z Wiresharkom za podrobnejšo analizo. Wireshark imate tudi na vaših Windows Serverjih.
+
+Poglej, kakšne vrste dnevniških datotek imaš na Vyos, kako se jih pregleduje/išče po njih.
+
+IPv6 segment z NPTv6 (IPv6-to-IPv6 Network Prefix Translation - RFC 6296)
+V omrežju imejte tudi vsaj eden segment (ipv6only), ki ima vklopljen SAMO IPv6 protokol, v njem uporabite privatne IPv6 naslove, in jih s tehniko NPTv6 preslikajte v enega izmed vam dodeljenih zunanjih IPv6 segmentov.
+
+https://docs.vyos.io/en/crux/configuration/nat/index.html?highlight=nptv6#nptv6-rfc6296 (za Vyos 1.2.x "Crux")
+
+
+IPv4 naslovni prostor:
+Vsaka skupina dobi 1 IPv4 naslov. Je v omrežju /25, GW 88.200.24.129.
+
+sk01: 88.200.24.231
+sk02: 88.200.24.232
+sk03: 88.200.24.233
+sk04: 88.200.24.234
+sk05: 88.200.24.235
+sk06: 88.200.24.236
+sk07: 88.200.24.237
+sk08: 88.200.24.238
+sk09: 88.200.24.239
+sk10: 88.200.24.240
+sk11: 88.200.24.241
+sk12: 88.200.24.242
+sk13: 88.200.24.243
+Ne uporabljajte IP naslovov, ki pripadajo drugim skupinam!
+IPv6 naslovni prostor:
+Uporabili smo http://www.subnetonline.com/pages/subnet-calculators/ipv6-subnet-calculator.php. Na voljo smo imeli omrežje 2001:1470:fffd::/56. Najprej smo ga razdelili na dva dela, spodnji del ima v uporabi LRK, zgornji del pa je namenjen študentom. Le- tega smo morali razdeliti na 20 delov (za 20 skupin).
+
+GW: 2001:1470:fffd:XX::1, pri čemer je XX=80-, glej spodaj vašo razporeditev za vsako posamezno skupino!
+
+Naslovni prostor, rezerviran za vse skupine 2001:1470:fffd:80::/57
+
+sk01 2001:1470:fffd:80::/62
+sk02 2001:1470:fffd:84::/62
+sk03 2001:1470:fffd:88::/62
+sk04 2001:1470:fffd:8c::/62
+sk05 2001:1470:fffd:90::/62
+sk06 2001:1470:fffd:94::/62
+sk07 2001:1470:fffd:98::/62
+sk08 2001:1470:fffd:9c::/62
+sk09 2001:1470:fffd:a0::/62
+sk10 2001:1470:fffd:a4::/62
+sk11 2001:1470:fffd:a8::/62
+sk12 2001:1470:fffd:ac::/62
+sk13 2001:1470:fffd:b0::/62
+sk14 2001:1470:fffd:b4::/62
+sk15 2001:1470:fffd:b8::/62
+sk16 2001:1470:fffd:bc::/62
+sk17 2001:1470:fffd:c0::/62
+sk18 2001:1470:fffd:c4::/62
+sk19 2001:1470:fffd:c8::/62
+sk20 2001:1470:fffd:cc::/62
+Vsaka skupina lahko poljubno razpolaga z dodeljenim naslovnim prostorom, minus 2001:1470:fffd:XX::/64 podomrežje, ki ga morate uporabiti za povezavo med vašim in LRKjevim routerjem. Prav tako morate nastaviti IPv6 številko na zunanjem vmesniku na vašem routerju na 2001:1470:fffd:XX::2/64 (ker je to IP številka, ki je vpisana v usmerjevalno tabelo LRKjevega usmerjevalnika kot t.i. naslednji hop (next-hop), ki zna usmerjati celoten vam dodeljen naslovni prostor 2001:1470:fffd:XX::/62.
+
+Strežniki VMware ESXi:
+Na voljo imamo 1 strežnik (12 jeder (24 s hyperthreadingom), 96GB RAM, 1TB SSD disk):
+
+https://esx.kp.lrk.si (88.200.24.216)
+Dostopen je SAMO preko Teleporta (https://kp.lrk.si). ESX hipervizor ima za upravljanje spletno HTML5 aplikacijo, ki podpira tudi GUI konzolo za virtualke, vendar si ČIM PREJ zaradi bolj učinkovitega in lažjega dela uredite dostop do njih preko omrežja (SSH, RDP, ...). Uporabite torej ESX konzolo samo za kreiranje virov in omrežne nastavitve, ostalo pa je veliko lažje delati na standarden način.
+
+Uporabniška imena so kar skX (X=št skupine), geslo ste določili na vajah oz. vam je bilo poslano po epošti. Vpišite ga (poleg vseh ostalih adminsitratorskih gesel za vaše računalnike v tem navideznem okolju) v nalogo v učilnici. Če so kakršne koli težave, mi pošljite mail.
+Navidezna stikala (virtual switch) v okolju vmWare ESXi
+Svoje računalnike lahko povezujete z drugimi tako kot v realnem svetu - priklapljate njihove vmesnike na stikala. Vsaka skupina si mora uporabljati več stikal, kamor lahko priklaplja svoje računalnike:
+vSwitch0 je edino stikalo, ki je priklopljeno na internet, torej je to za vas "zunanje" omrežje. Tu lahko uporabljate dodeljene javne IPv4 in IPv6 številke, skozi to omrežje lahko pridete od doma do svojih računalnikov v ESXi-ju. Na tem stikalu je nastavljena za vaš priklop skupina portov (Port Group) LRK-public-internet.
+Vsaka skupina naj ima definirana še najmanj tri stikala (XX = številka skupine):
+skXX-internal : stikalo, namenjeno priklopu običajnih računalnikov v vašem omrežju. Predstavljate si ga lahko kot omrežje, v katerega v podjetju priklopijo osebne računalnike zaposlenih.
+skXX-dmz : stikalo, namenjeno priklopu strežnikov, ki ponujajo storitve vašega "podjetja" tudi zunanjim odjemalcem (obiskovalcem vaših spletnih strani, storitev, ....)
+skXX-ipv6only : stikalo za segment, ki naj podpira SAMO IPv6 protokol (in ne tudi IPv4)
+Ker se pravic za dostop do stikal (t.j. priklop navideznih računalnikov v njih) žal ne da nastavljati na nivoju posameznega stikala in skupine, boste v izbirnem seznamu videli vsa stikala, ki so definirana v gostitelju (strežnik ESXi). Kar v bistvu pomeni, da se lahko v vaša interna omrežja priklopi tudi kakšen "heker" (beri: vaš kolega iz druge skupine) :) Kar samo po sebi ni nič narobe, saj se tudi v praksi pravzaprav veliko podjetij in predvsem vladnih agencij (npr. NSA) obnaša tako, kot da je v njihovo omrežje že priklopil zlobni heker in imajo zato ustrezno implementirano varnost tudi znotraj njihovega omrežja/segmenta.
+
+VMware ima poleg stikal tudi koncept skupin portov (PortGroups). To so logične nastavitve za skupine portov na stikalu. Ko priklapljate virtualne računalnike v stikala, jih pravzaprav priklapljate v skupine portov (PortGroups), in ne direktno na (virtualno) stikalo. Vsi poti v isti skupini imajo enake nastavitve (VLAN, itd.). Definirajte si ustrezne skupine portov (Port Groups), kamor boste priklapljali svoje virtualne računalnike: npr. skupina portov sk01-internal je definirana na stikalu sk01-internal.
+
+Skupine portov "Management network" ne brišite/spreminjajte/uporabljajte (gre za dostop do samega gostitelja (hosta), na katerem teče hipervizor).
+
+
+Seminarska naloga
+Completion requirements
+Pridružili ste se podjetju _____ (vstavi ime vašega podjetja). Ker gre za start-up, podjetje nima nikakršne IT infrastrukture. Tu nastopite vi. Šef vam naloži naslednja opravila:
+
+uporabniki in strežniki morajo biti vsak v svojem segmentu.
+(opcijsko) uporabiti morate heterogene operacijske sisteme (vsaj po en Windows, Linux)
+segment "uporabniki" naj ima omrežje 10.X.0.0/24 in segment "strežniki" naj ima omrežje 192.168.X.0/24 (pri čemer je X=številka vaše skupine). Vaš ISP (LRK :)) vam je dodelil eno "zunanjo" IP številko in IPv6 naslovni prostor.
+V omrežju imejte tudi en segment, ki bo uporabljal samo IPv6 protokol (ipv6only). V njem uporabite privatne IPv6 naslove (unique local address - ULA), in jih s tehniko NPTv6 (IPv6-to-IPv6 Network Prefix Translation - RFC 6296) preslikajte v enega izmed vam dodeljenih zunanjih IPv6 segmentov, ki ga še niste uporabili kje drugje (dodeljeni /62 je razdeljen na 4x /64, prvi je za povezavo z internetom, dva za dual stack omrežji DMZ in internal, zadnji pa za NPTv6 ipv6-only segment. NPTv6 je v Vyosu podprt v verziji VyOS >=1.2.
+Nastavite ostale pomembne parametre: DNS, domensko ime, NTP strežnike, ... (torej vse "splošne" nastavitve, ki jih potrebujete v podjetju). Uredite DNS posredovanje in split DNS konfiguracijo (en ("zunanji") DNS za zunanje naslove, če pa pride zahteva znotraj omrežja, ga preusmerite v notranji (split) DNS strežnik, ki vrača notranje privatne IP naslove strežnikov v DMZ.
+Smiselno nastavite storitvi DHCP in NAT. Strežniki naj imajo vedno enako IP številko, vendar mora vseeno biti dodeljena preko DHCP-ja. Uporabniki morajo imet dostop do interneta. Izpostaviti morate tudi nekaj storitev na vaših strežnikih (npr REST, Grafana, Cacti, ntop, ... glejte spodaj).
+Nastavite tudi IPv6, segmentirajte ga sami, pri tem uporabite dodeljen naslovni prostor IPv6. Storitve, ki jih boste nudili uporabnikom izven vašega podjetja, morajo biti dostopne tudi preko IPv6 (kjer je to smiselno). IPv6 nastavite:
+na VyOS statično
+(vsaj) na enemu segmentu z uporabo SLAAC
+(vsaj) na enem segmentu z uporabo DHCPv6
+Sprogramirajte eno REST storitev, kakšne vire (resources) boste izpostavili vašim uporabnikom se lahko odločite sami. Vira naj bosta vsaj dva, med seboj vsaj nekoliko povezana (npr. torej podobno kot je bilo predstavljeno na vajah za stranke in naročila).
+viri naj podpirajo tehnike pogajanja o vsebini (content negotiation), podpreti morate vsaj tri formate (XML, JSON in enega poljubnega - html, text, itd.).
+(opcijsko) Vsaj ena operacija nad podatki naj bo zaščitena, torej dostopna samo izbrani skupini uporabnikov, ki so vpisani v enem od LDAP strežnikov. Razmislite, katere operacije bodo "prosto" dostopne, katere pa so takšne, da jih lahko uporabljajo le avtenticirani in avtorizirani uporabniki.
+povezave do vaših REST storitev naj bodo varne (TLS/SSL s pravimi certifikati)
+storitve naj bodo povezane s podatkovno bazo, tako da se vsebina ohrani tudi ob ponovnem zagonu strežnika (lahko je relacijska, objektna, karkoli).
+storitve naj bodo dostopne poleg HTTP1.1 tudi preko HTTP/2
+storitev naj bo čim bolj visoko razpoložljiva
+(opcijsko) HTTP/3
+(opcijsko) enako naredite tudi v GraphQL
+Postavite (on-prem, torej nameščen na vaši infrastrukturi, ne kot oblačno "hosted service") imenik uporabnikov. Lahko AD - Microsoft Active Directory, lahko pa uporabite tudi kakšen drug Linux LDAP strežnik, npr. OpenLDAP ali FreeIPA. Vpišite par testnih uporabnikov, ki jih boste potem uporabljali v ostalih delih vašega sistema (VPN, avtentikacija za REST storitve, ...).
+Smiselno postavite požarne zidove. Razmislite (in dokumentirajte!), kakšna naj bodo pravila znotraj vašega omrežja, kakšna za dostop od zunaj in kakšna za izhodni promet, katere storitve boste izpostavili navzven, katere bodo samo notranje dostopne, katere bodo uporabljale vaše stranke, katere pa administratorji sistema... Ne pozabite, da je vaše omrežje IPv4 in IPv6 (t.i. dual stack)
+Omrežje mora omogočati oddaljen dostop uporabnikov preko navideznih zasebnih omrežij (VPN dostop do vašega omrežja). Pazite na to, da bo VPN dostop varen.
+(Opcijsko) Avtentikacija naj se izvaja na vaš aktivni imenik (ali LDAP kot je OpenLDAP). Torej za tiste uporabnike, ki so vpisani v vašem AD strežniku, oz. imajo v njem celo shranjena digitalna potrdila.
+Upravljanje in nadzor omrežja in storitev:
+Skonfigurirajte SNMP za beleženje dogodkov (beleženje vsaj enega vira, npr. metrike o prometu, ki gre v in iz omrežja, spletnega ali aplikacijskega strežnika, procesorja, pomnilnika ... Poskusite najti nekaj smiselnega za vaš primer postavitve), podatki naj bodo vidni grafično (Prometheus+Grafana, ali kar koli drugega), zato nastavite smiselne ustrezno kratke intervale za SNMP pooling.
+(opcija) Nastavite netflow ali sflow beleženje tokov, generirajte nekaj prometa, ki naj se nato vidi v analizatorju tokov. Integrirate lahko v Cacti (uporabljali ste ga najbrž zgoraj za SNMP - tu morate instalirati vtičnik - plugin) ali pa uporabite kakšen drug programček, npr. "ntop" (ki ima že vgrajeno podporo) in je to ločena storitev za administratorja vašega omrežja.
+(opcija) IDS/IPS: namestite in demostrirajte uporabo IDS/IPS z npr. skeniranjem vašega omrežja z orodjem nmap, uganjevanjem SSH gesla, itd. Uporabite lahko katerokoli odprtokodno rešitev iz tega segmenta, npr. Snort + Snorby, Suricata, ...
+RAFT: postavite v vašem podjetju primer storitve, ki uporablja protokol RAFT, na vsaj 3 računalnikih. Lahko je karkoli, kar uporablja RAFT, npr. etcd v povezavi s spletno aplikacijo ali kaj podobnega. Storitev naj bo visoko razpoložljiva.
+Na zagovor morate prinesti tudi tehnično poročilo, v katerem natančno opišete vaše rešitve problemov. Predvsem naj ne manjka natančna shema omrežja, strežnikov, opis storitev, nastavitve požarnih zidov, ... Poročilo se bo tudi točkovalo, je del ocene seminarske naloge. Poročilo naj bo napisano v smislu tehnične dokumentacije (npr. razmislite, kaj bi vi želeli imeti dokumentirano, če bi prišli v eno od takšnih podjetij namesto vašega kolega iz druge skupine, ki je vse to postavil...).
+
+
+Zagovori bodo načeloma zadnji teden semestra (razen, če se nismo zmenili drugače na vajah). Razpored bomo objavili na učilnici, kamor se boste lahko prijavili v prosti termin. Skupine se lahko med seboj tudi zamenjajo termine, le obvestite me o tem.
+
+Verzija teksta: 1.15
