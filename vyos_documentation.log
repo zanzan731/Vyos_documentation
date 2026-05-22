@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  22 MAY 2026 10:54
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  22 MAY 2026 10:59
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -506,7 +506,9 @@ Overfull \hbox (66.65521pt too wide) in paragraph at lines 855--857
 
 
 
-[16] (./vyos_documentation.aux)
+[16]
+
+[17] (./vyos_documentation.aux)
  ***********
 LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-09-02>
@@ -515,18 +517,18 @@ Package rerunfilecheck Info: File `vyos_documentation.out' has not changed.
 (rerunfilecheck)             Checksum: A66BB4BED33A6CC0B34BD3BC61D81F97;11083.
  ) 
 Here is how much of TeX's memory you used:
- 12412 strings out of 467748
- 182124 string characters out of 5431137
+ 12427 strings out of 467748
+ 182286 string characters out of 5431137
  914568 words of memory out of 5000000
- 40615 multiletter control sequences out of 15000+600000
+ 40624 multiletter control sequences out of 15000+600000
  641561 words of font info for 71 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,6n,79p,516b,1950s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,79p,516b,1990s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb>
-Output written on vyos_documentation.pdf (16 pages, 278972 bytes).
+Output written on vyos_documentation.pdf (17 pages, 280475 bytes).
 PDF statistics:
- 759 PDF objects out of 1000 (max. 8388607)
- 716 compressed objects within 8 object streams
- 375 named destinations out of 1000 (max. 500000)
+ 769 PDF objects out of 1000 (max. 8388607)
+ 725 compressed objects within 8 object streams
+ 381 named destinations out of 1000 (max. 500000)
  505 words of extra memory for PDF output out of 10000 (max. 10000000)
 

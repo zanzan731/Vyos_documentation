@@ -887,6 +887,23 @@ To vam bo izpisalo vsebino baze.
 
 
 
+% Pretvorba med Markdown in LaTeX
+%--------------------------------
+% Ukazi, ki jih lahko uporabite za pretvorbo dokumentacije med formati.
+% Zahteva: pandoc mora biti nameščen.
+\section*{Pretvorba med Markdown in LaTeX}
+\begin{itemize}
+  \item LaTeX \textrightarrow{} Markdown (GitHub-flavored):
+\begin{lstlisting}
+pandoc -s vyos_documentation.tex -t gfm -o vyos_documentation.md --wrap=none
+\end{lstlisting}
+
+  \item Markdown \textrightarrow{} LaTeX:
+\begin{lstlisting}
+pandoc -s vyos_documentation.md -o vyos_documentation.tex
+\end{lstlisting}
+\end{itemize}
+
 \end{document}
 
 %
