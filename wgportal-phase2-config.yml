@@ -1,0 +1,140 @@
+## Phase 2 wg-portal configuration (derived from existing wgportal.yaml)
+## - Copied and pruned from the running wg-portal configuration
+## - Uses only documented keys from the official overview
+## - Avoids deprecated options and avoids 10.11.* subnets to prevent conflicts
+## IMPORTANT: replace <REPLACE_WITH_BIND_PASSWORD> and <NEW_VM_DMZ_IP> before use
+
+core:
+  admin_user: admin@wgportal.local
+  admin_password: wgportal-default
+  admin_api_token: ""
+  disable_admin_user: false
+  editable_keys: true
+  # Use the non-deprecated granularity options for default peer creation
+  create_default_peer_on_login: false
+  create_default_peer_on_user_creation: false
+  create_default_peer_on_interface_creation: false
+  re_enable_peer_after_user_enable: true
+  delete_peer_after_user_deleted: false
+  self_provisioning_allowed: true
+  import_existing: true
+  restore_state: true
+
+backend:
+  default: local
+  rekey_timeout_interval: 125s
+  local_resolvconf_prefix: tun.
+
+advanced:
+  log_level: info
+  log_pretty: false
+  log_json: false
+  # primary listen port used when auto-creating interfaces
+  start_listen_port: 51820
+  # choose non-conflicting initial CIDRs (avoid 10.11.*)
+  start_cidr_v4: 10.200.12.0/24
+  start_cidr_v6: fdfd:d3ad:c0de:2345::0/64
+  use_ip_v6: true
+  config_storage_path: ""
+  expiry_check_interval: 15m
+  rule_prio_offset: 20000
+  route_table_offset: 20000
+  api_admin_only: true
+  limit_additional_user_peers: 0
+
+database:
+  debug: false
+  slow_query_threshold: "0"
+  type: sqlite
+  dsn: /var/lib/wg-portal/data/phase2.sqlite.db
+  encryption_passphrase: ""
+
+statistics:
+  use_ping_checks: true
+  ping_check_workers: 10
+  ping_unprivileged: false
+  ping_check_interval: 1m
+  data_collection_interval: 1m
+  collect_interface_data: true
+  collect_peer_data: true
+  collect_audit_data: true
+  listening_address: :8787
+
+mail:
+  host: 127.0.0.1
+  port: 25
+  encryption: none
+  cert_validation: true
+  username: ""
+  password: ""
+  auth_type: plain
+  from: Wireguard Portal <noreply@wireguard.local>
+  link_only: false
+  allow_peer_email: false
+  templates_path: ""
+
+auth:
+  ldap:
+    - provider_name: ad
+      url: ldap://192.168.11.201:389
+      start_tls: false
+      cert_validation: false
+      base_dn: DC=startup11,DC=local
+      bind_user: wgportal_bind@startup11.local
+      bind_pass: "<REPLACE_WITH_BIND_PASSWORD>"
+      login_filter: "(&(objectClass=user)(|(sAMAccountName={{login_identifier}})(userPrincipalName={{login_identifier}}))(!(userAccountControl:1.2.840.113556.1.4.803:=2)))"
+      field_map:
+        user_identifier: sAMAccountName
+        email: userPrincipalName
+        firstname: givenName
+        lastname: sn
+        phone: telephoneNumber
+        department: department
+        memberof: memberOf
+      admin_group: CN=Domain Admins,CN=Users,DC=startup11,DC=local
+      registration_enabled: true
+      sync_interval: 15m
+      sync_filter: "(&(objectClass=user)(!(objectClass=computer))(!(userAccountControl:1.2.840.113556.1.4.803:=2)))"
+      disable_missing: false
+      auto_re_enable: true
+      sync_log_user_info: true
+      log_user_info: true
+      # Restrict interface provisioning: only AD Domain Admins may provision for wg-admin
+      interface_filter:
+        wg-admin: "(memberOf=CN=Domain Admins,CN=Users,DC=startup11,DC=local)"
+  oidc: []
+  oauth: []
+  webauthn:
+    enabled: true
+  min_password_length: 16
+  hide_login_form: false
+
+web:
+  listening_address: :8080
+  external_url: http://<NEW_VM_DMZ_IP>:8080
+  base_path: ""
+  site_company_name: WireGuard Portal
+  site_title: WireGuard Portal
+  session_identifier: wgPortalSession
+  session_secret: very_secret
+  csrf_secret: extremely_secret
+  request_logging: false
+  expose_host_info: false
+  cert_file: ""
+  key_file: ""
+  frontend_filepath: ""
+
+webhook:
+  url: ""
+  authentication: ""
+  timeout: 10s
+
+# Notes:
+# - This file is intentionally conservative: it mirrors the running wg-portal config
+#   and uses only keys documented in the official overview/examples pages.
+# - The config does NOT declare 'servers' or custom 'profiles' blocks here because
+#   those keys are not shown in the main overview examples. Instead, create the
+#   two interfaces (`wg-admin` and `wg-client`) using the wg-portal UI or API after
+#   the service is started. The `interface_filter` above ensures only Domain Admins
+#   may provision peers for `wg-admin`, while normal users may self-provision peers
+#   on other interfaces (e.g., `wg-client`).

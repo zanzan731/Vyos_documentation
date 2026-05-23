@@ -3,6 +3,48 @@ date: 2026-05-22
 title: Dokumentacija VyOS usmerjevalnika - startup11
 ---
 
+## Naloga in zasnova omrežja
+V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture; cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
+
+### Cilji naloge
+- Postaviti omrežje z ločenimi segmenti za **uporabnike** in **strežnike** (strogo ločeno prometno okolje).
+- Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
+- Izpostaviti navzven le izbrane storitve: WireGuard, `wg-portal` (HTTPS) in REST frontend (HTTPS).
+- Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo iz internal in preko VPN (ni direktnega WAN dostopa).
+- Ohranjati poseben **ipv6only** segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
+
+### Opredelitev segmentov
+- **DMZ (eth1, 192.168.X.0/24)**: vsi strežniki (REST, wg-portal, WireGuard endpoint, AD/DNS, SNMP, ostali). Fizicni lokaciji strežnikov sta v DMZ, vendar dostopi do nekaterih storitev omejeni z omrežnimi ACL.
+- **INTERNAL (eth2, 10.X.0.0/24)**: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
+- **IPV6ONLY (eth3, ULA + NPTv6)**: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
+
+### Izolacija segmentov
+Segmenti se izolirajo z naslednjimi ukrepi:
+- **Layer-3 ločitev (VyOS routing + ACL)**: vsak segment ima ločen subnet in VyOS izvaja routing ter aplikacijo politk (default-deny ter strog seznam izjem).
+- **VLAN/PortGroup** na hipervizorju: DMZ, INTERNAL in IPV6ONLY so v ločenih PortGroup/VLANih, management port group pa ločen in omejen.
+- **Host-firewall** (vsak strežnik in vsaka delovna postaja): default-deny inbound, dovoljenje samo za nujne storitve; admin dostop omejen na internal in VPN izvore.
+- **Split DNS / conditional forward**: notranji klienti uporabljajo AD DNS za `startup11.local`, zunanji resolverji pa javne strežnike — prepreči izpostavitev notranjih zapisov.
+- **Monitoring in logging**: monitoring host ima izključno dovoljenje za SNMP/agent promet; centralizirano beleženje (syslog) in netflow/sflow za analizo.
+
+### Načrt požarnega zidu (visoka raven)
+Osnovna politika: *default deny* za vse vhodne in posredovane povezave, dovoli le eksplicitno definirane poti.
+- **WAN (eth0) -> VyOS**: dovoli `established, related`; dovoli DNAT za:
+  - UDP 51820 -> WireGuard endpoint v DMZ
+  - TCP 443 -> reverse-proxy ali neposredno na `wg-portal`/REST frontend (DMZ)
+- **WAN -> DMZ (direktni)**: ne dovoli neposrednega dostopa do AD/DNS/SNMP; dovoli samo zgoraj navedene DNAT pravila.
+- **INTERNAL -> DMZ**: dovoli le potrebne storitve: DNS (53) do AD/DNS; LDAP/LDAPS (389/636), Kerberos (88), Global Catalog (3268/3269) do AD; HTTP/HTTPS do REST frontend; SSH/RDP samo iz administrativne podmreže ali VPN.
+- **DMZ -> INTERNAL**: privzeto blokiraj; dovoli le potrebno (npr. monitoring/reporting na notranji monitoring host), definirano z virnim IP-jem.
+- **INTERNAL -> INTERNET**: dovoli outbound HTTP/HTTPS/DNS z NAT/masquerade na VyOS.
+- **VPN (WireGuard)**: uporabniški VPN ima omejen dostop; administrativni VPN ima dostop do DMZ in internal za upravljanje.
+- **Host-firewall pravila**: na vsakem strežniku implementiraj default-deny inbound; dovoli le servise, ki jih strežnik ponuja, z omejitvijo vira na internal/VPN ali specificirane monitoring host-e.
+
+V nadaljevanju dokumentacije so podrobnosti konfiguracij in primeri ukazov za VyOS in predloge za host-firewall.
+
+Za fazni izvedbeni plan s konkretnimi ukazi glej `phased-firewall-plan.md`.
+
+Opomba: trenutna PiVPN postavitev na Ubuntu DMZ hostu ostane nespremenjena v fazi 1. Podroben prehod na novo VM z `wg-portal` je opisan v `phased-firewall-plan.md` in nadomešča stare ideje o dodatnih pomočnih predlogah za `wg-client`.
+
+
 # Osnovne informacije
 
 - **Ime naprave:** startup11-vyos
@@ -518,7 +560,22 @@ Privzete pivpn nastavitve:
     sudo ip link delete wg0
     sudo systemctl restart wg-quick@wg0
 
-# Active Directory (Windows Server)
+  ## Dva WireGuard omrežja: `wg0` (admin) in `wg-client` (uporabniki)
+
+  V skladu z razširjenim načrtom obdržimo obstoječi `wg0` (PiVPN) kot *admin* omrežje za zdaj, v drugi fazi pa na novi VM z `wg-portal` uvedemo ločen *client* tunel. Podroben, fazni plan je zapisan v `phased-firewall-plan.md`.
+
+  Ključne lastnosti:
+  - `wg0` (admin): trenutni PiVPN tunel, poln dostop v fazi 1, NAT ostane nespremenjen.
+  - `wg-client`: prihodnji tunel na novi VM, omejen na INTERNAL in IPV6ONLY v fazi 2.
+
+  Opomba o varnosti in testiranju:
+  - PiVPN na strežniku že ustvarja iptables MASQUERADE in IP forwarding za `wg0`.
+  - V fazi 1 preverite, da admin peer prek `wg0` doseže DMZ, INTERNAL in `ipv6only`.
+  - V fazi 2 bo nova VM z `wg-portal` uporabljena za ločevanje admin in client prometa.
+
+  Za izvedbeni plan, vključno s testnimi ukazi po vsakem sklopu pravil, glej `phased-firewall-plan.md`.
+
+  # Active Directory (Windows Server)
 
 ## Osnovne informacije
 

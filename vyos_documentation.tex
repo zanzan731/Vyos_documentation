@@ -27,6 +27,59 @@ frame=single
 
 \maketitle
 
+\section{Naloga in zasnova omrežja}
+V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture; cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
+
+\subsection{Cilji naloge}
+\begin{itemize}
+  \item Postaviti omrežje z ločenimi segmenti za \textbf{uporabnike} in \textbf{strežnike} (strogo ločeno prometno okolje).
+  \item Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
+  \item Izpostaviti navzven le izbrane storitve: WireGuard, \texttt{wg-portal} (HTTPS) in REST frontend (HTTPS).
+  \item Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo iz internal in preko VPN (ni direktnega WAN dostopa).
+  \item Ohranjati poseben \textbf{ipv6only} segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
+\end{itemize}
+
+\subsection{Opredelitev segmentov}
+\begin{itemize}
+  \item \textbf{DMZ (eth1, 192.168.X.0/24)}: vsi strežniki (REST, wg-portal, WireGuard endpoint, AD/DNS, SNMP, ostali). Fizicni lokaciji strežnikov sta v DMZ, vendar dostopi do nekaterih storitev omejeni z omrežnimi ACL.
+  \item \textbf{INTERNAL (eth2, 10.X.0.0/24)}: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
+  \item \textbf{IPV6ONLY (eth3, ULA + NPTv6)}: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
+\end{itemize}
+
+\subsection{Izolacija segmentov}
+Segmenti se izolirajo z naslednjimi ukrepi:
+\begin{itemize}
+  \item \textbf{Layer-3 ločitev (VyOS routing + ACL)}: vsak segment ima ločen subnet in VyOS izvaja routing ter aplikacijo politk (default-deny ter strog seznam izjem).
+  \item \textbf{VLAN/PortGroup} na hipervizorju: DMZ, INTERNAL in IPV6ONLY so v ločenih PortGroup/VLANih, management port group pa ločen in omejen.
+  \item \textbf{Host-firewall} (vsak strežnik in vsaka delovna postaja): default-deny inbound, dovoljenje samo za nujne storitve; admin dostop omejen na internal in VPN izvore.
+  \item \textbf{Split DNS / conditional forward}: notranji klienti uporabljajo AD DNS za `startup11.local`, zunanji resolverji pa javne strežnike — prepreči izpostavitev notranjih zapisov.
+  \item \textbf{Monitoring in logging}: monitoring host ima izključno dovoljenje za SNMP/agent promet; centralizirano beleženje (syslog) in netflow/sflow za analizo.
+\end{itemize}
+
+\subsection{Načrt požarnega zidu (visoka raven)}
+Osnovna politika: \emph{default deny} za vse vhodne in posredovane povezave, dovoli le eksplicitno definirane poti.
+\begin{itemize}
+  \item \textbf{WAN (eth0) -> VyOS}: dovoli \texttt{established, related}; dovoli DNAT za:
+    \begin{itemize}
+      \item UDP 51820 -> WireGuard endpoint v DMZ
+      \item TCP 443 -> reverse-proxy ali neposredno na \texttt{wg-portal}/REST frontend (DMZ)
+    \end{itemize}
+  \item \textbf{WAN -> DMZ (direktni)}: ne dovoli neposrednega dostopa do AD/DNS/SNMP; dovoli samo zgoraj navedene DNAT pravila.
+  \item \textbf{INTERNAL -> DMZ}: dovoli le potrebne storitve:
+    \begin{itemize}
+      \item DNS (53) do AD/DNS
+      \item LDAP/LDAPS (389/636), Kerberos (88), Global Catalog (3268/3269) do AD
+      \item HTTP/HTTPS do REST frontend
+      \item SSH/RDP samo iz administrativne podmreže ali VPN
+    \end{itemize}
+  \item \textbf{DMZ -> INTERNAL}: privzeto blokiraj; dovoli le potrebno (npr. monitoring/reporting na notranji monitoring host), definirano z virnim IP-jem.
+  \item \textbf{INTERNAL -> INTERNET}: dovoli outbound HTTP/HTTPS/DNS z NAT/masquerade na VyOS.
+  \item \textbf{VPN (WireGuard)}: uporabniški VPN ima omejen dostop; administrativni VPN ima dostop do DMZ in internal za upravljanje.
+  \item \textbf{Host-firewall pravila}: na vsakem strežniku implementiraj default-deny inbound; dovoli le servise, ki jih strežnik ponuja, z omejitvijo vira na internal/VPN ali specificirane monitoring host-e.
+\end{itemize}
+
+V nadaljevanju dokumentacije so podrobnosti konfiguracij in primeri ukazov za VyOS in predloge za host-firewall.
+
 \section{Osnovne informacije}
 \begin{itemize}
     \item \textbf{Ime naprave:} startup11-vyos
@@ -516,6 +569,8 @@ Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenu
 \subsection{Splošne informacije}
 WireGuard VPN je nastavljeno na napravi na IP naslovu \texttt{192.168.11.106} v DMZ omrežju. Konfiguracija je bila avtomatsko generirana s \textbf{pivpn} skripto, ki poenostavi upravljanje in vzpostavitev WireGuard VPN strežnika.
 
+Trenutna postavitev ostane nespremenjena v prvi fazi. Podroben fazni načrt, ki ohrani obstoječi PiVPN/NAT in nato v drugi fazi preseli dual WireGuard stack na novo VM z \texttt{wg-portal}, je opisan v \texttt{phased-firewall-plan.md}. Ta novi načrt nadomešča prejšnje pomožne predloge za \texttt{wg-client}.
+
 \subsection{Dostop in port}
 \begin{itemize}
     \item \textbf{Notranji naslov:} 192.168.11.106
@@ -541,6 +596,8 @@ pivpn remove
 
 \subsection{Poskus z wg-portal}
 Poskusil sem postaviti tudi \texttt{wg-portal}, ker podpira LDAP avtentikacijo, vendar se je zagon ustavil pri odpiranju SQLite baze z napako \texttt{out of memory (14)}. Zaradi tega je ostalo upravljanje WireGuard uporabnikov na \texttt{pivpn}.
+
+Ta izkušnja velja za trenutno VM; v drugi fazi bo \texttt{wg-portal} nameščen na novi, čisti Ubuntu VM v DMZ, brez \texttt{pivpn}, da se obstoječa delujoča konfiguracija ne prekine.
 
 \begin{lstlisting}
 2026/05/21 23:16:51 INFO Starting WireGuard Portal V2... version=v2.2.3-1c3eacb
