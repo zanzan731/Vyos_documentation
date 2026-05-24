@@ -147,29 +147,7 @@ snmp & 192.168.11.107 & 00:0c:29:69:75:09 & SNMP / monitoring cilj \\
 \hline
 AD (dmz windows 1) & 192.168.11.201 & 00:0c:29:07:cf:1c & Active Directory (Domain Controller) \\
 \hline
-\end{longtable}
-
-\subsection{DHCP - statične mape}
-Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
-\begin{longtable}{|l|l|l|}
-\hline
-\textbf{Ime} & \textbf{MAC naslov} & \textbf{IP naslov} \\
-\hline
-raft1 & 00:0c:29:15:42:6f & 192.168.11.101 \\
-\hline
-raft2 & 00:0c:29:2b:64:27 & 192.168.11.102 \\
-\hline
-raft3 & 00:0c:29:a2:5c:63 & 192.168.11.103 \\
-\hline
-rest & 00:0c:29:17:1a:72 & 192.168.11.104 \\
-\hline
-dns-srv & 00:0c:29:4a:b1:99 & 192.168.11.105 \\
-\hline
-wireguard & 00:0c:29:c4:d1:52 & 192.168.11.106 \\
-\hline
-AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
-\hline
-snmp & 00:0c:29:69:75:09 & 192.168.11.107 \\
+new\_wg & 192.168.11.108 & 00:0c:29:f9:2a:a8 & New WireGuard-related host \\
 \hline
 \end{longtable}
 
@@ -243,7 +221,7 @@ IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \
 % IPv6 firewall rules summarized in the firewall table above.
 
 \section{Storitve}
-\subsection{DHCP (IPv4)}
+\subsection{DHCPv4}
 DHCP server ima dve skupini: \textbf{SERVERS} (192.168.11.0/24) z navedenimi statičnimi mapami in \textbf{USERS} (10.11.0.0/24) za uporabniške naprave z avtomatskim razponom.
 \begin{longtable}{|l|l|}
 \hline
@@ -255,8 +233,58 @@ USERS & 10.11.0.0/24 (dinamični range 10.11.0.100-200) \\
 \hline
 \end{longtable}
 
+\subsection{DHCP - statične mape}
+Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Ime} & \textbf{MAC naslov} & \textbf{IP naslov} \\
+\hline
+raft1 & 00:0c:29:15:42:6f & 192.168.11.101 \\
+\hline
+raft2 & 00:0c:29:2b:64:27 & 192.168.11.102 \\
+\hline
+raft3 & 00:0c:29:a2:5c:63 & 192.168.11.103 \\
+\hline
+rest & 00:0c:29:17:1a:72 & 192.168.11.104 \\
+\hline
+dns-srv & 00:0c:29:4a:b1:99 & 192.168.11.105 \\
+\hline
+wireguard & 00:0c:29:c4:d1:52 & 192.168.11.106 \\
+\hline
+AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
+\hline
+snmp & 00:0c:29:69:75:09 & 192.168.11.107 \\
+\hline
+new\_wg & 00:0c:29:f9:2a:a8 & 192.168.11.108 \\
+\hline
+\end{longtable}
+
 \subsection{DHCPv6}
 DHCPv6 podeljuje naslove v subnetu \texttt{2001:1470:fffd:a9::/64} z range \texttt{::100} - \texttt{::1ff}. Ime strežnika za DHCPv6 je \texttt{2001:1470:fffd:a9::1}.
+
+\paragraph{Statične DHCPv6 mape}
+Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporabljajo v konfiguraciji VyOS:
+\begin{longtable}{|l|l|l|}
+\hline
+\textbf{Host} & \textbf{DHCPv6 naslov} & \textbf{DUID / identifier} \\
+\hline
+dmz-windows-AD & 2001:1470:fffd:a9::185 & 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 \\
+\hline
+raft1 & 2001:1470:fffd:a9::124 & 00:02:00:00:ab:11:2b:e2:d4:90:70:f3:b3:37 \\
+\hline
+raft2 & 2001:1470:fffd:a9::114 & 00:02:00:00:ab:11:e1:94:d4:8a:18:52:ad:98 \\
+\hline
+raft3 & 2001:1470:fffd:a9::16b & 00:02:00:00:ab:11:92:37:c8:9a:00:b8:67:77 \\
+\hline
+rest & 2001:1470:fffd:a9::115 & 00:02:00:00:ab:11:5a:9d:49:65:ce:4a:b2:48 \\
+\hline
+snmp & 2001:1470:fffd:a9::17a & 00:02:00:00:ab:11:b8:b7:97:e3:eb:3c:a5:52 \\
+\hline
+wg & 2001:1470:fffd:a9::1c8 & 00:02:00:00:ab:11:80:f9:48:e8:e6:e2:12:59 \\
+\hline
+new\_wg & 2001:1470:fffd:a9::18d & 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 \\
+\hline
+\end{longtable}
 
 \subsection{DNS (posredovanje in split DNS)}
 DNS posredovanje na VyOS sprejema poizvedbe iz notranjih omrežij in uporablja conditional forward za AD domeno.
@@ -410,72 +438,62 @@ dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
 
 Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za \texttt{startup11.local} dosežejo avtoritativni AD DNS.
 
-\subsection{wg-portal (WireGuard portal) in integracija z Active Directory}
-
-\textbf{Kaj je wg-portal:} \texttt{wg-portal} je spletna aplikacija za upravljanje WireGuard konfiguracij, dovoljenj in omogočanje samopostrežnega ustvarjanja peer konfiguracij za uporabnike.
-
-\textbf{Kje teče:} Aplikacija je dosegljiva na \texttt{http://192.168.11.106:8888}. Lokacije ostalih storitev so navedene v razdelku "DMZ strežniki" zgoraj.
-
-\textbf{Kako se poveže z AD:}
-\begin{itemize}
-  \item Aplikacija uporablja LDAP bind račun za poizvedbe uporabnikov in preverjanje članstev v skupinah.
-  \item Avtentikacija poteka z bindanjem (bind) in iskanjem vnosa, ki ustreza \texttt{sAMAccountName} ali \texttt{userPrincipalName}.
-  \item Atribute AD lahko preslikamo, npr. uporabimo \texttt{userPrincipalName} kot \texttt{email}, kadar je \texttt{mail} prazen.
-  \item Administratorske pravice se določijo preko članstva v AD skupini (npr. \texttt{Domain Admins}).
-\end{itemize}
-
-Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneeru/complete-guide-installing-and-configuring-wireguard-portal-on-linux-d23261027520 z nekaj lokalnimi modifikacijami prilagoditvami za naš okolje. Konfiguracija, ki smo jo uporabili v tem repozitoriju, je na voljo v datoteki \texttt{wgportal.yaml}.
-
-\textbf{Opombe:}
-\begin{itemize}
-  \item Privzeta podatkovna shramba aplikacije je SQLite (\texttt{data/sqlite.db}). Če aplikacija poroča o napaki \texttt{unable to open database file}, preverite, da mapa \texttt{data} obstaja in ima pravilne pravice/lastništvo (npr. \texttt{/opt/wg-portal/data}).
-  \item Primer ukazov za ustvarjanje bind uporabnika v AD (PowerShell):
-\end{itemize}
-\begin{lstlisting}
-# Ustvari servisnega uporabnika (prilagodi geslo varno)
-New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
-
-# Po potrebi dodaj uporabnike v administratorsko skupino
-Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
-\end{lstlisting}
-
-\textbf{Preizkusi in dnevniški pregledi:}
-\begin{itemize}
-  \item Testirajte LDAP poizvedbe z orodjem \texttt{ldapsearch} kjer je na voljo.
-  \item Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
-  \item Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve \verb|create_default_peer_on_login| in \verb|self_provisioning_allowed|.
-\end{itemize}
-
-\textbf{Opomba:} Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
-
 \subsection{NTP}
-\subsection{SNMP in monitoring}
-SNMP je omogočen na VyOS in služi kot vir metrike za orodja za monitoring (Prometheus + Grafana).
+????
 
-\textbf{VyOS konfiguracija (primer iz v4.commands):}
+\section{Monitoring in SNMP}
+Za spremljanje metrik v DMZ uporabljamo preprost monitoring stack: Prometheus (scrape in shranjevanje), \texttt{snmp\_exporter} (pretvornik SNMP→Prometheus) in Grafana (vizualizacija). \texttt{snmp\_exporter} pobira metrike z naprave VyOS prek SNMP v2c in jih izpostavi na svojem HTTP vmesniku, ki ga nato pobira Prometheus.
+
+\subsection{Komponente in porti}
+\begin{itemize}
+  \item \textbf{snmp\_exporter}: 192.168.11.107:9116 (TCP) - endpoint exporterja, npr. \texttt{http://192.168.11.107:9116/snmp}
+  \item \textbf{Prometheus}: 192.168.11.107:9090 (TCP) - scrape cilj in uporabniški vmesnik
+  \item \textbf{Grafana}: 192.168.11.107:3000 (TCP) - nadzorne plošče in vizualizacija
+  \item \textbf{VyOS SNMP}: 192.168.11.1:161 (UDP) - SNMP agent na usmerjevalniku (v2c community)
+\end{itemize}
+
+\subsection{VyOS SNMP (primer)}
+Omogočite SNMP na VyOS in ga vežite na DMZ naslov:
 \begin{lstlisting}
 set service snmp community startup11 authorization 'ro'
-set service snmp contact 'pd43760@student.uni-lj.si'
+set service snmp contact 'ops@startup11.local'
 set service snmp listen-address 192.168.11.1
-set service snmp location 'FRI'
+commit
+save
 \end{lstlisting}
 
-\textbf{Kako pobrati metrike (pregledno):}
-\begin{itemize}
-  \item Preveri dostop z: \texttt{snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0}
-  \item Pri uspehu bo vrnil \texttt{sysUpTime} in podobne OID vrednosti.
-\end{itemize}
+\subsection{Docker Compose primer (snmp\_exporter + Prometheus + Grafana)}
+Namestite to na monitoring gostitelja (192.168.11.107) in prilagodite poti/volumne po potrebi.
+\begin{lstlisting}
+version: '3'
+services:
+  snmp\_exporter:
+    image: prom/snmp-exporter:latest
+    ports:
+      - "9116:9116"
+    volumes:
+      - ./snmp.yml:/etc/snmp\_exporter/snmp.yml
 
-\textbf{Monitoring stack (kratka navodila)}
-\begin{itemize}
-  \item Uporabi \texttt{snmp\_exporter} (port 9116), \texttt{prometheus} in \texttt{grafana} (npr. Docker Compose stack).
-  \item Priporočen potek: pripravite \texttt{generator.yml} s modulom \texttt{vyos} (walk: ifTable, ifXTable, sysUpTime), zaženite generator in pridobite \texttt{snmp.yml}.
-  \item Preizkus exporterja (primer):
-  \begin{lstlisting}
-curl "http://<snmp_exporter>:9116/snmp?module=vyos&target=192.168.11.1"
-  \end{lstlisting}
-  \item Primer Prometheus scrape job (poenostavljeno):
-  \begin{lstlisting}
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - snmp\_exporter
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+\end{lstlisting}
+
+\subsection{Konfiguracija Prometheusa (primer scrape job)}
+Dodajte `scrape` nalogo, da Prometheus pobira metrike od exporterja (če ne uporabljate Docker Compose DNS, zamenjajte `snmp\_exporter:9116` z `192.168.11.107:9116`):
+\begin{lstlisting}
 scrape_configs:
   - job_name: 'snmp'
     static_configs:
@@ -484,22 +502,27 @@ scrape_configs:
     params:
       module: [vyos]
       auth: [vyos_auth]
-    relabel_configs: ...
-  \end{lstlisting}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target']
+        target_label: instance
+      - target_label: __address__
+        replacement: 192.168.11.107:9116
+\end{lstlisting}
+
+\subsection{Generator in snmp.yml}
+Uporabite uradni generator za `snmp\_exporter`, da ustvarite prilagojen `snmp.yml` za VyOS. Postopek v grobem:
+\begin{itemize}
+  \item Naredite `generator.yml` z `auth` sekcijo (community `startup11`) in modulom `vyos`, ki naredi `walk` za `1.3.6.1.2.1.1.3` (sysUpTime), `1.3.6.1.2.1.2` (ifTable) in `1.3.6.1.2.1.31.1.1` (ifXTable).
+  \item Zaženite generator (kot container ali binarko) in dobljeni `snmp.yml` kopirajte na exporter gostitelja v `/etc/snmp\_exporter/snmp.yml`.
 \end{itemize}
 
-\textbf{Hitri nasveti:}
-\begin{itemize}
-  \item Namestite MIB datoteke, če generator potrebuje lokalne MIB‑e (paket \texttt{snmp-mibs-downloader}).
-  \item Če exporter vrne napako \texttt{Unknown auth}, preverite, da so v \texttt{snmp.yml} in Prometheus parametri usklajeni (auth ime in modul).
-\end{itemize}
-Konfigurirani NTP strežniki so:
-\begin{itemize}
-    \item ntp.arnes.si
-    \item time1.vyos.net
-    \item time2.vyos.net
-    \item time3.vyos.net
-\end{itemize}
+\subsection{Testiranje}
+\begin{lstlisting}
+curl "http://192.168.11.107:9116/snmp?module=vyos&target=192.168.11.1"
+snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0
+\end{lstlisting}
 
 \subsection{Router Advertisements (RA)}
 RA so omogočeni na:
@@ -563,70 +586,6 @@ show configuration commands > v4.commands
 \end{lstlisting}
 
 Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenutnih nastavitev.
-
-\section{WireGuard}
-
-\subsection{Splošne informacije}
-WireGuard VPN je nastavljeno na napravi na IP naslovu \texttt{192.168.11.106} v DMZ omrežju. Konfiguracija je bila avtomatsko generirana s \textbf{pivpn} skripto, ki poenostavi upravljanje in vzpostavitev WireGuard VPN strežnika.
-
-Trenutna postavitev ostane nespremenjena v prvi fazi. Podroben fazni načrt, ki ohrani obstoječi PiVPN/NAT in nato v drugi fazi preseli dual WireGuard stack na novo VM z \texttt{wg-portal}, je opisan v \texttt{phased-firewall-plan.md}. Ta novi načrt nadomešča prejšnje pomožne predloge za \texttt{wg-client}.
-
-\subsection{Dostop in port}
-\begin{itemize}
-    \item \textbf{Notranji naslov:} 192.168.11.106
-    \item \textbf{Javni port:} UDP 51820 (preusmeran prek NAT/DNAT na eth0)
-    \item \textbf{Storitev:} Aktivna in dostopna iz javnega interneta
-\end{itemize}
-
-\subsection{Upravljanje VPN uporabnikov}
-WireGuard uporabnike upravljate s pivpn ukazom. Osnovni koraki:
-\begin{lstlisting}
-# Dodaj novega VPN uporabnika
-pivpn add
-
-# Ogled aktivnih povezav
-pivpn -c
-
-# Ogled konfiguracije in QR koda
-pivpn -qr
-
-# Brisanje uporabnika
-pivpn remove
-\end{lstlisting}
-
-\subsection{Poskus z wg-portal}
-Poskusil sem postaviti tudi \texttt{wg-portal}, ker podpira LDAP avtentikacijo, vendar se je zagon ustavil pri odpiranju SQLite baze z napako \texttt{out of memory (14)}. Zaradi tega je ostalo upravljanje WireGuard uporabnikov na \texttt{pivpn}.
-
-Ta izkušnja velja za trenutno VM; v drugi fazi bo \texttt{wg-portal} nameščen na novi, čisti Ubuntu VM v DMZ, brez \texttt{pivpn}, da se obstoječa delujoča konfiguracija ne prekine.
-
-\begin{lstlisting}
-2026/05/21 23:16:51 INFO Starting WireGuard Portal V2... version=v2.2.3-1c3eacb
-time=2026-05-21T23:16:51.752Z level=INFO msg="Configuration loaded!" logLevel=info
-panic: failed to open sqlite database: unable to open database file: out of memory (14)
-\end{lstlisting}
-
-\subsection{Konfiguracija in nastavitve}
-Privzete pivpn nastavitve:
-\begin{itemize}
-    \item Podatkovna mapa: \verb|/etc/wireguard/|
-    \item Datoteka strežnika: \verb|/etc/wireguard/wg0.conf|
-    \item Konfiguracije VPN uporabnikov (QR kode, ključi): \verb|~/configs/| (domača mapa pivpn skripty)
-    \item VPN subnet v našem sistemu: \texttt{10.4.103.0/24}
-\end{itemize}
-
-\subsection{Odpravljanje težav}
-Če WireGuard ni dostopen ali se ne povezuje:
-\begin{lstlisting}
-# Preverka stanja vmesnika
-ip link show wg0
-
-# Preverka aktivnih povezav
-wg show
-
-# Resetiranje WireGuard vmesnika
-sudo ip link delete wg0
-sudo systemctl restart wg-quick@wg0
-\end{lstlisting}
 
 \section{Active Directory (Windows Server)}
 \subsection{Osnovne informacije}
@@ -730,6 +689,99 @@ Resolve-DnsName snmp.startup11.local -Type A -Server 127.0.0.1
 \end{lstlisting}
 
 \textbf{Opomba o split DNS:} VyOS izvaja DNS posredovanje in conditional forward na AD DNS za \texttt{startup11.local}, AD DNS pa ostane avtoritativni vir notranjih zapisov.
+
+
+\section{WireGuard}
+
+\subsection{Splošne informacije}
+WireGuard VPN je nastavljeno na napravi na IP naslovu \texttt{192.168.11.106} v DMZ omrežju. Konfiguracija je bila avtomatsko generirana s \textbf{pivpn} skripto, ki poenostavi upravljanje in vzpostavitev WireGuard VPN strežnika.
+
+Trenutna postavitev ostane nespremenjena v prvi fazi. Podroben fazni načrt, ki ohrani obstoječi PiVPN/NAT in nato v drugi fazi preseli dual WireGuard stack na novo VM z \texttt{wg-portal}, je opisan v \texttt{phased-firewall-plan.md}. Ta novi načrt nadomešča prejšnje pomožne predloge za \texttt{wg-client}.
+
+\subsection{Dostop in port}
+\begin{itemize}
+    \item \textbf{Notranji naslov:} 192.168.11.106
+    \item \textbf{Javni port:} UDP 51820 (preusmeran prek NAT/DNAT na eth0)
+    \item \textbf{Storitev:} Aktivna in dostopna iz javnega interneta
+\end{itemize}
+
+\subsection{Upravljanje VPN uporabnikov}
+WireGuard uporabnike upravljate s pivpn ukazom. Osnovni koraki:
+\begin{lstlisting}
+# Dodaj novega VPN uporabnika
+pivpn add
+
+# Ogled aktivnih povezav
+pivpn -c
+
+# Ogled konfiguracije in QR koda
+pivpn -qr
+
+# Brisanje uporabnika
+pivpn remove
+\end{lstlisting}
+
+\subsection{Konfiguracija in nastavitve}
+Privzete pivpn nastavitve:
+\begin{itemize}
+    \item Podatkovna mapa: \verb|/etc/wireguard/|
+    \item Datoteka strežnika: \verb|/etc/wireguard/wg0.conf|
+    \item Konfiguracije VPN uporabnikov (QR kode, ključi): \verb|~/configs/| (domača mapa pivpn skripty)
+    \item VPN subnet v našem sistemu: \texttt{10.4.103.0/24}
+\end{itemize}
+
+\subsection{Odpravljanje težav}
+Če WireGuard ni dostopen ali se ne povezuje:
+\begin{lstlisting}
+# Preverka stanja vmesnika
+ip link show wg0
+
+# Preverka aktivnih povezav
+wg show
+
+# Resetiranje WireGuard vmesnika
+sudo ip link delete wg0
+sudo systemctl restart wg-quick@wg0
+\end{lstlisting}
+
+\subsection{wg-portal (WireGuard portal) in integracija z Active Directory}
+
+\textbf{Kaj je wg-portal:} \texttt{wg-portal} je spletna aplikacija za upravljanje WireGuard konfiguracij, dovoljenj in omogočanje samopostrežnega ustvarjanja peer konfiguracij za uporabnike.
+
+\textbf{Kje teče:} Aplikacija je dosegljiva na \texttt{http://192.168.11.106:8888}. Lokacije ostalih storitev so navedene v razdelku "DMZ strežniki" zgoraj.
+
+\textbf{Kako se poveže z AD:}
+\begin{itemize}
+  \item Aplikacija uporablja LDAP bind račun za poizvedbe uporabnikov in preverjanje članstev v skupinah.
+  \item Avtentikacija poteka z bindanjem (bind) in iskanjem vnosa, ki ustreza \texttt{sAMAccountName} ali \texttt{userPrincipalName}.
+  \item Atribute AD lahko preslikamo, npr. uporabimo \texttt{userPrincipalName} kot \texttt{email}, kadar je \texttt{mail} prazen.
+  \item Administratorske pravice se določijo preko članstva v AD skupini (npr. \texttt{Domain Admins}).
+\end{itemize}
+
+Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneeru/complete-guide-installing-and-configuring-wireguard-portal-on-linux-d23261027520 z nekaj lokalnimi modifikacijami prilagoditvami za naš okolje. Konfiguracija, ki smo jo uporabili v tem repozitoriju, je na voljo v datoteki \texttt{wgportal.yaml}.
+
+\textbf{Opombe:}
+\begin{itemize}
+  \item Privzeta podatkovna shramba aplikacije je SQLite (\texttt{data/sqlite.db}). Če aplikacija poroča o napaki \texttt{unable to open database file}, preverite, da mapa \texttt{data} obstaja in ima pravilne pravice/lastništvo (npr. \texttt{/opt/wg-portal/data}).
+  \item Primer ukazov za ustvarjanje bind uporabnika v AD (PowerShell):
+\end{itemize}
+\begin{lstlisting}
+# Ustvari servisnega uporabnika (prilagodi geslo varno)
+New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
+
+# Po potrebi dodaj uporabnike v administratorsko skupino
+Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
+\end{lstlisting}
+
+\textbf{Preizkusi in dnevniški pregledi:}
+\begin{itemize}
+  \item Testirajte LDAP poizvedbe z orodjem \texttt{ldapsearch} kjer je na voljo.
+  \item Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
+  \item Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve \verb|create_default_peer_on_login| in \verb|self_provisioning_allowed|.
+\end{itemize}
+
+\textbf{Opomba:} Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
+
 
 \section{REST}
 Vse datoteke se nahajajo na sk11-dmz-linux-04 v home directoriju od zanzan04. Imamo dve rest storitvi in sicer Scriptum\_kp in library-api. V tem delu bom govoril o library-api za probleme s Scriptum\_kp pa se obrnite na github dokumentacijo projekta \url{https://github.com/zanzan731/Scriptum\_kp}.

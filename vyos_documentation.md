@@ -1,49 +1,77 @@
 ---
-date: 2026-05-22
+date: 2026-05-24
 title: Dokumentacija VyOS usmerjevalnika - startup11
 ---
 
-## Naloga in zasnova omrežja
+# Naloga in zasnova omrežja
+
 V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture; cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
 
-### Cilji naloge
+## Cilji naloge
+
 - Postaviti omrežje z ločenimi segmenti za **uporabnike** in **strežnike** (strogo ločeno prometno okolje).
+
 - Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
+
 - Izpostaviti navzven le izbrane storitve: WireGuard, `wg-portal` (HTTPS) in REST frontend (HTTPS).
+
 - Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo iz internal in preko VPN (ni direktnega WAN dostopa).
+
 - Ohranjati poseben **ipv6only** segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
 
-### Opredelitev segmentov
+## Opredelitev segmentov
+
 - **DMZ (eth1, 192.168.X.0/24)**: vsi strežniki (REST, wg-portal, WireGuard endpoint, AD/DNS, SNMP, ostali). Fizicni lokaciji strežnikov sta v DMZ, vendar dostopi do nekaterih storitev omejeni z omrežnimi ACL.
+
 - **INTERNAL (eth2, 10.X.0.0/24)**: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
+
 - **IPV6ONLY (eth3, ULA + NPTv6)**: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
 
-### Izolacija segmentov
+## Izolacija segmentov
+
 Segmenti se izolirajo z naslednjimi ukrepi:
+
 - **Layer-3 ločitev (VyOS routing + ACL)**: vsak segment ima ločen subnet in VyOS izvaja routing ter aplikacijo politk (default-deny ter strog seznam izjem).
+
 - **VLAN/PortGroup** na hipervizorju: DMZ, INTERNAL in IPV6ONLY so v ločenih PortGroup/VLANih, management port group pa ločen in omejen.
+
 - **Host-firewall** (vsak strežnik in vsaka delovna postaja): default-deny inbound, dovoljenje samo za nujne storitve; admin dostop omejen na internal in VPN izvore.
-- **Split DNS / conditional forward**: notranji klienti uporabljajo AD DNS za `startup11.local`, zunanji resolverji pa javne strežnike — prepreči izpostavitev notranjih zapisov.
+
+- **Split DNS / conditional forward**: notranji klienti uporabljajo AD DNS za ‘startup11.local‘, zunanji resolverji pa javne strežnike — prepreči izpostavitev notranjih zapisov.
+
 - **Monitoring in logging**: monitoring host ima izključno dovoljenje za SNMP/agent promet; centralizirano beleženje (syslog) in netflow/sflow za analizo.
 
-### Načrt požarnega zidu (visoka raven)
+## Načrt požarnega zidu (visoka raven)
+
 Osnovna politika: *default deny* za vse vhodne in posredovane povezave, dovoli le eksplicitno definirane poti.
-- **WAN (eth0) -> VyOS**: dovoli `established, related`; dovoli DNAT za:
-  - UDP 51820 -> WireGuard endpoint v DMZ
-  - TCP 443 -> reverse-proxy ali neposredno na `wg-portal`/REST frontend (DMZ)
-- **WAN -> DMZ (direktni)**: ne dovoli neposrednega dostopa do AD/DNS/SNMP; dovoli samo zgoraj navedene DNAT pravila.
-- **INTERNAL -> DMZ**: dovoli le potrebne storitve: DNS (53) do AD/DNS; LDAP/LDAPS (389/636), Kerberos (88), Global Catalog (3268/3269) do AD; HTTP/HTTPS do REST frontend; SSH/RDP samo iz administrativne podmreže ali VPN.
-- **DMZ -> INTERNAL**: privzeto blokiraj; dovoli le potrebno (npr. monitoring/reporting na notranji monitoring host), definirano z virnim IP-jem.
-- **INTERNAL -> INTERNET**: dovoli outbound HTTP/HTTPS/DNS z NAT/masquerade na VyOS.
+
+- **WAN (eth0) -\> VyOS**: dovoli `established, related`; dovoli DNAT za:
+
+  - UDP 51820 -\> WireGuard endpoint v DMZ
+
+  - TCP 443 -\> reverse-proxy ali neposredno na `wg-portal`/REST frontend (DMZ)
+
+- **WAN -\> DMZ (direktni)**: ne dovoli neposrednega dostopa do AD/DNS/SNMP; dovoli samo zgoraj navedene DNAT pravila.
+
+- **INTERNAL -\> DMZ**: dovoli le potrebne storitve:
+
+  - DNS (53) do AD/DNS
+
+  - LDAP/LDAPS (389/636), Kerberos (88), Global Catalog (3268/3269) do AD
+
+  - HTTP/HTTPS do REST frontend
+
+  - SSH/RDP samo iz administrativne podmreže ali VPN
+
+- **DMZ -\> INTERNAL**: privzeto blokiraj; dovoli le potrebno (npr. monitoring/reporting na notranji monitoring host), definirano z virnim IP-jem.
+
+- **INTERNAL -\> INTERNET**: dovoli outbound HTTP/HTTPS/DNS z NAT/masquerade na VyOS.
+
 - **VPN (WireGuard)**: uporabniški VPN ima omejen dostop; administrativni VPN ima dostop do DMZ in internal za upravljanje.
+
 - **Host-firewall pravila**: na vsakem strežniku implementiraj default-deny inbound; dovoli le servise, ki jih strežnik ponuja, z omejitvijo vira na internal/VPN ali specificirane monitoring host-e.
 
 V nadaljevanju dokumentacije so podrobnosti konfiguracij in primeri ukazov za VyOS in predloge za host-firewall.
-
-Za fazni izvedbeni plan s konkretnimi ukazi glej `phased-firewall-plan.md`.
-
-Opomba: trenutna PiVPN postavitev na Ubuntu DMZ hostu ostane nespremenjena v fazi 1. Podroben prehod na novo VM z `wg-portal` je opisan v `phased-firewall-plan.md` in nadomešča stare ideje o dodatnih pomočnih predlogah za `wg-client`.
-
 
 # Osnovne informacije
 
@@ -90,21 +118,7 @@ Opomba: trenutna PiVPN postavitev na Ubuntu DMZ hostu ostane nespremenjena v faz
 | wireguard | 192.168.11.106 | 00:0c:29:c4:d1:52 | WireGuard VPN končna točka |
 | snmp | 192.168.11.107 | 00:0c:29:69:75:09 | SNMP / monitoring cilj |
 | AD (dmz windows 1) | 192.168.11.201 | 00:0c:29:07:cf:1c | Active Directory (Domain Controller) |
-
-## DHCP - statične mape
-
-Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
-
-| **Ime**            | **MAC naslov**    | **IP naslov**  |
-|:-------------------|:------------------|:---------------|
-| raft1              | 00:0c:29:15:42:6f | 192.168.11.101 |
-| raft2              | 00:0c:29:2b:64:27 | 192.168.11.102 |
-| raft3              | 00:0c:29:a2:5c:63 | 192.168.11.103 |
-| rest               | 00:0c:29:17:1a:72 | 192.168.11.104 |
-| dns-srv            | 00:0c:29:4a:b1:99 | 192.168.11.105 |
-| wireguard          | 00:0c:29:c4:d1:52 | 192.168.11.106 |
-| AD (dmz windows 1) | 00:0c:29:07:cf:1c | 192.168.11.201 |
-| snmp               | 00:0c:29:69:75:09 | 192.168.11.107 |
+| new_wg | 192.168.11.108 | 00:0c:29:f9:2a:a8 | New WireGuard-related host |
 
 # NAT in preusmeritve vrat
 
@@ -165,7 +179,7 @@ IPv6 ima podobna vhodna pravila (dovoli `established/related` in SSH na `eth0`),
 
 # Storitve
 
-## DHCP (IPv4)
+## DHCPv4
 
 DHCP server ima dve skupini: **SERVERS** (192.168.11.0/24) z navedenimi statičnimi mapami in **USERS** (10.11.0.0/24) za uporabniške naprave z avtomatskim razponom.
 
@@ -174,9 +188,40 @@ DHCP server ima dve skupini: **SERVERS** (192.168.11.0/24) z navedenimi statičn
 | SERVERS     | 192.168.11.0/24 (statične mape)                |
 | USERS       | 10.11.0.0/24 (dinamični range 10.11.0.100-200) |
 
+## DHCP - statične mape
+
+Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
+
+| **Ime**            | **MAC naslov**    | **IP naslov**  |
+|:-------------------|:------------------|:---------------|
+| raft1              | 00:0c:29:15:42:6f | 192.168.11.101 |
+| raft2              | 00:0c:29:2b:64:27 | 192.168.11.102 |
+| raft3              | 00:0c:29:a2:5c:63 | 192.168.11.103 |
+| rest               | 00:0c:29:17:1a:72 | 192.168.11.104 |
+| dns-srv            | 00:0c:29:4a:b1:99 | 192.168.11.105 |
+| wireguard          | 00:0c:29:c4:d1:52 | 192.168.11.106 |
+| AD (dmz windows 1) | 00:0c:29:07:cf:1c | 192.168.11.201 |
+| snmp               | 00:0c:29:69:75:09 | 192.168.11.107 |
+| new_wg             | 00:0c:29:f9:2a:a8 | 192.168.11.108 |
+
 ## DHCPv6
 
 DHCPv6 podeljuje naslove v subnetu `2001:1470:fffd:a9::/64` z range `::100` - `::1ff`. Ime strežnika za DHCPv6 je `2001:1470:fffd:a9::1`.
+
+#### Statične DHCPv6 mape
+
+Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporabljajo v konfiguraciji VyOS:
+
+| **Host** | **DHCPv6 naslov** | **DUID / identifier** |
+|:---|:---|:---|
+| dmz-windows-AD | 2001:1470:fffd:a9::185 | 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 |
+| raft1 | 2001:1470:fffd:a9::124 | 00:02:00:00:ab:11:2b:e2:d4:90:70:f3:b3:37 |
+| raft2 | 2001:1470:fffd:a9::114 | 00:02:00:00:ab:11:e1:94:d4:8a:18:52:ad:98 |
+| raft3 | 2001:1470:fffd:a9::16b | 00:02:00:00:ab:11:92:37:c8:9a:00:b8:67:77 |
+| rest | 2001:1470:fffd:a9::115 | 00:02:00:00:ab:11:5a:9d:49:65:ce:4a:b2:48 |
+| snmp | 2001:1470:fffd:a9::17a | 00:02:00:00:ab:11:b8:b7:97:e3:eb:3c:a5:52 |
+| wg | 2001:1470:fffd:a9::1c8 | 00:02:00:00:ab:11:80:f9:48:e8:e6:e2:12:59 |
+| new_wg | 2001:1470:fffd:a9::18d | 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 |
 
 ## DNS (posredovanje in split DNS)
 
@@ -322,104 +367,95 @@ Na gostitelju, kjer teče `wg-portal`, smo uporabili preprost popravek: za vmesn
 
 Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za `startup11.local` dosežejo avtoritativni AD DNS.
 
-## wg-portal (WireGuard portal) in integracija z Active Directory
-
-**Kaj je wg-portal:** `wg-portal` je spletna aplikacija za upravljanje WireGuard konfiguracij, dovoljenj in omogočanje samopostrežnega ustvarjanja peer konfiguracij za uporabnike.
-
-**Kje teče:** Aplikacija je dosegljiva na `http://192.168.11.106:8888`. Lokacije ostalih storitev so navedene v razdelku "DMZ strežniki" zgoraj.
-
-**Kako se poveže z AD:**
-
-- Aplikacija uporablja LDAP bind račun za poizvedbe uporabnikov in preverjanje članstev v skupinah.
-
-- Avtentikacija poteka z bindanjem (bind) in iskanjem vnosa, ki ustreza `sAMAccountName` ali `userPrincipalName`.
-
-- Atribute AD lahko preslikamo, npr. uporabimo `userPrincipalName` kot `email`, kadar je `mail` prazen.
-
-- Administratorske pravice se določijo preko članstva v AD skupini (npr. `Domain Admins`).
-
-Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneeru/complete-guide-installing-and-configuring-wireguard-portal-on-linux-d23261027520 z nekaj lokalnimi modifikacijami prilagoditvami za naš okolje. Konfiguracija, ki smo jo uporabili v tem repozitoriju, je na voljo v datoteki `wgportal.yaml`.
-
-**Opombe:**
-
-- Privzeta podatkovna shramba aplikacije je SQLite (`data/sqlite.db`). Če aplikacija poroča o napaki `unable to open database file`, preverite, da mapa `data` obstaja in ima pravilne pravice/lastništvo (npr. `/opt/wg-portal/data`).
-
-- Primer ukazov za ustvarjanje bind uporabnika v AD (PowerShell):
-
-<!-- -->
-
-    # Ustvari servisnega uporabnika (prilagodi geslo varno)
-    New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
-
-    # Po potrebi dodaj uporabnike v administratorsko skupino
-    Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
-
-**Preizkusi in dnevniški pregledi:**
-
-- Testirajte LDAP poizvedbe z orodjem `ldapsearch` kjer je na voljo.
-
-- Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
-
-- Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve `create_default_peer_on_login` in `self_provisioning_allowed`.
-
-**Opomba:** Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
-
 ## NTP
 
-## SNMP in monitoring
+????
 
-SNMP je omogočen na VyOS in služi kot vir metrike za orodja za monitoring (Prometheus + Grafana).
+# Monitoring in SNMP
 
-**VyOS konfiguracija (primer iz v4.commands):**
+Za spremljanje metrik v DMZ uporabljamo preprost monitoring stack: Prometheus (scrape in shranjevanje), `snmp_exporter` (pretvornik SNMP→Prometheus) in Grafana (vizualizacija). `snmp_exporter` pobira metrike z naprave VyOS prek SNMP v2c in jih izpostavi na svojem HTTP vmesniku, ki ga nato pobira Prometheus.
+
+## Komponente in porti
+
+- **snmp_exporter**: 192.168.11.107:9116 (TCP) - endpoint exporterja, npr. `http://192.168.11.107:9116/snmp`
+
+- **Prometheus**: 192.168.11.107:9090 (TCP) - scrape cilj in uporabniški vmesnik
+
+- **Grafana**: 192.168.11.107:3000 (TCP) - nadzorne plošče in vizualizacija
+
+- **VyOS SNMP**: 192.168.11.1:161 (UDP) - SNMP agent na usmerjevalniku (v2c community)
+
+## VyOS SNMP (primer)
+
+Omogočite SNMP na VyOS in ga vežite na DMZ naslov:
 
     set service snmp community startup11 authorization 'ro'
-    set service snmp contact 'pd43760@student.uni-lj.si'
+    set service snmp contact 'ops@startup11.local'
     set service snmp listen-address 192.168.11.1
-    set service snmp location 'FRI'
+    commit
+    save
 
-**Kako pobrati metrike (pregledno):**
+## Docker Compose primer (snmp_exporter + Prometheus + Grafana)
 
-- Preveri dostop z: `snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0`
+Namestite to na monitoring gostitelja (192.168.11.107) in prilagodite poti/volumne po potrebi.
 
-- Pri uspehu bo vrnil `sysUpTime` in podobne OID vrednosti.
+    version: '3'
+    services:
+      snmp\_exporter:
+        image: prom/snmp-exporter:latest
+        ports:
+          - "9116:9116"
+        volumes:
+          - ./snmp.yml:/etc/snmp\_exporter/snmp.yml
 
-**Monitoring stack (kratka navodila)**
+      prometheus:
+        image: prom/prometheus:latest
+        ports:
+          - "9090:9090"
+        volumes:
+          - ./prometheus.yml:/etc/prometheus/prometheus.yml
+        depends_on:
+          - snmp\_exporter
 
-- Uporabi `snmp_exporter` (port 9116), `prometheus` in `grafana` (npr. Docker Compose stack).
+      grafana:
+        image: grafana/grafana:latest
+        ports:
+          - "3000:3000"
+        depends_on:
+          - prometheus
 
-- Priporočen potek: pripravite `generator.yml` s modulom `vyos` (walk: ifTable, ifXTable, sysUpTime), zaženite generator in pridobite `snmp.yml`.
+## Konfiguracija Prometheusa (primer scrape job)
 
-- Preizkus exporterja (primer):
+Dodajte ‘scrape‘ nalogo, da Prometheus pobira metrike od exporterja (če ne uporabljate Docker Compose DNS, zamenjajte ‘snmp_exporter:9116‘ z ‘192.168.11.107:9116‘):
 
-      curl "http://<snmp_exporter>:9116/snmp?module=vyos&target=192.168.11.1"
+    scrape_configs:
+      - job_name: 'snmp'
+        static_configs:
+          - targets: ['192.168.11.1']
+        metrics_path: /snmp
+        params:
+          module: [vyos]
+          auth: [vyos_auth]
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target']
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.11.107:9116
 
-- Primer Prometheus scrape job (poenostavljeno):
+## Generator in snmp.yml
 
-      scrape_configs:
-        - job_name: 'snmp'
-          static_configs:
-            - targets: ['192.168.11.1']
-          metrics_path: /snmp
-          params:
-            module: [vyos]
-            auth: [vyos_auth]
-          relabel_configs: ...
+Uporabite uradni generator za ‘snmp_exporter‘, da ustvarite prilagojen ‘snmp.yml‘ za VyOS. Postopek v grobem:
 
-**Hitri nasveti:**
+- Naredite ‘generator.yml‘ z ‘auth‘ sekcijo (community ‘startup11‘) in modulom ‘vyos‘, ki naredi ‘walk‘ za ‘1.3.6.1.2.1.1.3‘ (sysUpTime), ‘1.3.6.1.2.1.2‘ (ifTable) in ‘1.3.6.1.2.1.31.1.1‘ (ifXTable).
 
-- Namestite MIB datoteke, če generator potrebuje lokalne MIB‑e (paket `snmp-mibs-downloader`).
+- Zaženite generator (kot container ali binarko) in dobljeni ‘snmp.yml‘ kopirajte na exporter gostitelja v ‘/etc/snmp_exporter/snmp.yml‘.
 
-- Če exporter vrne napako `Unknown auth`, preverite, da so v `snmp.yml` in Prometheus parametri usklajeni (auth ime in modul).
+## Testiranje
 
-Konfigurirani NTP strežniki so:
-
-- ntp.arnes.si
-
-- time1.vyos.net
-
-- time2.vyos.net
-
-- time3.vyos.net
+    curl "http://192.168.11.107:9116/snmp?module=vyos&target=192.168.11.1"
+    snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0
 
 ## Router Advertisements (RA)
 
@@ -496,86 +532,7 @@ Pri apliciranju ukazov je potrebna pazljivost — nekateri ukazi ne delujejo kot
 
 Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenutnih nastavitev.
 
-# WireGuard
-
-## Splošne informacije
-
-WireGuard VPN je nastavljeno na napravi na IP naslovu `192.168.11.106` v DMZ omrežju. Konfiguracija je bila avtomatsko generirana s **pivpn** skripto, ki poenostavi upravljanje in vzpostavitev WireGuard VPN strežnika.
-
-## Dostop in port
-
-- **Notranji naslov:** 192.168.11.106
-
-- **Javni port:** UDP 51820 (preusmeran prek NAT/DNAT na eth0)
-
-- **Storitev:** Aktivna in dostopna iz javnega interneta
-
-## Upravljanje VPN uporabnikov
-
-WireGuard uporabnike upravljate s pivpn ukazom. Osnovni koraki:
-
-    # Dodaj novega VPN uporabnika
-    pivpn add
-
-    # Ogled aktivnih povezav
-    pivpn -c
-
-    # Ogled konfiguracije in QR koda
-    pivpn -qr
-
-    # Brisanje uporabnika
-    pivpn remove
-
-## Poskus z wg-portal
-
-Poskusil sem postaviti tudi `wg-portal`, ker podpira LDAP avtentikacijo, vendar se je zagon ustavil pri odpiranju SQLite baze z napako `out of memory (14)`. Zaradi tega je ostalo upravljanje WireGuard uporabnikov na `pivpn`.
-
-    2026/05/21 23:16:51 INFO Starting WireGuard Portal V2... version=v2.2.3-1c3eacb
-    time=2026-05-21T23:16:51.752Z level=INFO msg="Configuration loaded!" logLevel=info
-    panic: failed to open sqlite database: unable to open database file: out of memory (14)
-
-## Konfiguracija in nastavitve
-
-Privzete pivpn nastavitve:
-
-- Podatkovna mapa: `/etc/wireguard/`
-
-- Datoteka strežnika: `/etc/wireguard/wg0.conf`
-
-- Konfiguracije VPN uporabnikov (QR kode, ključi): `~/configs/` (domača mapa pivpn skripty)
-
-- VPN subnet v našem sistemu: `10.4.103.0/24`
-
-## Odpravljanje težav
-
-Če WireGuard ni dostopen ali se ne povezuje:
-
-    # Preverka stanja vmesnika
-    ip link show wg0
-
-    # Preverka aktivnih povezav
-    wg show
-
-    # Resetiranje WireGuard vmesnika
-    sudo ip link delete wg0
-    sudo systemctl restart wg-quick@wg0
-
-  ## Dva WireGuard omrežja: `wg0` (admin) in `wg-client` (uporabniki)
-
-  V skladu z razširjenim načrtom obdržimo obstoječi `wg0` (PiVPN) kot *admin* omrežje za zdaj, v drugi fazi pa na novi VM z `wg-portal` uvedemo ločen *client* tunel. Podroben, fazni plan je zapisan v `phased-firewall-plan.md`.
-
-  Ključne lastnosti:
-  - `wg0` (admin): trenutni PiVPN tunel, poln dostop v fazi 1, NAT ostane nespremenjen.
-  - `wg-client`: prihodnji tunel na novi VM, omejen na INTERNAL in IPV6ONLY v fazi 2.
-
-  Opomba o varnosti in testiranju:
-  - PiVPN na strežniku že ustvarja iptables MASQUERADE in IP forwarding za `wg0`.
-  - V fazi 1 preverite, da admin peer prek `wg0` doseže DMZ, INTERNAL in `ipv6only`.
-  - V fazi 2 bo nova VM z `wg-portal` uporabljena za ločevanje admin in client prometa.
-
-  Za izvedbeni plan, vključno s testnimi ukazi po vsakem sklopu pravil, glej `phased-firewall-plan.md`.
-
-  # Active Directory (Windows Server)
+# Active Directory (Windows Server)
 
 ## Osnovne informacije
 
@@ -692,6 +649,106 @@ Resolve-DnsName snmp.startup11.local -Type A -Server 127.0.0.1
 ```
 
 **Opomba o split DNS:** VyOS izvaja DNS posredovanje in conditional forward na AD DNS za `startup11.local`, AD DNS pa ostane avtoritativni vir notranjih zapisov.
+
+# WireGuard
+
+## Splošne informacije
+
+WireGuard VPN je nastavljeno na napravi na IP naslovu `192.168.11.106` v DMZ omrežju. Konfiguracija je bila avtomatsko generirana s **pivpn** skripto, ki poenostavi upravljanje in vzpostavitev WireGuard VPN strežnika.
+
+Trenutna postavitev ostane nespremenjena v prvi fazi. Podroben fazni načrt, ki ohrani obstoječi PiVPN/NAT in nato v drugi fazi preseli dual WireGuard stack na novo VM z `wg-portal`, je opisan v `phased-firewall-plan.md`. Ta novi načrt nadomešča prejšnje pomožne predloge za `wg-client`.
+
+## Dostop in port
+
+- **Notranji naslov:** 192.168.11.106
+
+- **Javni port:** UDP 51820 (preusmeran prek NAT/DNAT na eth0)
+
+- **Storitev:** Aktivna in dostopna iz javnega interneta
+
+## Upravljanje VPN uporabnikov
+
+WireGuard uporabnike upravljate s pivpn ukazom. Osnovni koraki:
+
+    # Dodaj novega VPN uporabnika
+    pivpn add
+
+    # Ogled aktivnih povezav
+    pivpn -c
+
+    # Ogled konfiguracije in QR koda
+    pivpn -qr
+
+    # Brisanje uporabnika
+    pivpn remove
+
+## Konfiguracija in nastavitve
+
+Privzete pivpn nastavitve:
+
+- Podatkovna mapa: `/etc/wireguard/`
+
+- Datoteka strežnika: `/etc/wireguard/wg0.conf`
+
+- Konfiguracije VPN uporabnikov (QR kode, ključi): `~/configs/` (domača mapa pivpn skripty)
+
+- VPN subnet v našem sistemu: `10.4.103.0/24`
+
+## Odpravljanje težav
+
+Če WireGuard ni dostopen ali se ne povezuje:
+
+    # Preverka stanja vmesnika
+    ip link show wg0
+
+    # Preverka aktivnih povezav
+    wg show
+
+    # Resetiranje WireGuard vmesnika
+    sudo ip link delete wg0
+    sudo systemctl restart wg-quick@wg0
+
+## wg-portal (WireGuard portal) in integracija z Active Directory
+
+**Kaj je wg-portal:** `wg-portal` je spletna aplikacija za upravljanje WireGuard konfiguracij, dovoljenj in omogočanje samopostrežnega ustvarjanja peer konfiguracij za uporabnike.
+
+**Kje teče:** Aplikacija je dosegljiva na `http://192.168.11.106:8888`. Lokacije ostalih storitev so navedene v razdelku "DMZ strežniki" zgoraj.
+
+**Kako se poveže z AD:**
+
+- Aplikacija uporablja LDAP bind račun za poizvedbe uporabnikov in preverjanje članstev v skupinah.
+
+- Avtentikacija poteka z bindanjem (bind) in iskanjem vnosa, ki ustreza `sAMAccountName` ali `userPrincipalName`.
+
+- Atribute AD lahko preslikamo, npr. uporabimo `userPrincipalName` kot `email`, kadar je `mail` prazen.
+
+- Administratorske pravice se določijo preko članstva v AD skupini (npr. `Domain Admins`).
+
+Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneeru/complete-guide-installing-and-configuring-wireguard-portal-on-linux-d23261027520 z nekaj lokalnimi modifikacijami prilagoditvami za naš okolje. Konfiguracija, ki smo jo uporabili v tem repozitoriju, je na voljo v datoteki `wgportal.yaml`.
+
+**Opombe:**
+
+- Privzeta podatkovna shramba aplikacije je SQLite (`data/sqlite.db`). Če aplikacija poroča o napaki `unable to open database file`, preverite, da mapa `data` obstaja in ima pravilne pravice/lastništvo (npr. `/opt/wg-portal/data`).
+
+- Primer ukazov za ustvarjanje bind uporabnika v AD (PowerShell):
+
+<!-- -->
+
+    # Ustvari servisnega uporabnika (prilagodi geslo varno)
+    New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
+
+    # Po potrebi dodaj uporabnike v administratorsko skupino
+    Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
+
+**Preizkusi in dnevniški pregledi:**
+
+- Testirajte LDAP poizvedbe z orodjem `ldapsearch` kjer je na voljo.
+
+- Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
+
+- Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve `create_default_peer_on_login` in `self_provisioning_allowed`.
+
+**Opomba:** Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
 
 # REST
 
@@ -903,22 +960,12 @@ Raft storitev poteka na treh serverjih 192.168.11.101, 192.168.11.102, 192.168.1
 
 To vam bo izpisalo vsebino baze.
 
----
+# Pretvorba med Markdown in LaTeX
 
-## Pretvorba med Markdown in LaTeX
+- LaTeX Markdown (GitHub-flavored):
 
-Ukazi za pretvorbo (zahteva: `pandoc`):
+      pandoc -s vyos_documentation.tex -t gfm -o vyos_documentation.md --wrap=none
 
-- LaTeX -> Markdown (GitHub-flavored):
+- Markdown LaTeX:
 
-```bash
-pandoc -s vyos_documentation.tex -t gfm -o vyos_documentation.md --wrap=none
-```
-
-- Markdown -> LaTeX:
-
-```bash
-pandoc -s vyos_documentation.md -o vyos_documentation.tex
-```
-
-Opomba: pri pretvorbi iz Markdowna v LaTeX lahko pride do manjših razlik v oblikovanju; preverite končni `.tex` in po potrebi prilagodite preambulo (pakete, nastavitve `listings`/`minted`).
+      pandoc -s vyos_documentation.md -o vyos_documentation.tex
