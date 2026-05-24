@@ -35,7 +35,7 @@ V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Pod
   \item Postaviti omrežje z ločenimi segmenti za \textbf{uporabnike} in \textbf{strežnike} (strogo ločeno prometno okolje).
   \item Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
   \item Izpostaviti navzven le izbrane storitve: WireGuard, \texttt{wg-portal} (HTTPS) in REST frontend (HTTPS).
-  \item Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo iz internal in preko VPN (ni direktnega WAN dostopa).
+  \item Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo znotraj omrežja in preko VPN (ni direktnega WAN dostopa).
   \item Ohranjati poseben \textbf{ipv6only} segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
 \end{itemize}
 
@@ -145,10 +145,11 @@ wireguard & 192.168.11.106 & 00:0c:29:c4:d1:52 & WireGuard VPN končna točka \\
 \hline
 snmp & 192.168.11.107 & 00:0c:29:69:75:09 & SNMP / monitoring cilj \\
 \hline
-AD (dmz windows 1) & 192.168.11.201 & 00:0c:29:07:cf:1c & Active Directory (Domain Controller) \\
-\hline
 new\_wg & 192.168.11.108 & 00:0c:29:f9:2a:a8 & New WireGuard-related host \\
 \hline
+AD (dmz windows 1) & 192.168.11.201 & 00:0c:29:07:cf:1c & Active Directory (Domain Controller) \\
+\hline
+
 \end{longtable}
 
 \section{NAT in preusmeritve vrat}
@@ -251,11 +252,11 @@ dns-srv & 00:0c:29:4a:b1:99 & 192.168.11.105 \\
 \hline
 wireguard & 00:0c:29:c4:d1:52 & 192.168.11.106 \\
 \hline
-AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
-\hline
 snmp & 00:0c:29:69:75:09 & 192.168.11.107 \\
 \hline
 new\_wg & 00:0c:29:f9:2a:a8 & 192.168.11.108 \\
+\hline
+AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
 \hline
 \end{longtable}
 
@@ -304,7 +305,8 @@ Trenutna AD zona \texttt{startup11.local} vsebuje klju\v{c}ne notranje zapise za
   \item korenski zapis \texttt{@} vsebuje A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::185};
   \item NS in SOA na vrhu cone kažeta na \texttt{win-sgi52j8519e.startup11.local.};
   \item standardni AD SRV zapisi so prisotni za \verb|_gc._tcp|, \verb|_kerberos._tcp|, \verb|_kerberos._udp|, \verb|_ldap._tcp| in \verb|_kpasswd._tcp| ter ustrezne \verb|Default-First-Site-Name| in \verb|ForestDnsZones| / \verb|DomainDnsZones| podcone;
-  \item glavni DC gostitelj \texttt{win-sgi52j8519e} ima A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::185};
+  \item glavni DC gostitelj \texttt{win-sgi52j8519e} ima A zapis \texttt{192.168.11.201} in AAAA zapis \newline
+\texttt{2001:1470:fffd:a9::185};
   \item dodatna notranja zapisa sta \texttt{rest.startup11.local} \textrightarrow{} \texttt{192.168.11.104} in \texttt{snmp.startup11.local} \textrightarrow{} \texttt{192.168.11.107}.
 \end{itemize}
 
@@ -446,7 +448,8 @@ Za spremljanje metrik v DMZ uporabljamo preprost monitoring stack: Prometheus (s
 
 \subsection{Komponente in porti}
 \begin{itemize}
-  \item \textbf{snmp\_exporter}: 192.168.11.107:9116 (TCP) - endpoint exporterja, npr. \texttt{http://192.168.11.107:9116/snmp}
+  \item \textbf{snmp\_exporter}: 192.168.11.107:9116 (TCP) - endpoint exporterja, npr. \newline
+\texttt{http://192.168.11.107:9116/snmp}
   \item \textbf{Prometheus}: 192.168.11.107:9090 (TCP) - scrape cilj in uporabniški vmesnik
   \item \textbf{Grafana}: 192.168.11.107:3000 (TCP) - nadzorne plošče in vizualizacija
   \item \textbf{VyOS SNMP}: 192.168.11.1:161 (UDP) - SNMP agent na usmerjevalniku (v2c community)
@@ -533,7 +536,7 @@ RA so omogočeni na:
 \end{itemize}
 
 \subsection{SSH}
-SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Če želite začasno omogočiti prijavo z geslom, uredite datoteko \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}, nato ponovno zaženite \texttt{sshd}.
+SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Če želite začasno omogočiti prijavo z geslom, uredite datoteko \newline  \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}, nato ponovno zaženite \texttt{sshd}.
 
 \section{Sistem}
 \subsection{Uporabniki in ključi}
@@ -767,7 +770,8 @@ Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneer
 \end{itemize}
 \begin{lstlisting}
 # Ustvari servisnega uporabnika (prilagodi geslo varno)
-New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
+New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword
+(ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
 
 # Po potrebi dodaj uporabnike v administratorsko skupino
 Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
@@ -777,7 +781,7 @@ Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
 \begin{itemize}
   \item Testirajte LDAP poizvedbe z orodjem \texttt{ldapsearch} kjer je na voljo.
   \item Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
-  \item Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve \verb|create_default_peer_on_login| in \verb|self_provisioning_allowed|.
+  \item Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve \newline  \verb|create_default_peer_on_login| in \verb|self_provisioning_allowed|.
 \end{itemize}
 
 \textbf{Opomba:} Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
@@ -971,7 +975,7 @@ Invoke-RestMethod `
 \end{lstlisting}
 
 \subsubsection{Scriptum\_kp}
-Scriptum je dostopen na spletnem mestu \url{192.168.11.104:8080} ne uporablja LDAP uporabnikov ampak uporabnike na MongoDB bazi. Frontend je Angular,, backend je REST API, Node.js, Express. MongoDB baza ni na tem serverju ampak je na zunanjih mongo DB strežnikih.
+Scriptum je dostopen na spletnem mestu \url{192.168.11.104:8080} in \url{88.200.24.241:8080} ne uporablja LDAP uporabnikov ampak uporabnike na MongoDB bazi. Frontend je Angular,, backend je REST API, Node.js, Express. MongoDB baza ni na tem serverju ampak je na zunanjih mongo DB strežnikih.
 
 \section{Raft} 
 Raft storitev poteka na treh serverjih 192.168.11.101, 192.168.11.102, 192.168.11.103. Vse spremembe so sihronizirane preko etcd kljucov, vsaka ima svojo lokalno bazo ki se sinhronizira. To je update Rest storitve saj ta sedaj pošilja svojo bazo RAFT podatkovni bazi.
