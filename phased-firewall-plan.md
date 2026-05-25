@@ -6,8 +6,9 @@ Summary of services (IPs, ports, public exposure):
 |---|---|---:|---:|---|
 | VyOS management (SSH) | WAN (eth0 public IP) | 22 (tcp) | Yes | WAN SSH allow present in live config |
 | Existing WireGuard listener (`wg0`) | 192.168.11.106 (DMZ WG host) | 51820 (udp) | Yes | PiVPN on DMZ host; NAT/MASQUERADE remains in Phase 1 |
-| Current wg-portal UI | 192.168.11.104 (DMZ web host) | 8888 (tcp) | Yes | Local portal UI (current deployment)
+| Current wg-portal UI | 192.168.11.106 (DMZ WG host) | 8888 (tcp) | Yes | Local portal UI (current deployment)
 | REST service `scriptum` | 192.168.11.104 (DMZ web host) | 8080 (tcp) | Yes | Internal REST endpoint used by services
+| `scriptum` backend (public) | 192.168.11.104 (DMZ web host) | 4443 (tcp) | Yes | Public backend endpoint
 | Library API (HTTP) | 192.168.11.104 (DMZ web host) | 3000 (tcp) | No | Library API (HTTP)
 | Library API (HTTPS) | 192.168.11.104 (DMZ web host) | 3443 (tcp) | Yes | Library API (HTTPS)
 | Library API (GraphQL) | 192.168.11.104 (DMZ web host) | 32484 (tcp) | No | Library GraphQL endpoint (internal)

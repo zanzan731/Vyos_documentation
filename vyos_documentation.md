@@ -1,5 +1,5 @@
 ---
-date: 2026-05-24
+date: 2026-05-25
 title: Dokumentacija VyOS usmerjevalnika - startup11
 ---
 
@@ -15,7 +15,7 @@ V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Pod
 
 - Izpostaviti navzven le izbrane storitve: WireGuard, `wg-portal` (HTTPS) in REST frontend (HTTPS).
 
-- Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo iz internal in preko VPN (ni direktnega WAN dostopa).
+- Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo znotraj omrežja in preko VPN (ni direktnega WAN dostopa).
 
 - Ohranjati poseben **ipv6only** segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
 
@@ -108,17 +108,17 @@ V nadaljevanju dokumentacije so podrobnosti konfiguracij in primeri ukazov za Vy
 
 ## Pregled strežnikov
 
-| **Ime strežnika** | **IP naslov** | **MAC naslov** | **Namen** |
+| **Ime strežnika** | **IP naslov** | **IPv6 naslov** | **Namen** |
 |:---|:---|:---|:---|
-| raft1 | 192.168.11.101 | 00:0c:29:15:42:6f | Raft (cluster node) |
-| raft2 | 192.168.11.102 | 00:0c:29:2b:64:27 | Raft (cluster node) |
-| raft3 | 192.168.11.103 | 00:0c:29:a2:5c:63 | Raft (cluster node) |
-| rest | 192.168.11.104 | 00:0c:29:17:1a:72 | REST API / ostali servisi |
-| dns-srv | 192.168.11.105 | 00:0c:29:4a:b1:99 | DNS strežnik (lokalni) |
-| wireguard | 192.168.11.106 | 00:0c:29:c4:d1:52 | WireGuard VPN končna točka |
-| snmp | 192.168.11.107 | 00:0c:29:69:75:09 | SNMP / monitoring cilj |
-| AD (dmz windows 1) | 192.168.11.201 | 00:0c:29:07:cf:1c | Active Directory (Domain Controller) |
-| new_wg | 192.168.11.108 | 00:0c:29:f9:2a:a8 | New WireGuard-related host |
+| raft1 | 192.168.11.101 | 2001:1470:fffd:a9::124 | Raft (cluster node) |
+| raft2 | 192.168.11.102 | 2001:1470:fffd:a9::114 | Raft (cluster node) |
+| raft3 | 192.168.11.103 | 2001:1470:fffd:a9::16b | Raft (cluster node) |
+| rest | 192.168.11.104 | 2001:1470:fffd:a9::115 | REST API / ostali servisi |
+| dns-srv | 192.168.11.105 | \- | DNS strežnik (lokalni) |
+| wireguard | 192.168.11.106 | 2001:1470:fffd:a9::1c8 | WireGuard VPN končna točka |
+| snmp | 192.168.11.107 | 2001:1470:fffd:a9::17a | SNMP / monitoring cilj |
+| new_wg | 192.168.11.108 | 2001:1470:fffd:a9::18d | New WireGuard-related host |
+| AD (dmz windows 1) | 192.168.11.201 | 2001:1470:fffd:a9::185 | Active Directory (Domain Controller) |
 
 # NAT in preusmeritve vrat
 
@@ -200,9 +200,9 @@ Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP nas
 | rest               | 00:0c:29:17:1a:72 | 192.168.11.104 |
 | dns-srv            | 00:0c:29:4a:b1:99 | 192.168.11.105 |
 | wireguard          | 00:0c:29:c4:d1:52 | 192.168.11.106 |
-| AD (dmz windows 1) | 00:0c:29:07:cf:1c | 192.168.11.201 |
 | snmp               | 00:0c:29:69:75:09 | 192.168.11.107 |
 | new_wg             | 00:0c:29:f9:2a:a8 | 192.168.11.108 |
+| AD (dmz windows 1) | 00:0c:29:07:cf:1c | 192.168.11.201 |
 
 ## DHCPv6
 
@@ -245,7 +245,8 @@ Trenutna AD zona `startup11.local` vsebuje ključne notranje zapise za domeno, D
 
 - standardni AD SRV zapisi so prisotni za `_gc._tcp`, `_kerberos._tcp`, `_kerberos._udp`, `_ldap._tcp` in `_kpasswd._tcp` ter ustrezne `Default-First-Site-Name` in `ForestDnsZones` / `DomainDnsZones` podcone;
 
-- glavni DC gostitelj `win-sgi52j8519e` ima A zapis `192.168.11.201` in AAAA zapis `2001:1470:fffd:a9::185`;
+- glavni DC gostitelj `win-sgi52j8519e` ima A zapis `192.168.11.201` in AAAA zapis\
+  `2001:1470:fffd:a9::185`;
 
 - dodatna notranja zapisa sta `rest.startup11.local` `192.168.11.104` in `snmp.startup11.local` `192.168.11.107`.
 
@@ -369,7 +370,14 @@ Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, d
 
 ## NTP
 
-????
+NTP sinhronizacija uporablja naslednje strežnike:
+
+| **NTP strežnik** |
+|:-----------------|
+| ntp.arnes.si     |
+| time1.vyos.net   |
+| time2.vyos.net   |
+| time3.vyos.net   |
 
 # Monitoring in SNMP
 
@@ -377,7 +385,8 @@ Za spremljanje metrik v DMZ uporabljamo preprost monitoring stack: Prometheus (s
 
 ## Komponente in porti
 
-- **snmp_exporter**: 192.168.11.107:9116 (TCP) - endpoint exporterja, npr. `http://192.168.11.107:9116/snmp`
+- **snmp_exporter**: 192.168.11.107:9116 (TCP) - endpoint exporterja, npr.\
+  `http://192.168.11.107:9116/snmp`
 
 - **Prometheus**: 192.168.11.107:9090 (TCP) - scrape cilj in uporabniški vmesnik
 
@@ -469,7 +478,8 @@ RA so omogočeni na:
 
 ## SSH
 
-SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Če želite začasno omogočiti prijavo z geslom, uredite datoteko `/etc/ssh/sshd_config.d/50-cloud-init.conf` in nastavite `PasswordAuthentication yes`, nato ponovno zaženite `sshd`.
+SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Če želite začasno omogočiti prijavo z geslom, uredite datoteko\
+`/etc/ssh/sshd_config.d/50-cloud-init.conf` in nastavite `PasswordAuthentication yes`, nato ponovno zaženite `sshd`.
 
 # Sistem
 
@@ -735,7 +745,8 @@ Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneer
 <!-- -->
 
     # Ustvari servisnega uporabnika (prilagodi geslo varno)
-    New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
+    New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword
+    (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
 
     # Po potrebi dodaj uporabnike v administratorsko skupino
     Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
@@ -746,7 +757,8 @@ Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneer
 
 - Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
 
-- Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve `create_default_peer_on_login` in `self_provisioning_allowed`.
+- Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve\
+  `create_default_peer_on_login` in `self_provisioning_allowed`.
 
 **Opomba:** Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
 
@@ -935,7 +947,7 @@ Primer zaščitene GraphQL mutacije z LDAP uporabnikom:
 
 ### Scriptum_kp
 
-Scriptum je dostopen na spletnem mestu <a href="192.168.11.104:8080" class="uri">192.168.11.104:8080</a> ne uporablja LDAP uporabnikov ampak uporabnike na MongoDB bazi. Frontend je Angular,, backend je REST API, Node.js, Express. MongoDB baza ni na tem serverju ampak je na zunanjih mongo DB strežnikih.
+Scriptum je dostopen na spletnem mestu <a href="192.168.11.104:8080" class="uri">192.168.11.104:8080</a> in <a href="88.200.24.241:8080" class="uri">88.200.24.241:8080</a> ne uporablja LDAP uporabnikov ampak uporabnike na MongoDB bazi. Frontend je Angular,, backend je REST API, Node.js, Express. MongoDB baza ni na tem serverju ampak je na zunanjih mongo DB strežnikih.
 
 # Raft
 

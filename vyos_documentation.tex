@@ -26,6 +26,8 @@ frame=single
 \begin{document}
 
 \maketitle
+\tableofcontents
+\vspace{1em}
 
 \section{Naloga in zasnova omrežja}
 V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture; cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
@@ -129,25 +131,25 @@ Izvorni NAT (SNAT) & 192.168.11.0/24, izhodni vmesnik eth0 & maskiranje (masquer
 \subsection{Pregled strežnikov}
 \begin{longtable}{|l|l|l|l|}
 \hline
-\textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{MAC naslov} & \textbf{Namen} \\
+\textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{IPv6 naslov} & \textbf{Namen} \\
 \hline
-raft1 & 192.168.11.101 & 00:0c:29:15:42:6f & Raft (cluster node) \\
+raft1 & 192.168.11.101 & 2001:1470:fffd:a9::124 & Raft (cluster node) \\
 \hline
-raft2 & 192.168.11.102 & 00:0c:29:2b:64:27 & Raft (cluster node) \\
+raft2 & 192.168.11.102 & 2001:1470:fffd:a9::114 & Raft (cluster node) \\
 \hline
-raft3 & 192.168.11.103 & 00:0c:29:a2:5c:63 & Raft (cluster node) \\
+raft3 & 192.168.11.103 & 2001:1470:fffd:a9::16b & Raft (cluster node) \\
 \hline
-rest & 192.168.11.104 & 00:0c:29:17:1a:72 & REST API / ostali servisi \\
+rest & 192.168.11.104 & 2001:1470:fffd:a9::115 & REST API / ostali servisi \\
 \hline
-dns-srv & 192.168.11.105 & 00:0c:29:4a:b1:99 & DNS strežnik (lokalni) \\
+dns-srv & 192.168.11.105 & - & DNS strežnik (lokalni) \\
 \hline
-wireguard & 192.168.11.106 & 00:0c:29:c4:d1:52 & WireGuard VPN končna točka \\
+wireguard & 192.168.11.106 & 2001:1470:fffd:a9::1c8 & WireGuard VPN končna točka \\
 \hline
-snmp & 192.168.11.107 & 00:0c:29:69:75:09 & SNMP / monitoring cilj \\
+snmp & 192.168.11.107 & 2001:1470:fffd:a9::17a & SNMP / monitoring cilj \\
 \hline
-new\_wg & 192.168.11.108 & 00:0c:29:f9:2a:a8 & New WireGuard-related host \\
+new\_wg & 192.168.11.108 & 2001:1470:fffd:a9::18d & New WireGuard-related host \\
 \hline
-AD (dmz windows 1) & 192.168.11.201 & 00:0c:29:07:cf:1c & Active Directory (Domain Controller) \\
+AD (dmz windows 1) & 192.168.11.201 & 2001:1470:fffd:a9::185 & Active Directory (Domain Controller) \\
 \hline
 
 \end{longtable}
@@ -441,7 +443,21 @@ dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
 Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za \texttt{startup11.local} dosežejo avtoritativni AD DNS.
 
 \subsection{NTP}
-????
+NTP sinhronizacija uporablja naslednje strežnike:
+
+\begin{longtable}{|l|}
+\hline
+\textbf{NTP strežnik} \\
+\hline
+ntp.arnes.si \\
+\hline
+time1.vyos.net \\
+\hline
+time2.vyos.net \\
+\hline
+time3.vyos.net \\
+\hline
+\end{longtable}
 
 \section{Monitoring in SNMP}
 Za spremljanje metrik v DMZ uporabljamo preprost monitoring stack: Prometheus (scrape in shranjevanje), \texttt{snmp\_exporter} (pretvornik SNMP→Prometheus) in Grafana (vizualizacija). \texttt{snmp\_exporter} pobira metrike z naprave VyOS prek SNMP v2c in jih izpostavi na svojem HTTP vmesniku, ki ga nato pobira Prometheus.
