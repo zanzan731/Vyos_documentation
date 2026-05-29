@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2026.2.28)  29 MAY 2026 23:09
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2026.2.28)  29 MAY 2026 23:21
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -328,14 +328,6 @@ ex.def
 File: l3backend-pdftex.def 2025-06-09 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count323
 ) (vyos_documentation.aux)
-Runaway argument?
-{\contentsline {paragraph}{Stati훾ne DHC 
-! File ended while scanning use of \@writefile.
-<inserted text> 
-                \par 
-l.26 \begin{document}
-                     
-? 
 \openout1 = `vyos_documentation.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 26.
@@ -356,6 +348,7 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 26.
 LaTeX Font Info:    ... okay on input line 26.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 26.
 LaTeX Font Info:    ... okay on input line 26.
+
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -412,11 +405,17 @@ Package hyperref Info: Link coloring OFF on input line 26.
 \@outlinefile=\write3
 \openout3 = `vyos_documentation.out'.
 
- (vyos_documentation.toc)
+ (vyos_documentation.toc
+
+[1
+
+{C:/Users/탑an/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}])
 \tf@toc=\write4
 \openout4 = `vyos_documentation.toc'.
 
 
+
+[2]
 Overfull \hbox (3.50854pt too wide) in paragraph at lines 37--38
 []\T1/cmr/m/n/10.95 Postaviti om-re튺e z lo즕n-imi seg-menti za \T1/cmr/bx/n/10
 .95 uporab-nike \T1/cmr/m/n/10.95 in \T1/cmr/bx/n/10.95 stre틁ike \T1/cmr/m/n/1
@@ -430,10 +429,6 @@ ke de-lovne postaje, ad-min-is-tra-tivne postaje
  []
 
 
-
-[1
-
-{C:/Users/탑an/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
 Overfull \hbox (19.03088pt too wide) in paragraph at lines 57--58
 []\T1/cmr/bx/n/10.95 Split DNS / con-di-tional for-ward\T1/cmr/m/n/10.95 : no-t
 ranji kli-enti uporabl-jajo AD DNS za `startup11.local`,
@@ -447,7 +442,9 @@ st ima izklju즢o do-vol-jenje za SN-M-P/a-gent promet;
 
 
 
-[2]
+[3]
+
+[4]
 Overfull \hbox (47.7109pt too wide) in alignment at lines 132--155
  [] [] [] [] 
  []
@@ -459,14 +456,12 @@ Overfull \hbox (32.80656pt too wide) in alignment at lines 162--174
 
 
 
-[3]
+[5]
 Underfull \hbox (badness 3803) in paragraph at lines 207--208
 []|\T1/cmr/m/n/10.95 Dovoli nove UDP povezave iz eth0 proti
  []
 
-
-
-[4] [5]
+[6]
 Overfull \hbox (6.07056pt too wide) in paragraph at lines 307--308
 []\T1/cmr/m/n/10.95 korenski za-pis \T1/cmtt/m/n/10.95 @ \T1/cmr/m/n/10.95 vse-
 buje A za-pis \T1/cmtt/m/n/10.95 192.168.11.201 \T1/cmr/m/n/10.95 in AAAA za-pi
@@ -474,6 +469,8 @@ s \T1/cmtt/m/n/10.95 2001:1470:fffd:a9::185\T1/cmr/m/n/10.95 ;
  []
 
 
+
+[7]
 Overfull \hbox (1.69992pt too wide) in paragraph at lines 309--310
 [][]\T1/cmtt/m/n/10.95 _ldap._tcp []\T1/cmr/m/n/10.95 in [][]\T1/cmtt/m/n/10.95
  _kpasswd._tcp []\T1/cmr/m/n/10.95 ter us-trezne [][]\T1/cmtt/m/n/10.95 Default
@@ -494,14 +491,10 @@ Overfull \hbox (59.22083pt too wide) in paragraph at lines 321--322
  []
 
 
-Package longtable Warning: Column widths have changed
-(longtable)                in table 10 on input line 335.
 
+[8]
 
-
-[6]
-
-[7]
+[9]
 Overfull \hbox (1.59444pt too wide) in paragraph at lines 424--425
 \T1/cmr/m/n/10.95 mDNS (Avahi). Posledi즢o lahko DNS poizvedbe za \T1/cmtt/m/n/
 10.95 startup11.local \T1/cmr/m/n/10.95 pre-jmejo odgovor \T1/cmtt/m/n/10.95 RE
@@ -510,11 +503,9 @@ FUSED
 
 
 
-[8]
-
-[9]
-
 [10]
+
+[11]
 Overfull \hbox (12.35431pt too wide) in paragraph at lines 555--556
 [][]\T1/cmtt/m/n/10.95 /etc/ssh/sshd_config.d/50-cloud-init.conf []\T1/cmr/m/n/
 10.95 in nas-tavite \T1/cmtt/m/n/10.95 PasswordAuthentication yes\T1/cmr/m/n/10
@@ -522,6 +513,8 @@ Overfull \hbox (12.35431pt too wide) in paragraph at lines 555--556
  []
 
 
+
+[12]
 Overfull \hbox (3.61922pt too wide) in paragraph at lines 562--563
 []\T1/cmr/bx/n/10.95 zanzan\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 AAAAC3NzaC1lZ
 DI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL 
@@ -535,7 +528,7 @@ Overfull \hbox (38.11186pt too wide) in paragraph at lines 565--566
 
 
 
-[11]
+[13]
 (C:\Users\탑an\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
@@ -546,9 +539,9 @@ LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 631.
 
 
-[12]
+[14]
 
-[13]
+[15]
 Overfull \hbox (116.8436pt too wide) in paragraph at lines 724--725
 \T1/cmr/m/n/10.95 AD DNS je av-tori-ta-tiven za \T1/cmtt/m/n/10.95 startup11.lo
 cal \T1/cmr/m/n/10.95 in vraca AD SRV za-pise (npr. [][]\T1/cmtt/m/n/10.95 _lda
@@ -557,9 +550,7 @@ p._tcp.dc._msdcs.startup11.local[]\T1/cmr/m/n/10.95 ).
 
 
 
-[14]
-
-[15]
+[16]
 Overfull \hbox (4.4511pt too wide) in paragraph at lines 821--822
 []\T1/cmr/bx/n/10.95 Kje te즕: \T1/cmr/m/n/10.95 Ap-likacija je dosegljiva na \
 T1/cmtt/m/n/10.95 http://192.168.11.106:8888\T1/cmr/m/n/10.95 . Lokacije os-tal
@@ -567,6 +558,8 @@ ih storitev
  []
 
 
+
+[17]
 Overfull \hbox (3.05887pt too wide) in paragraph at lines 831--832
 []\T1/cmr/m/n/10.95 Pri na-mestitvi smo se v ve-liki meri dr튮li vod-nika: http
 s://medium.com/@seeneeru/complete-
@@ -581,11 +574,11 @@ b-staja in ima pravilne
 
 
 
-[16]
-
-[17]
-
 [18]
+
+[19]
+
+[20]
 Overfull \hbox (19.41675pt too wide) in paragraph at lines 1014--1016
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
@@ -596,8 +589,6 @@ Overfull \hbox (66.65521pt too wide) in paragraph at lines 1016--1017
  []
 
 
-
-[19]
 Overfull \hbox (66.65521pt too wide) in paragraph at lines 1035--1037
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][
 ][][][][][][][] 
@@ -605,13 +596,14 @@ Overfull \hbox (66.65521pt too wide) in paragraph at lines 1035--1037
 
 
 
-[20]
+[21]
+(C:\Users\탑an\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
+File: lstlang1.sty 2024/09/23 1.10c listings language file
+)
 
-Package longtable Warning: Table widths have changed. Rerun LaTeX.
+[22]
 
-
-
-[21] (vyos_documentation.aux)
+[23] (vyos_documentation.aux)
  ***********
 LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-07-19>
@@ -623,31 +615,31 @@ Package rerunfilecheck Warning: File `vyos_documentation.out' has changed.
 (rerunfilecheck)                or use package `bookmark'.
 
 Package rerunfilecheck Info: Checksums for `vyos_documentation.out':
-(rerunfilecheck)             Before: 3945E60F91ECFABEA995AB792B085850;8192
-(rerunfilecheck)             After:  0C3876A4E4718DC4BCF59A208E69D86B;13516.
+(rerunfilecheck)             Before: 0C3876A4E4718DC4BCF59A208E69D86B;13516
+(rerunfilecheck)             After:  5BCFB261FCC07D6A0D429112E549E548;13650.
  ) 
 Here is how much of TeX's memory you used:
- 12542 strings out of 468149
- 186333 string characters out of 5431566
- 897991 words of memory out of 5000000
- 40577 multiletter control sequences out of 15000+600000
+ 12801 strings out of 468149
+ 189626 string characters out of 5431566
+ 917447 words of memory out of 5000000
+ 40828 multiletter control sequences out of 15000+600000
  641354 words of font info for 72 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,6n,79p,473b,1954s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,79p,473b,1958s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1
 000.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\
 ecti1095.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dp
 i600\ectt1095.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/
-ec/dpi600\ecbx1095.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/ljfour/jkna
-ppen/ec/dpi600\tcrm1095.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/ljfour
-/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/l
-jfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts
+ec/dpi600\tcrm1095.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/ljfour/jkna
+ppen/ec/dpi600\ecbx1200.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/ljfour
+/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts/pk/l
+jfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\탑an\AppData\Local\MiKTeX\fonts
 /pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\탑an\AppData\Local\MiKTeX\
 fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\탑an\AppData\Local\Mi
 KTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1728.pk>
-Output written on vyos_documentation.pdf (21 pages, 312887 bytes).
+Output written on vyos_documentation.pdf (23 pages, 343653 bytes).
 PDF statistics:
- 1306 PDF objects out of 1440 (max. 8388607)
- 447 named destinations out of 1000 (max. 500000)
- 353 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1491 PDF objects out of 1728 (max. 8388607)
+ 453 named destinations out of 1000 (max. 500000)
+ 609 words of extra memory for PDF output out of 10000 (max. 10000000)
 

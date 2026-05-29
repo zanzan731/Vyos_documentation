@@ -1056,13 +1056,32 @@ Na serverju boste imeli veliko datotek:
   \item \texttt{create-author.js}, \texttt{manual-replicate.js} -  pomožne skripte za pomoč pri testiranju pisanja in repliciranja
 \end{itemize}
 
-\subsection{Branje baze}
-Če želite manualno prebrati bazo predvsem za testiranje in če se vam zdi da niso sinhornizirane.
+\subsection{Pregled in preverjanje baze podatkov}
+
+Za namene testiranja ali preverjanja pravilne sinhronizacije podatkov med vozlišči lahko vsebino baze podatkov preberete neposredno iz ukazne vrstice.
+
 \begin{lstlisting}
 cd ~/library-api
 node query-ha-db.js
 \end{lstlisting}
-To vam bo izpisalo vsebino baze.
+
+Skript privzeto izvede poizvedbo:
+
+\begin{lstlisting}[language=SQL]
+SELECT id, name FROM authors;
+\end{lstlisting}
+
+Rezultat poizvedbe se izpiše v terminalu, kar omogoča hitro preverjanje vsebine baze podatkov.
+
+Če želite izvesti druge SQL poizvedbe, lahko ustrezno prilagodite datoteko \texttt{query-ha-db.js} in vanjo vnesete želen SQL stavek.
+
+Podatkovna baza se nahaja v datoteki:
+
+\begin{lstlisting}
+library-ha.db
+\end{lstlisting}
+
+Priporočljivo je, da se pred posegi v podatkovno bazo ustvari varnostna kopija, zlasti v produkcijskem okolju.
 
 
 
