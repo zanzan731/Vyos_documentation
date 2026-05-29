@@ -656,6 +656,57 @@ Disable-ADAccount -Identity "ime"
 Remove-ADUser -Identity "ime" -Confirm:$false
 \end{lstlisting}
 
+\subsection{Priključitev računalnikov v domeno}
+
+Vsi računalniki, ki bodo uporabljali storitve domene \texttt{startup11.local}, morajo biti ustrezno pridruženi domeni Active Directory. Postopek se nekoliko razlikuje glede na operacijski sistem.
+
+\subsubsection{Linux}
+
+Pri novejših različicah Ubuntu Linuxa je med grafično namestitvijo sistema na voljo možnost \textit{Use Active Directory}. Ta se nahaja v koraku \textit{Create your account}. V tem primeru:
+
+\begin{enumerate}
+    \item Označite možnost \textit{Use Active Directory}.
+    \item Vnesite ime domene: \texttt{startup11.local}.
+    \item Za pridružitev uporabite uporabniški račun z ustreznimi pravicami v domeni.
+\end{enumerate}
+
+Če sistem med namestitvijo ni bil priključen v domeno, je to mogoče storiti naknadno z uporabo naslednjih orodij.
+
+Najprej namestimo vse potrebne pakete:
+\begin{lstlisting}
+sudo apt install sssd sssd-ad realmd adcli krb5-user
+\end{lstlisting}
+
+Preverimo, ali je domena dosegljiva:
+\begin{lstlisting}
+sudo realm discover startup11.local
+\end{lstlisting}
+
+Nato računalnik priključimo v domeno:
+\begin{lstlisting}
+sudo realm join startup11.local
+\end{lstlisting}
+
+Po uspešni prijavi je priporočljiv ponovni zagon sistema.
+
+\subsubsection{Windows}
+
+V operacijskem sistemu Windows lahko računalnik pridružimo domeni prek grafičnega vmesnika:
+
+\begin{enumerate}
+    \item Odprite \textbf{Nastavitve} (\textit{Settings}).
+    \item Izberite \textbf{Sistem} (\textit{System}).
+    \item Odprite \textbf{Informacije o sistemu} (\textit{About}).
+    \item Kliknite \textbf{Preimenuj ta računalnik (napredno)} (\textit{Rename this PC (advanced)}).
+    \item Izberite možnost \textbf{ID omrežja} (\textit{Network ID}).
+    \item Sledite čarovniku za pridružitev domeni.
+    \item Kot ime domene vnesite \texttt{startup11.local}.
+    \item Ob pozivu vnesite poverilnice uporabniškega računa, ki ima pravico dodajati računalnike v domeno.
+\end{enumerate}
+
+Po uspešni pridružitvi bo sistem zahteval ponovni zagon. Po ponovnem zagonu se lahko uporabniki prijavijo z domenimi računi.
+
+
 \subsection{Prijava v domeno}
 Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko priklopimo v domeno \texttt{startup11.local}. Po uspešnem priklopu se uporabniki prijavljajo z:
 
