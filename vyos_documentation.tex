@@ -825,7 +825,7 @@ sudo systemctl restart wg-quick@wg0
   \item Aplikacija uporablja LDAP bind račun za poizvedbe uporabnikov in preverjanje članstev v skupinah.
   \item Avtentikacija poteka z bindanjem (bind) in iskanjem vnosa, ki ustreza \texttt{sAMAccountName} ali \texttt{userPrincipalName}.
   \item Atribute AD lahko preslikamo, npr. uporabimo \texttt{userPrincipalName} kot \texttt{email}, kadar je \texttt{mail} prazen.
-  \item Administratorske pravice se določijo preko članstva v AD skupini (npr. \texttt{Domain Admins}).
+  \item Administratorske pravice se določijo preko članstva v AD skupini \texttt{Admin}.
 \end{itemize}
 
 Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneeru/complete-guide-installing-and-configuring-wireguard-portal-on-linux-d23261027520 z nekaj lokalnimi modifikacijami prilagoditvami za naš okolje. Konfiguracija, ki smo jo uporabili v tem repozitoriju, je na voljo v datoteki \texttt{wgportal.yaml}.
@@ -841,7 +841,7 @@ New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword
 (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
 
 # Po potrebi dodaj uporabnike v administratorsko skupino
-Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
+Add-ADGroupMember -Identity "Admin" -Members "zanadmin","pavlogal"
 \end{lstlisting}
 
 \textbf{Preizkusi in dnevniški pregledi:}
@@ -855,133 +855,126 @@ Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
 
 
 \section{REST}
-Vse datoteke se nahajajo na sk11-dmz-linux-04 v home directoriju od zanzan04. Imamo dve rest storitvi in sicer Scriptum\_kp in library-api. V tem delu bom govoril o library-api za probleme s Scriptum\_kp pa se obrnite na github dokumentacijo projekta \url{https://github.com/zanzan731/Scriptum\_kp}.
+V tej točki je opisana storitev \texttt{library-api}, ki teče na gostitelju \texttt{sk11-dmz-linux-04} pod uporabnikom \texttt{zanzan04}. V istem okolju obstaja še projekt \texttt{Scriptum\_kp}, vendar ta dokument obravnava samo \texttt{library-api}. Za \texttt{Scriptum\_kp} velja ločena dokumentacija projekta na \url{https://github.com/zanzan731/Scriptum\_kp}.
 
-\subsection{Arhitektura}
-Komponente:
+\subsection{Arhitektura storitve}
+\texttt{library-api} je Node.js aplikacija z naslednjimi glavnimi komponentami:
 \begin{itemize}
-  \item Node.js Express aplikacija (\texttt{server.js})
-  \item SQLite baza (\texttt{library.db})
-  \item TLS certifikati
-  \item Docker in Docker Compose
-  \item LDAP povezava proti Active Directory
+  \item \texttt{server.js} kot glavni REST strežnik,
+  \item SQLite baza \texttt{library-ha.db},
+  \item samopodpisani TLS certifikati v direktoriju \texttt{certs/},
+  \item Docker slika in \texttt{docker-compose.yml} za zagon s ponovnim zagonom,
+  \item povezava na Active Directory prek LDAP za avtentikacijo in avtorizacijo.
+\end{itemize}
+
+Storitev posluša na dveh vratih:
+\begin{itemize}
+  \item \texttt{3000} za HTTP,
+  \item \texttt{3443} za HTTPS in HTTP/2.
 \end{itemize}
 
 \subsection{Konfiguracija}
-Pomembne okoljske spremenljivke  (\texttt{server.js}):
+Glavne okoljske spremenljivke v \texttt{server.js} so:
 
 \begin{lstlisting}
+DATABASE_FILE=./library-ha.db
+SERVER_HTTP_PORT=3000
+SERVER_HTTPS_PORT=3443
+SERVER_HOST=0.0.0.0
+ETCD_ENDPOINTS=192.168.11.101:2379,192.168.11.102:2379,192.168.11.103:2379
 LDAP_URL=ldap://192.168.11.201:389
 AD_DOMAIN=startup11.local
 AD_BASE_DN=DC=startup11,DC=local
 AD_LIBRARIAN_GROUP_DN=CN=LIBRARIAN,CN=Users,DC=startup11,DC=local
-AD_ADMIN_USERS=zan_admin,other.user
+AD_ADMIN_GROUP_DN=CN=Admin,CN=Users,DC=startup11,DC=local
 \end{lstlisting}
 
-Opis:
 \begin{itemize}
-  \item \texttt{LDAP\_URL} določa LDAP strežnik
-  \item \texttt{AD\_BASE\_DN} določa osnovni DN
-  \item \texttt{AD\_LIBRARIAN\_GROUP\_DN} določa skupino z dovoljenji
+  \item \texttt{DATABASE\_FILE} določa pot do lokalne SQLite baze;
+  \item \texttt{SERVER\_HTTP\_PORT} in \texttt{SERVER\_HTTPS\_PORT} določata poslušanje HTTP/HTTPS vrat;
+  \item \texttt{SERVER\_HOST} mora biti \texttt{0.0.0.0}, da se storitev pravilno veže znotraj Dockerja;
+  \item \texttt{ETCD\_ENDPOINTS} poveže aplikacijo z Raft klastrom;
+  \item \texttt{AD\_LIBRARIAN\_GROUP\_DN} določa vlogo za pisanje;
+  \item \texttt{AD\_ADMIN\_GROUP\_DN} določa administratorsko vlogo iz Active Directory;
+  \item ostale spremenljivke določajo LDAP prijavo in povezavo do AD.
 \end{itemize}
 
-\subsection{Docker zagon}
-Kljub temu da je možen lokalni zagon z \texttt{npm} (\texttt{npm install}, \texttt{npm run dev}), kar vam omogoča lokalno testiranje na \url{https://localhost:3443/} in \url{http://localhost:3000/} na serverju vedno buildamo to z dockerjem.
+\subsection{Zagon in persistenca}
+Za lokalni razvoj je možen tudi klasičen zagon z \texttt{npm}, vendar je za strežnik priporočljiv Docker z možnostjo samodejnega ponovnega zagona:
 
-Build slike:
 \begin{lstlisting}
-docker build -t library-api-ad:latest .
-\end{lstlisting}
+docker build -t library-api-rest:latest .
 
-Zagon kontejnerja:
-\begin{lstlisting}
 docker run -d \
-  --name library-api-ad-test \
+  --name library-api-rest \
+  --restart unless-stopped \
   -p 3000:3000 \
   -p 3443:3443 \
-  -e LDAP_URL=ldap://192.168.11.201:389 \
-  -e AD_DOMAIN=startup11.local \
-  -e AD_BASE_DN=DC=startup11,DC=local \
-  -e AD_LIBRARIAN_GROUP_DN=CN=LIBRARIAN,CN=Users,DC=startup11,DC=local \
-  library-api-ad:latest
+  -e SERVER_HOST=0.0.0.0 \
+  -e DATABASE_FILE=/app/data/library-ha.db \
+  -e ETCD_ENDPOINTS=192.168.11.101:2379,192.168.11.102:2379,192.168.11.103:2379 \
+  -v /home/zanzan04/library-api/data:/app/data \
+  -v /home/zanzan04/library-api/certs:/app/certs \
+  library-api-rest:latest
 \end{lstlisting}
+
+Pri tej postavitvi Docker ohrani:
+\begin{itemize}
+  \item \texttt{restart unless-stopped} za samodejni zagon po rebootu gostitelja,
+  \item podatkovni direktorij \texttt{/app/data} za SQLite bazo,
+  \item direktorij \texttt{/app/certs} za TLS certifikate.
+\end{itemize}
 
 \subsection{Preverjanje delovanja}
-Ko imate enkrat zagnano bi morala biti spletna stran dostopna preko vseh računalnikov znotraj omrežja na \url{https://192.168.11.104:3443/} in \url{http://192.168.11.104:3000/}.
+Po zagonu mora biti storitev dostopna prek lokalnega omrežja na \url{https://192.168.11.104:3443/} in \url{http://192.168.11.104:3000/}.
 
-\subsubsection{Javni GET zahtevek}
+\subsubsection{Osnovni testi}
 \begin{lstlisting}
+curl -i http://192.168.11.104:3000/authors
 curl -k -i https://192.168.11.104:3443/authors
 curl --http2 -k -i https://192.168.11.104:3443/authors
-curl -i http://192.168.11.104:3000/authors
 \end{lstlisting}
 
-\subsubsection{Vsebinsko pogajanje in podprti formati}
-JSON:
+\subsubsection{Vsebinsko pogajanje}
+Podprti formati so JSON, XML in HTML:
 
 \begin{lstlisting}
-curl -k -H "Accept: application/json" \
-https://192.168.11.104:3443/authors
+curl -k -H "Accept: application/json" https://192.168.11.104:3443/authors
+curl -k -H "Accept: application/xml" https://192.168.11.104:3443/authors
+curl -k "https://192.168.11.104:3443/authors?format=html"
 \end{lstlisting}
 
-XML:
-
+\subsubsection{Glavne poti}
 \begin{lstlisting}
-curl -k -H "Accept: application/xml" \
-https://192.168.11.104:3443/authors
-\end{lstlisting}
+GET    /authors
+GET    /authors/:id
+GET    /authors/:id/books
+POST   /authors
+PUT    /authors/:id
+DELETE /authors/:id
 
-HTML:
-
-\begin{lstlisting}
-curl -k \
-"https://192.168.11.104:3443/authors?format=html"
-\end{lstlisting}
-
-To je samo za authors imas pa tudi veliko drugih poti:
-\begin{lstlisting}
-GET /authors  - list all (public)
-GET /authors/:id  - single author (public)
-GET /authors/:id/books  - books by author (public)
-POST /authors  - create (requires librarian or admin)
-PUT /authors/:id  - update (requires librarian or admin)
-DELETE /authors/:id  - delete (requires admin only)
-GET /books  - list all, optional ?genre= filter (public)
-GET /books/:id  - single book (public)
-POST /books  - create (requires librarian or admin)
-PUT /books/:id  - update (requires librarian or admin)
-PATCH /books/:id/availability  - toggle availability (requires librarian or admin)
-DELETE /books/:id  - delete (requires admin only)
+GET    /books
+GET    /books/:id
+POST   /books
+PUT    /books/:id
+PATCH  /books/:id/availability
+DELETE /books/:id
 \end{lstlisting}
 
 \subsubsection{LDAP avtorizacija}
-Rabis userja pod librarian ali admin za dodaten dostop.
-
+Branje je javno, pisanje pa zahteva ustrezno vlogo v Active Directory:
 \begin{itemize}
-  \item branje (GET) avtorjev in knjig — javno dostopno brez prijave
-  \item ustvarjanje (POST) avtorjev in knjig
-  \item posodabljanje (PUT) avtorjev in knjig
-  \item brisanje (DELETE) je rezervirano za admin uporabnike
+  \item \textbf{GET} je dostopen brez prijave,
+  \item \textbf{POST} in \textbf{PUT} zahtevata vlogo \texttt{librarian} ali \texttt{admin},
+  \item \textbf{DELETE} je dovoljen samo uporabnikom, ki so člani administratorske skupine \texttt{Admin}, konfigurirane prek \texttt{AD\_ADMIN\_GROUP\_DN}.
 \end{itemize}
 
-Za windows PowerShell:
+Primer preverjanja s PowerShellom:
 \begin{lstlisting}
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
-
-$b64 = [Convert]::ToBase64String(
-  [Text.Encoding]::ASCII.GetBytes(
-    'username:password'
-  )
-)
-
-$headers = @{
-  Authorization = "Basic $b64"
-  'Content-Type'='application/json'
-}
-
-$body = @{
-  name = 'Test Author'
-} | ConvertTo-Json
+$b64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('username:password'))
+$headers = @{ Authorization = "Basic $b64"; 'Content-Type'='application/json' }
+$body = @{ name = 'Test Author' } | ConvertTo-Json
 
 Invoke-RestMethod `
   -Uri 'https://192.168.11.104:3443/authors' `
@@ -990,9 +983,8 @@ Invoke-RestMethod `
   -Body $body
 \end{lstlisting}
 
-Za linux:
+Primer preverjanja z Linux odjemalcem:
 \begin{lstlisting}
-
 curl -i -X POST http://192.168.11.104:3000/authors \
   -H "Content-Type: application/json" \
   -u username:password \
@@ -1002,13 +994,13 @@ curl -i -X DELETE http://192.168.11.104:3000/authors/5 \
   -u username:password
 \end{lstlisting}
 
-\subsubsection{Potrditev TLS certifikata}
-Za certifikat:
+\subsubsection{TLS certifikat}
+Certifikati so samopodpisani, zato jih je v testnem okolju treba ročno zaupati:
 \begin{lstlisting}
 openssl s_client -connect 192.168.11.104:3443 -servername 192.168.11.104 -showcerts
 curl -vkI https://192.168.11.104:3443/
 \end{lstlisting}
-Certifikati so self-signed zato če jim želiš zaupat jih rabiš naložiti v napravi:
+
 \begin{lstlisting}
 openssl s_client -connect 192.168.11.104:3443 -showcerts </dev/null \
   | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /tmp/library-192-168-11-104.crt
@@ -1018,20 +1010,16 @@ sudo update-ca-certificates
 \end{lstlisting}
 
 \subsubsection{GraphQL}
-
-Primer javnega GraphQL poizvedovanja:
+GraphQL strežnik uporablja isto okolje in isto logiko sinhronizacije, vendar deluje na ločenih vratih:
 \begin{lstlisting}
 curl -k -X POST "https://192.168.11.104:32484/graphql" \
   -H "Content-Type: application/json" \
   -d '{"query":"{ authors { id name } }"}'
 \end{lstlisting}
 
-Primer zaščitene GraphQL mutacije z LDAP uporabnikom:
+Za zaščiteno mutacijo uporabimo Basic Auth:
 \begin{lstlisting}
-$b64 = [Convert]::ToBase64String(
-  [Text.Encoding]::ASCII.GetBytes('username:password')
-)
-
+$b64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('username:password'))
 $body = @{ query = 'mutation { createAuthor(name: "GraphQL Test") { id name } }' } | ConvertTo-Json
 
 Invoke-RestMethod `
@@ -1042,47 +1030,100 @@ Invoke-RestMethod `
 \end{lstlisting}
 
 \subsubsection{Scriptum\_kp}
-Scriptum je dostopen na spletnem mestu \url{192.168.11.104:8080} in \url{88.200.24.241:8080} ne uporablja LDAP uporabnikov ampak uporabnike na MongoDB bazi. Frontend je Angular,, backend je REST API, Node.js, Express. MongoDB baza ni na tem serverju ampak je na zunanjih mongo DB strežnikih.
+Projekt \texttt{Scriptum\_kp} teče ločeno na naslovih \url{192.168.11.104:8080} in \url{88.200.24.241:8080}. Uporablja MongoDB uporabnike, ne LDAP uporabnikov, zato ga ta dokument obravnava samo informativno.
 
-\section{Raft} 
-Raft storitev poteka na treh serverjih 192.168.11.101, 192.168.11.102, 192.168.11.103. Vse spremembe so sihronizirane preko etcd kljucov, vsaka ima svojo lokalno bazo ki se sinhronizira. To je update Rest storitve saj ta sedaj pošilja svojo bazo RAFT podatkovni bazi.
-Na serverju boste imeli veliko datotek:
+\subsubsection{Opomba o produkcijskem zagonu}
+REST storitev na \texttt{192.168.11.104} je po ponovnem zagonu strežnika treba zagnati prek Dockerja, ker je to trenutno edini način, da se storitev samodejno pobere nazaj z \texttt{restart unless-stopped}. Ročni \texttt{node server.js} zagon je uporaben za testiranje, ni pa obstojen čez reboot.
 
+\section{Raft sinhronizacija}
+V tej postavitvi Raft ne izvaja aplikacija sama, temveč \texttt{etcd} na treh vozliščih \texttt{192.168.11.101}, \texttt{192.168.11.102} in \texttt{192.168.11.103}. Aplikacija uporablja \texttt{etcd} za distribuirane ključavnice, osnovni izbor vodje in sinhronizacijo zapisov med lokalnimi SQLite bazami.
+
+Vsaka instanca ima svojo lokalno datoteko \texttt{library-ha.db}. Ko se zapis spremeni, se najprej shrani lokalno, nato pa se v \texttt{etcd} objavi pod ključem \texttt{sync:\textless tip\textgreater:\textless id\textgreater}. Ostale instance te ključe preberejo prek watcherja in posodobijo svoje lokalne podatke.
+
+\subsection{Ključne datoteke}
 \begin{itemize}
-  \item \texttt{raft-api-integration.js} -  ta datoteka pomaga pri replikaciji in temu da se domenijo o vodji
-  \item \texttt{sync-watcher.js} -  gleda etcd sync ključe in jih doda v localno library-ha.db za nek razlog etcd se ni znal sam zmenit za ključe
-  \item \texttt{query-ha-db.js} -  node.js script da bere library-ha.db in sprinta autorje, uporabno za testiranje
-  \item \texttt{test-graphql.js} -  test samo za lokalno da preveri če je možno POST request narediti na qraphql
-  \item \texttt{create-author.js}, \texttt{manual-replicate.js} -  pomožne skripte za pomoč pri testiranju pisanja in repliciranja
+  \item \texttt{raft-api-integration.js} --- glavna REST implementacija z integracijo v \texttt{etcd}.
+  \item \texttt{sync-watcher.js} --- watcher za \texttt{sync:} ključe in aplikacijo sprememb v lokalno bazo.
+  \item \texttt{query-ha-db.js} --- hiter pregled vsebine \texttt{library-ha.db}.
+  \item \texttt{create-author.js} --- lokalni testni zapis prek REST.
+  \item \texttt{manual-replicate.js} --- ročna objava testa replike v \texttt{etcd}.
+  \item \texttt{test-graphql.js} --- lokalni testni POST na GraphQL endpoint.
 \end{itemize}
 
-\subsection{Pregled in preverjanje baze podatkov}
+\subsection{Kaj mora biti zagnano}
+Pred preizkušanjem morajo delovati:
+\begin{itemize}
+  \item \texttt{etcd} cluster na vseh treh strežnikih,
+  \item API storitev na vseh vozliščih,
+  \item omrežni dostop do vrat \texttt{2379} in \texttt{2380},
+  \item lokalna baza \texttt{library-ha.db} na vsaki instanci.
+\end{itemize}
 
-Za namene testiranja ali preverjanja pravilne sinhronizacije podatkov med vozlišči lahko vsebino baze podatkov preberete neposredno iz ukazne vrstice.
+\subsection{Pregled baze}
+Za hiter pregled lokalne baze na posameznem vozlišču uporabimo:
 
 \begin{lstlisting}
 cd ~/library-api
 node query-ha-db.js
 \end{lstlisting}
 
-Skript privzeto izvede poizvedbo:
+Privzeti SQL ukaz je:
 
 \begin{lstlisting}[language=SQL]
 SELECT id, name FROM authors;
 \end{lstlisting}
 
-Rezultat poizvedbe se izpiše v terminalu, kar omogoča hitro preverjanje vsebine baze podatkov.
-
-Če želite izvesti druge SQL poizvedbe, lahko ustrezno prilagodite datoteko \texttt{query-ha-db.js} in vanjo vnesete želen SQL stavek.
-
-Podatkovna baza se nahaja v datoteki:
+Stanje storitev na vozliščih preverimo z:
 
 \begin{lstlisting}
-library-ha.db
+ssh zanzan01@192.168.11.101 "systemctl status library-api"
+ssh zanzan02@192.168.11.102 "systemctl status library-api"
+ssh zanzan03@192.168.11.103 "systemctl status library-api"
 \end{lstlisting}
 
-Priporočljivo je, da se pred posegi v podatkovno bazo ustvari varnostna kopija, zlasti v produkcijskem okolju.
+\subsection{Preverjanje clustra}
+Za pregled članov in stanja clustra uporabimo \texttt{etcdctl}:
 
+\begin{lstlisting}
+etcdctl member list --endpoints=http://localhost:2379
+etcdctl endpoint status --cluster -w table
+\end{lstlisting}
+
+Oddaljen pregled na node1:
+\begin{lstlisting}
+ssh zanzan01@192.168.11.101 "etcdctl member list --endpoints=http://localhost:2379"
+ssh zanzan01@192.168.11.101 "etcdctl endpoint status --cluster -w table"
+\end{lstlisting}
+
+\subsection{Testiranje sinhronizacije}
+Pomembni testi so naslednji:
+
+\begin{lstlisting}
+cd ~/library-api
+node create-author.js
+node manual-replicate.js
+node sync-watcher.js
+node test-graphql.js
+\end{lstlisting}
+
+Pomen posameznih ukazov:
+\begin{itemize}
+  \item \texttt{create-author.js} doda testnega avtorja prek REST,
+  \item \texttt{manual-replicate.js} ročno objavi \texttt{sync:} zapis v \texttt{etcd},
+  \item \texttt{sync-watcher.js} pobere nove \texttt{sync:} ključe in jih uporabi v lokalni bazi,
+  \item \texttt{test-graphql.js} preveri, ali je lokalni GraphQL endpoint dosegljiv.
+\end{itemize}
+
+Če je sinhronizacija uspela, mora biti rezultat \texttt{node query-ha-db.js} enak na vseh vozliščih.
+
+\subsection{Priporočeni potek}
+\begin{enumerate}
+  \item Preveri, da je \texttt{etcd} cluster aktiven.
+  \item Preveri, da je REST storitev zagnana na vseh treh strežnikih.
+  \item Dodaj ali posodobi zapis prek REST ali GraphQL.
+  \item Preveri lokalno bazo z \texttt{node query-ha-db.js}.
+  \item Po potrebi preveri še \texttt{/health} endpoint in loge storitve.
+\end{enumerate}
 
 
 

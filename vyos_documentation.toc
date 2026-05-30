@@ -4,21 +4,21 @@
 \contentsline {subsection}{\numberline {1.3}Izolacija segmentov}{3}{subsection.1.3}%
 \contentsline {subsection}{\numberline {1.4}Načrt požarnega zidu (visoka raven)}{4}{subsection.1.4}%
 \contentsline {section}{\numberline {2}Osnovne informacije}{4}{section.2}%
-\contentsline {section}{\numberline {3}Omrežni vmesniki}{4}{section.3}%
+\contentsline {section}{\numberline {3}Omrežni vmesniki}{5}{section.3}%
 \contentsline {section}{\numberline {4}Privzete usmeritve (statične usmeritve)}{5}{section.4}%
 \contentsline {section}{\numberline {5}NAT (IPv4)}{5}{section.5}%
 \contentsline {section}{\numberline {6}DMZ strežniki (vsi v omrežju 192.168.11.0/24)}{5}{section.6}%
 \contentsline {subsection}{\numberline {6.1}Pregled strežnikov}{5}{subsection.6.1}%
 \contentsline {section}{\numberline {7}NAT in preusmeritve vrat}{5}{section.7}%
 \contentsline {subsection}{\numberline {7.1}IPv4 DNAT (port forwarding)}{5}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}IPv4 source NAT (masquerade)}{5}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.2}IPv4 source NAT (masquerade)}{6}{subsection.7.2}%
 \contentsline {subsection}{\numberline {7.3}NAT66 (NPTv6, IPv6-to-IPv6 Network Prefix Translation - RFC 6296)}{6}{subsection.7.3}%
 \contentsline {section}{\numberline {8}Varnost (firewall)}{6}{section.8}%
 \contentsline {subsection}{\numberline {8.1}IPv4 - vhodni promet (input)}{6}{subsection.8.1}%
 \contentsline {subsection}{\numberline {8.2}IPv4 - forward (posredovanje)}{6}{subsection.8.2}%
 \contentsline {subsection}{\numberline {8.3}IPv6 - vhodni promet in posredovanje}{6}{subsection.8.3}%
-\contentsline {section}{\numberline {9}Storitve}{6}{section.9}%
-\contentsline {subsection}{\numberline {9.1}DHCPv4}{6}{subsection.9.1}%
+\contentsline {section}{\numberline {9}Storitve}{7}{section.9}%
+\contentsline {subsection}{\numberline {9.1}DHCPv4}{7}{subsection.9.1}%
 \contentsline {subsection}{\numberline {9.2}DHCP - statične mape}{7}{subsection.9.2}%
 \contentsline {subsection}{\numberline {9.3}DHCPv6}{7}{subsection.9.3}%
 \contentsline {paragraph}{Statične DHCPv6 mape}{7}{section*.2}%
@@ -63,15 +63,22 @@
 \contentsline {subsection}{\numberline {14.5}Odpravljanje težav}{17}{subsection.14.5}%
 \contentsline {subsection}{\numberline {14.6}wg-portal (WireGuard portal) in integracija z Active Directory}{17}{subsection.14.6}%
 \contentsline {section}{\numberline {15}REST}{18}{section.15}%
-\contentsline {subsection}{\numberline {15.1}Arhitektura}{18}{subsection.15.1}%
+\contentsline {subsection}{\numberline {15.1}Arhitektura storitve}{18}{subsection.15.1}%
 \contentsline {subsection}{\numberline {15.2}Konfiguracija}{19}{subsection.15.2}%
-\contentsline {subsection}{\numberline {15.3}Docker zagon}{19}{subsection.15.3}%
-\contentsline {subsection}{\numberline {15.4}Preverjanje delovanja}{19}{subsection.15.4}%
-\contentsline {subsubsection}{\numberline {15.4.1}Javni GET zahtevek}{19}{subsubsection.15.4.1}%
-\contentsline {subsubsection}{\numberline {15.4.2}Vsebinsko pogajanje in podprti formati}{20}{subsubsection.15.4.2}%
-\contentsline {subsubsection}{\numberline {15.4.3}LDAP avtorizacija}{20}{subsubsection.15.4.3}%
-\contentsline {subsubsection}{\numberline {15.4.4}Potrditev TLS certifikata}{21}{subsubsection.15.4.4}%
-\contentsline {subsubsection}{\numberline {15.4.5}GraphQL}{21}{subsubsection.15.4.5}%
-\contentsline {subsubsection}{\numberline {15.4.6}Scriptum\_kp}{22}{subsubsection.15.4.6}%
-\contentsline {section}{\numberline {16}Raft}{22}{section.16}%
-\contentsline {subsection}{\numberline {16.1}Pregled in preverjanje baze podatkov}{22}{subsection.16.1}%
+\contentsline {subsection}{\numberline {15.3}Zagon in persistenca}{19}{subsection.15.3}%
+\contentsline {subsection}{\numberline {15.4}Preverjanje delovanja}{20}{subsection.15.4}%
+\contentsline {subsubsection}{\numberline {15.4.1}Osnovni testi}{20}{subsubsection.15.4.1}%
+\contentsline {subsubsection}{\numberline {15.4.2}Vsebinsko pogajanje}{20}{subsubsection.15.4.2}%
+\contentsline {subsubsection}{\numberline {15.4.3}Glavne poti}{20}{subsubsection.15.4.3}%
+\contentsline {subsubsection}{\numberline {15.4.4}LDAP avtorizacija}{20}{subsubsection.15.4.4}%
+\contentsline {subsubsection}{\numberline {15.4.5}TLS certifikat}{21}{subsubsection.15.4.5}%
+\contentsline {subsubsection}{\numberline {15.4.6}GraphQL}{21}{subsubsection.15.4.6}%
+\contentsline {subsubsection}{\numberline {15.4.7}Scriptum\_kp}{22}{subsubsection.15.4.7}%
+\contentsline {subsubsection}{\numberline {15.4.8}Opomba o produkcijskem zagonu}{22}{subsubsection.15.4.8}%
+\contentsline {section}{\numberline {16}Raft sinhronizacija}{22}{section.16}%
+\contentsline {subsection}{\numberline {16.1}Ključne datoteke}{22}{subsection.16.1}%
+\contentsline {subsection}{\numberline {16.2}Kaj mora biti zagnano}{22}{subsection.16.2}%
+\contentsline {subsection}{\numberline {16.3}Pregled baze}{22}{subsection.16.3}%
+\contentsline {subsection}{\numberline {16.4}Preverjanje clustra}{23}{subsection.16.4}%
+\contentsline {subsection}{\numberline {16.5}Testiranje sinhronizacije}{23}{subsection.16.5}%
+\contentsline {subsection}{\numberline {16.6}Priporočeni potek}{23}{subsection.16.6}%
