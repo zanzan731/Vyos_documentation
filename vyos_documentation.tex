@@ -1376,10 +1376,7 @@ Invoke-RestMethod `
 \end{lstlisting}
 
 \subsubsection{Scriptum\_kp}
-Projekt \texttt{Scriptum\_kp} teče ločeno na naslovih \url{192.168.11.104:8080} in \url{88.200.24.241:8080}. Uporablja MongoDB uporabnike, ne LDAP uporabnikov, zato ga ta dokument obravnava samo informativno.
-
-\subsubsection{Opomba o produkcijskem zagonu}
-REST storitev na \texttt{192.168.11.104} je po ponovnem zagonu strežnika treba zagnati prek Dockerja, ker je to trenutno edini način, da se storitev samodejno pobere nazaj z \texttt{restart unless-stopped}. Ročni \texttt{node server.js} zagon je uporaben za testiranje, ni pa obstojen čez reboot.
+Projekt \texttt{Scriptum\_kp} teče ločeno na naslovih \url{192.168.11.104:8080} in \url{88.200.24.241:8080}. Uporablja MongoDB uporabnike in ne LDAP uporabnikov.
 
 \section{Raft sinhronizacija}
 V tej postavitvi Raft ne izvaja aplikacija sama, temveč \texttt{etcd} na treh vozliščih \texttt{192.168.11.101}, \texttt{192.168.11.102} in \texttt{192.168.11.103}. Aplikacija uporablja \texttt{etcd} za distribuirane ključavnice, osnovni izbor vodje in sinhronizacijo zapisov med lokalnimi SQLite bazami.
