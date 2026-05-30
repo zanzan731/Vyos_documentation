@@ -13,12 +13,12 @@ Summary of services (IPs, ports, public exposure):
 | Library API (HTTPS) | 192.168.11.104 (DMZ web host) | 3443 (tcp) | Yes | Library API (HTTPS)
 | Library API (GraphQL) | 192.168.11.104 (DMZ web host) | 32484 (tcp) | No | Library GraphQL endpoint (internal)
 | DMZ DNS | 192.168.11.105 | 53 (udp/tcp) | No | Internal → DMZ DNS rules (internal clients only)
-| AD DNS | 192.168.11.201 (AD), 2001:1470:fffd:a9::185 | 53 (udp/tcp) | No | Client/server AD name resolution (from `v4.conf` rules)
-| AD Kerberos | 192.168.11.201 (AD), 2001:1470:fffd:a9::185 | 88 (tcp/udp) | No | Domain authentication / ticketing
-| AD LDAP | 192.168.11.201 (AD), 2001:1470:fffd:a9::185 | 389 (tcp/udp) | No | Directory queries and joins
-| AD Global Catalog | 192.168.11.201 (AD), 2001:1470:fffd:a9::185 | 3268, 3269 (tcp) | No | Forest-wide lookups / logon support
-| AD SMB/RPC/time/kpasswd | 192.168.11.201 (AD), 2001:1470:fffd:a9::185 | 135, 123, 445, 464 (tcp/udp) | No | Group policy, RPC endpoint mapping, time sync, Kerberos password ops
-| AD Dynamic RPC | 192.168.11.201 (AD), 2001:1470:fffd:a9::185 | 49152-65535 (tcp) | No | AD RPC high ports required by many management/auth flows
+| AD DNS | 192.168.11.201 (AD), 2001:1470:fffd:a9::201 | 53 (udp/tcp) | No | Client/server AD name resolution (from `v4.conf` rules)
+| AD Kerberos | 192.168.11.201 (AD), 2001:1470:fffd:a9::201 | 88 (tcp/udp) | No | Domain authentication / ticketing
+| AD LDAP | 192.168.11.201 (AD), 2001:1470:fffd:a9::201 | 389 (tcp/udp) | No | Directory queries and joins
+| AD Global Catalog | 192.168.11.201 (AD), 2001:1470:fffd:a9::201 | 3268, 3269 (tcp) | No | Forest-wide lookups / logon support
+| AD SMB/RPC/time/kpasswd | 192.168.11.201 (AD), 2001:1470:fffd:a9::201 | 135, 123, 445, 464 (tcp/udp) | No | Group policy, RPC endpoint mapping, time sync, Kerberos password ops
+| AD Dynamic RPC | 192.168.11.201 (AD), 2001:1470:fffd:a9::201 | 49152-65535 (tcp) | No | AD RPC high ports required by many management/auth flows
 | DMZ SNMP target | VyOS router (DMZ) — 192.168.11.1 | 161 (udp) | No | SNMP enabled on VyOS (listen 192.168.11.1); exporter scrapes this target
 | Prometheus (monitoring) | 192.168.11.107 (DMZ monitoring host) | 9090 (tcp) | No | Prometheus scrape UI/service (scrapes exporter)
 | snmp_exporter | 192.168.11.107 (DMZ monitoring host) | 9116 (tcp) | No | Exporter endpoint for Prometheus (`/snmp`), scrapes VyOS at 192.168.11.1
@@ -34,17 +34,17 @@ The current VyOS configuration uses static DHCP mappings for the DMZ and related
 
 | Host | DHCPv4 address | DHCPv6 address | DHCPv6 DUID / identifier | Notes |
 |---|---|---|---|---|
-| dmz-windows-AD | 192.168.11.201 | 2001:1470:fffd:a9::185 | 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 | AD / Windows server |
+| raft1 | 192.168.11.101 | 2001:1470:fffd:a9::101 | 00:02:00:00:ab:11:2b:e2:d4:90:70:f3:b3:37 | DMZ server |
+| raft2 | 192.168.11.102 | 2001:1470:fffd:a9::102 | 00:02:00:00:ab:11:e1:94:d4:8a:18:52:ad:98 | DMZ server |
+| raft3 | 192.168.11.103 | 2001:1470:fffd:a9::103 | 00:02:00:00:ab:11:92:37:c8:9a:00:b8:67:77 | DMZ server |
+| rest | 192.168.11.104 | 2001:1470:fffd:a9::104 | 00:02:00:00:ab:11:5a:9d:49:65:ce:4a:b2:48 | REST / web service |
 | dns-srv | 192.168.11.105 | - | - | DMZ DNS server |
-| raft1 | 192.168.11.101 | 2001:1470:fffd:a9::124 | 00:02:00:00:ab:11:2b:e2:d4:90:70:f3:b3:37 | DMZ server |
-| raft2 | 192.168.11.102 | 2001:1470:fffd:a9::114 | 00:02:00:00:ab:11:e1:94:d4:8a:18:52:ad:98 | DMZ server |
-| raft3 | 192.168.11.103 | 2001:1470:fffd:a9::16b | 00:02:00:00:ab:11:92:37:c8:9a:00:b8:67:77 | DMZ server |
-| rest | 192.168.11.104 | 2001:1470:fffd:a9::115 | 00:02:00:00:ab:11:5a:9d:49:65:ce:4a:b2:48 | REST / web service |
-| snmp | 192.168.11.107 | 2001:1470:fffd:a9::17a | 00:02:00:00:ab:11:b8:b7:97:e3:eb:3c:a5:52 | SNMP-managed host |
-| wg | 192.168.11.106 | 2001:1470:fffd:a9::1c8 | 00:02:00:00:ab:11:80:f9:48:e8:e6:e2:12:59 | WireGuard host |
-| new_wg | 192.168.11.108 | 2001:1470:fffd:a9::18d | 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 | New WireGuard-related host |
+| wg | 192.168.11.106 | 2001:1470:fffd:a9::106 | 00:02:00:00:ab:11:80:f9:48:e8:e6:e2:12:59 | WireGuard host |
+| snmp | 192.168.11.107 | 2001:1470:fffd:a9::107 | 00:02:00:00:ab:11:b8:b7:97:e3:eb:3c:a5:52 | SNMP-managed host |
+| new_wg | 192.168.11.108 | 2001:1470:fffd:a9::108 | 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 | New WireGuard-related host |
+| dmz-windows-AD | 192.168.11.201 | 2001:1470:fffd:a9::201 | 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 | AD / Windows server |
 
-For the IPv6-only mapping set, `wg` is the current name used in `v5.5.conf` for `2001:1470:fffd:a9::1c8`.
+For the IPv6 mapping set, the addresses now mirror the IPv4 1xx/2xx convention: `101-108` for the DMZ hosts and `201` for AD.
 
 ## Network assumptions
 

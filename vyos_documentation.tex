@@ -133,23 +133,23 @@ Izvorni NAT (SNAT) & 192.168.11.0/24, izhodni vmesnik eth0 & maskiranje (masquer
 \hline
 \textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{IPv6 naslov} & \textbf{Namen} \\
 \hline
-raft1 & 192.168.11.101 & 2001:1470:fffd:a9::124 & Raft (cluster node) \\
+raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & Raft (cluster node) \\
 \hline
-raft2 & 192.168.11.102 & 2001:1470:fffd:a9::114 & Raft (cluster node) \\
+raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & Raft (cluster node) \\
 \hline
-raft3 & 192.168.11.103 & 2001:1470:fffd:a9::16b & Raft (cluster node) \\
+raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & Raft (cluster node) \\
 \hline
-rest & 192.168.11.104 & 2001:1470:fffd:a9::115 & REST API / ostali servisi \\
+rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST API / ostali servisi \\
 \hline
 dns-srv & 192.168.11.105 & - & DNS strežnik (lokalni) \\
 \hline
-wireguard & 192.168.11.106 & 2001:1470:fffd:a9::1c8 & WireGuard VPN končna točka \\
+wireguard & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard VPN končna točka \\
 \hline
-snmp & 192.168.11.107 & 2001:1470:fffd:a9::17a & SNMP / monitoring cilj \\
+snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & SNMP / monitoring cilj \\
 \hline
-new\_wg & 192.168.11.108 & 2001:1470:fffd:a9::18d & New WireGuard-related host \\
+new\_wg & 192.168.11.108 & 2001:1470:fffd:a9::108 & New WireGuard-related host \\
 \hline
-AD (dmz windows 1) & 192.168.11.201 & 2001:1470:fffd:a9::185 & Active Directory (Domain Controller) \\
+AD (dmz windows 1) & 192.168.11.201 & 2001:1470:fffd:a9::201 & Active Directory (Domain Controller) \\
 \hline
 
 \end{longtable}
@@ -220,7 +220,7 @@ IPv6 & FORWARD & Dovoli nove UDP povezave na port 51820 na vhodnem vmesniku eth0
 % Forward rule summary already in firewall table above.
 
 \subsection{IPv6 - vhodni promet in posredovanje}
-IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \texttt{eth0}), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku \texttt{eth0}) in pravila 210-241 za dostop do AD strežnika na \texttt{2001:1470:fffd:a9::185}.
+IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \texttt{eth0}), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku \texttt{eth0}) in pravila 210-241 za dostop do AD strežnika na \texttt{2001:1470:fffd:a9::201}.
 % IPv6 firewall rules summarized in the firewall table above.
 
 \section{Storitve}
@@ -271,21 +271,21 @@ Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporablja
 \hline
 \textbf{Host} & \textbf{DHCPv6 naslov} & \textbf{DUID / identifier} \\
 \hline
-dmz-windows-AD & 2001:1470:fffd:a9::185 & 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 \\
+dmz-windows-AD & 2001:1470:fffd:a9::201 & 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 \\
 \hline
-raft1 & 2001:1470:fffd:a9::124 & 00:02:00:00:ab:11:2b:e2:d4:90:70:f3:b3:37 \\
+raft1 & 2001:1470:fffd:a9::101 & 00:02:00:00:ab:11:2b:e2:d4:90:70:f3:b3:37 \\
 \hline
-raft2 & 2001:1470:fffd:a9::114 & 00:02:00:00:ab:11:e1:94:d4:8a:18:52:ad:98 \\
+raft2 & 2001:1470:fffd:a9::102 & 00:02:00:00:ab:11:e1:94:d4:8a:18:52:ad:98 \\
 \hline
-raft3 & 2001:1470:fffd:a9::16b & 00:02:00:00:ab:11:92:37:c8:9a:00:b8:67:77 \\
+raft3 & 2001:1470:fffd:a9::103 & 00:02:00:00:ab:11:92:37:c8:9a:00:b8:67:77 \\
 \hline
-rest & 2001:1470:fffd:a9::115 & 00:02:00:00:ab:11:5a:9d:49:65:ce:4a:b2:48 \\
+rest & 2001:1470:fffd:a9::104 & 00:02:00:00:ab:11:5a:9d:49:65:ce:4a:b2:48 \\
 \hline
-snmp & 2001:1470:fffd:a9::17a & 00:02:00:00:ab:11:b8:b7:97:e3:eb:3c:a5:52 \\
+snmp & 2001:1470:fffd:a9::107 & 00:02:00:00:ab:11:b8:b7:97:e3:eb:3c:a5:52 \\
 \hline
-wg & 2001:1470:fffd:a9::1c8 & 00:02:00:00:ab:11:80:f9:48:e8:e6:e2:12:59 \\
+wg & 2001:1470:fffd:a9::106 & 00:02:00:00:ab:11:80:f9:48:e8:e6:e2:12:59 \\
 \hline
-new\_wg & 2001:1470:fffd:a9::18d & 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 \\
+new\_wg & 2001:1470:fffd:a9::108 & 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 \\
 \hline
 \end{longtable}
 
@@ -298,17 +298,17 @@ DNS posredovanje na VyOS sprejema poizvedbe iz notranjih omrežij in uporablja c
   \item vse ostale poizvedbe gredo na javne upstream DNS strežnike (ARNES + Cloudflare).
 \end{itemize}
 
-\textbf{AD DNS server (authoritative):} \texttt{192.168.11.201} / \texttt{2001:1470:fffd:a9::185}
+\textbf{AD DNS server (authoritative):} \texttt{192.168.11.201} / \texttt{2001:1470:fffd:a9::201}
 
 \subsubsection{Trenutno stanje AD DNS}
 Trenutna AD zona \texttt{startup11.local} vsebuje klju\v{c}ne notranje zapise za domeno, DC in DMZ stre\v{z}nike:
 
 \begin{itemize}
-  \item korenski zapis \texttt{@} vsebuje A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::185};
+  \item korenski zapis \texttt{@} vsebuje A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::201};
   \item NS in SOA na vrhu cone kažeta na \texttt{win-sgi52j8519e.startup11.local.};
   \item standardni AD SRV zapisi so prisotni za \verb|_gc._tcp|, \verb|_kerberos._tcp|, \verb|_kerberos._udp|, \verb|_ldap._tcp| in \verb|_kpasswd._tcp| ter ustrezne \verb|Default-First-Site-Name| in \verb|ForestDnsZones| / \verb|DomainDnsZones| podcone;
   \item glavni DC gostitelj \texttt{win-sgi52j8519e} ima A zapis \texttt{192.168.11.201} in AAAA zapis \newline
-\texttt{2001:1470:fffd:a9::185};
+\texttt{2001:1470:fffd:a9::201};
   \item dodatna notranja zapisa sta \texttt{rest.startup11.local} \textrightarrow{} \texttt{192.168.11.104} in \texttt{snmp.startup11.local} \textrightarrow{} \texttt{192.168.11.107}.
 \end{itemize}
 
@@ -340,7 +340,7 @@ Strežnik \texttt{dns-srv} (192.168.11.105) z \textbf{dnsmasq} je opcijski notra
 \textbf{Trenutna konfiguracija:}
 \begin{itemize}
     \item dnsmasq posluša na: \texttt{192.168.11.105:53} (DMZ naslov)
-    \item \texttt{startup11.local} se posreduje na AD DNS: \texttt{192.168.11.201} in \texttt{2001:1470:fffd:a9::185}
+    \item \texttt{startup11.local} se posreduje na AD DNS: \texttt{192.168.11.201} in \texttt{2001:1470:fffd:a9::201}
     \item Konfiguracija: \verb|/etc/dnsmasq.d/startup11.conf|
 \end{itemize}
 
@@ -383,7 +383,7 @@ bind-interfaces
 
 # Forward AD domain to AD DNS (preserves SRV records)
 server=/startup11.local/192.168.11.201
-server=/startup11.local/2001:1470:fffd:a9::185
+server=/startup11.local/2001:1470:fffd:a9::201
 
 # Upstream resolvers for non-local domains
 server=1.1.1.1
