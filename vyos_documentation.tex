@@ -58,38 +58,95 @@ Segmenti se izolirajo z naslednjimi ukrepi:
   \item \textbf{Monitoring in logging}: monitoring host ima izključno dovoljenje za SNMP/agent promet; centralizirano beleženje (syslog) in netflow/sflow za analizo.
 \end{itemize}
 
-\subsection{Načrt požarnega zidu (visoka raven)}
-Osnovna politika: \emph{default deny} za vse vhodne in posredovane povezave, dovoli le eksplicitno definirane poti.
-\begin{itemize}
-  \item \textbf{WAN (eth0) -> VyOS}: dovoli \texttt{established, related}; dovoli DNAT za:
-    \begin{itemize}
-      \item UDP 51820 -> WireGuard endpoint v DMZ
-      \item TCP 443 -> reverse-proxy ali neposredno na \texttt{wg-portal}/REST frontend (DMZ)
-    \end{itemize}
-  \item \textbf{WAN -> DMZ (direktni)}: ne dovoli neposrednega dostopa do AD/DNS/SNMP; dovoli samo zgoraj navedene DNAT pravila.
-  \item \textbf{INTERNAL -> DMZ}: dovoli le potrebne storitve:
-    \begin{itemize}
-      \item DNS (53) do AD/DNS
-      \item LDAP/LDAPS (389/636), Kerberos (88), Global Catalog (3268/3269) do AD
-      \item HTTP/HTTPS do REST frontend
-      \item SSH/RDP samo iz administrativne podmreže ali VPN
-    \end{itemize}
-  \item \textbf{DMZ -> INTERNAL}: privzeto blokiraj; dovoli le potrebno (npr. monitoring/reporting na notranji monitoring host), definirano z virnim IP-jem.
-  \item \textbf{INTERNAL -> INTERNET}: dovoli outbound HTTP/HTTPS/DNS z NAT/masquerade na VyOS.
-  \item \textbf{VPN (WireGuard)}: uporabniški VPN ima omejen dostop; administrativni VPN ima dostop do DMZ in internal za upravljanje.
-  \item \textbf{Host-firewall pravila}: na vsakem strežniku implementiraj default-deny inbound; dovoli le servise, ki jih strežnik ponuja, z omejitvijo vira na internal/VPN ali specificirane monitoring host-e.
-\end{itemize}
 
-V nadaljevanju dokumentacije so podrobnosti konfiguracij in primeri ukazov za VyOS in predloge za host-firewall.
+\section{Naprave}
 
-\section{Osnovne informacije}
+\subsection{usmerjevalnik}
+sk11-vyos
+
+\subsection{internal}
+sk11-internal-linux
+sk11-internal-windows
+
+\subsection{ipv6only}
+sk11-ipv6only-linux
+sk11-ipv6only-windows
+
+
+\subsection{DMZ strežniki - označi subnet}
+\begin{longtable}{|l|l|l|l|}
+\hline
+\textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{IPv6 naslov} & \textbf{Namen} \\
+\hline
+raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & Raft (cluster node) \\
+\hline
+raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & Raft (cluster node) \\
+\hline
+raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & Raft (cluster node) \\
+\hline
+rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST API / ostali servisi \\
+\hline
+dns-srv & 192.168.11.105 & - & DNS strežnik (lokalni) (ni v uporabi)\\
+\hline
+wireguard & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard VPN končna točka \\
+\hline
+snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & SNMP / monitoring cilj \\
+\hline
+wg2 & 192.168.11.108 & 2001:1470:fffd:a9::108 & drugi wireguard strežnik (ni v uporabi) \\
+\hline
+AD & 192.168.11.201 & 2001:1470:fffd:a9::201 & Active Directory (Domain Controller) \\
+\hline
+\end{longtable}
+
+
+\section{Povzetek storitev}
+
+\begin{longtable}{|p{4.1cm}|p{2.4cm}|p{2.5cm}|p{1.3cm}|p{5.0cm}|}
+\hline
+\textbf{Service} & \textbf{Host} & \textbf{Port (proto)} & \textbf{Public?} & \textbf{Notes} \\
+\hline
+RDP & all internal and ipv6only + AD server & 3389 (tcp) & No & RDP enabled all devices that have a GUI \\
+\hline
+SSH & all devices & 22 (tcp) & only vyos & SSH service present on all devices; WAN SSH allowed only on vyos \\
+\hline
+SNMP target (VyOS) & vyos & 161 (udp) & No & SNMP on VyOS; exporter scrapes this target \\
+\hline
+REST service (scriptum) & rest & 8080 (tcp) & Yes & Public DNAT exists \\
+\hline
+scriptum backend & rest & 4443 (tcp) & Yes & Public backend endpoint \\
+\hline
+Library API (HTTP) & rest & 3000 (tcp) & No & Internal HTTP API \\
+\hline
+Library API (HTTPS) & rest & 3443 (tcp) & Yes & Public HTTPS endpoint \\
+\hline
+Library API (GraphQL) & rest & 32484 (tcp) & No & Internal GraphQL endpoint \\
+\hline
+DMZ DNS & dns-srv & 53 (udp/tcp) & No & Internal DNS for DMZ clients \\
+\hline
+WireGuard server & wireguard & 51820 (udp) & Yes & PiVPN, uses its own NAT/masquerade \\
+\hline
+wg-portal UI & wireguard & 8888 (tcp) & No & Local portal UI (internal only) \\
+\hline
+Prometheus & snmp & 9090 (tcp) & No & Prometheus scrape UI/service \\
+\hline
+\texttt{snmp\_exporter} & snmp & 9116 (tcp) & No & Exporter endpoint for Prometheus \\
+\hline
+Grafana & snmp & 3000 (tcp) & No & Grafana UI for dashboards \\
+\hline
+AD services (DNS/Kerberos/LDAP/etc.) & AD & 53, 88, 389, 3268, 135, 123, 445, 464, 49152-65535 & No & Active Directory services (internal only) \\
+\hline
+\end{longtable}
+
+\section{VyOS}
+
+\subsection{Osnovne informacije}
 \begin{itemize}
     \item \textbf{Ime naprave:} startup11-vyos
     \item \textbf{Domena:} startup11.local
     \item \textbf{Uporabnik:} vyos (prijava prek SSH ključa)
 \end{itemize}
 
-\section{Omrežni vmesniki}
+\subsection{Omrežni vmesniki}
 \begin{longtable}{|l|l|l|l|}
 \hline
 \textbf{Vmesnik} & \textbf{Opis} & \textbf{IPv4} & \textbf{IPv6} \\
@@ -104,7 +161,7 @@ eth3 & IPv6-only & - & fd11:11:11::1/64 \\
 \hline
 \end{longtable}
 
-\section{Privzete usmeritve (statične usmeritve)}
+\subsection{Privzete usmeritve (statične usmeritve)}
 \begin{longtable}{|l|l|}
 \hline
 \textbf{Destinacija} & \textbf{Naslednji hop} \\
@@ -115,115 +172,264 @@ eth3 & IPv6-only & - & fd11:11:11::1/64 \\
 \hline
 \end{longtable}
 
-\section{NAT (IPv4)}
-\begin{longtable}{|l|l|l|}
-\hline
-\textbf{Vrsta} & \textbf{Viri / kriterij} & \textbf{Prevod / opomba} \\
-\hline
-Izvorni NAT (SNAT) & 10.11.0.0/24, izhodni vmesnik eth0 & maskiranje (masquerade) \\
-\hline
-Izvorni NAT (SNAT) & 192.168.11.0/24, izhodni vmesnik eth0 & maskiranje (masquerade) \\
-\hline
-\end{longtable}
-
-\section{DMZ strežniki (vsi v omrežju 192.168.11.0/24)}
-
-\subsection{Pregled strežnikov}
-\begin{longtable}{|l|l|l|l|}
-\hline
-\textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{IPv6 naslov} & \textbf{Namen} \\
-\hline
-raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & Raft (cluster node) \\
-\hline
-raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & Raft (cluster node) \\
-\hline
-raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & Raft (cluster node) \\
-\hline
-rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST API / ostali servisi \\
-\hline
-dns-srv & 192.168.11.105 & - & DNS strežnik (lokalni) \\
-\hline
-wireguard & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard VPN končna točka \\
-\hline
-snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & SNMP / monitoring cilj \\
-\hline
-new\_wg & 192.168.11.108 & 2001:1470:fffd:a9::108 & New WireGuard-related host \\
-\hline
-AD (dmz windows 1) & 192.168.11.201 & 2001:1470:fffd:a9::201 & Active Directory (Domain Controller) \\
-\hline
-
-\end{longtable}
-
-\section{NAT in preusmeritve vrat}
-\subsection{IPv4 DNAT (port forwarding)}
+\subsection{Router Advertisements (RA)}
+RA so omogočeni na:
 \begin{itemize}
-    \item \textbf{Pravila:} zunanja vmesnik \texttt{eth0}, UDP port \texttt{51820} preusmerjen na \texttt{192.168.11.106} (WireGuard).
+    \item \texttt{eth1}: prefix \texttt{2001:1470:fffd:a9::/64} (managed flag, no-autonomous)
+    \item \texttt{eth2}: prefix \texttt{2001:1470:fffd:aa::/64}
+    \item \texttt{eth3}: prefix \texttt{fd11:11:11::/64}, name-server \texttt{fd11:11:11::1}
 \end{itemize}
-\begin{longtable}{|l|l|l|}
+
+\subsection{NTP}
+NTP sinhronizacija uporablja naslednje strežnike:
+
+\begin{longtable}{|l|}
 \hline
-\textbf{Tip} & \textbf{Kriterij} & \textbf{Cilj / opomba} \\
+\textbf{NTP strežnik} \\
 \hline
-DNAT (preusmeritev vrat) & vhod: eth0, proto UDP, dst port 51820 & 192.168.11.106 (WireGuard) \\
+ntp.arnes.si \\
 \hline
-SNAT / maskiranje & 10.11.0.0/24 -> izhod eth0 & maskiranje (masquerade) \\
+time1.vyos.net \\
 \hline
-SNAT / maskiranje & 192.168.11.0/24 -> izhod eth0 & maskiranje (masquerade) \\
+time2.vyos.net \\
 \hline
-NAT66 & fd11:11:11::/64 -> izhod eth0 & 2001:1470:fffd:ab::/64 \\
+time3.vyos.net \\
 \hline
 \end{longtable}
 
-\subsection{IPv4 source NAT (masquerade)}
-Masquerade je nastavljen za notranji in DMZ promet, ki gre preko javnega vmesnika \texttt{eth0}.
-\begin{lstlisting}
-# 10.11.0.0/24 -> eth0 (masquerade)
-set nat source rule 100 outbound-interface name 'eth0'
-set nat source rule 100 source address '10.11.0.0/24'
-set nat source rule 100 translation address 'masquerade'
 
-# 192.168.11.0/24 -> eth0 (masquerade)
-set nat source rule 110 outbound-interface name 'eth0'
-set nat source rule 110 source address '192.168.11.0/24'
-set nat source rule 110 translation address 'masquerade'
+\section{Nastavitve na napravah}
+
+\subsection{Uporabniška imena}
+Uporabniki na dmz virtualkah so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke.
+Na klientih TODO.
+
+\subsection{Splošno geslo}
+\begin{center}
+\boxed{\texttt{123NajboljseGeslo456!}}
+\end{center}
+
+\subsection{SSH}
+SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. 
+\begin{itemize}
+    \item \textbf{pavle}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h}
+    \item \textbf{zanzan}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL}
+\end{itemize}
+Če želite začasno omogočiti prijavo z geslom, uredite datoteko \newline  \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}, nato ponovno zaženite \texttt{sshd}.
+
+\subsection{RDP}
+RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 3389.
+Na Ubuntu ga omogočimo z Settings > System > Remote Desktop, in moramo potem nastaviti geslo, 
+saj za RDP uporablja različno geslo ki je privzeto avtogenerirano.
+
+\section{Upravljanje s konfiguracijami}
+
+\subsection{Nalaganje celotne konfiguracije}
+Če želite naložiti celotno konfiguracijo iz datoteke (npr. \verb|v4.conf|), uporabite:
+\begin{lstlisting}
+configure
+load v4.conf
+commit
+save
 \end{lstlisting}
 
-\subsection{NAT66 (NPTv6, IPv6-to-IPv6 Network Prefix Translation - RFC 6296)}
-Prevod naslovov: \texttt{fd11:11:11::/64} se prevaja na \texttt{2001:1470:fffd:ab::/64} za promet, ki izhaja prek \texttt{eth0}.
+\subsection{Apliciranje seznama ukazov}
+Če želite aplicirati seznam ukazov iz datoteke (npr. \verb|v4.commands|), uporabite:
+\begin{lstlisting}
+configure
+source v4.commands
+commit
+save
+\end{lstlisting}
 
-\section{Varnost (firewall)}
-\subsection{IPv4 - vhodni promet (input)}
+\subsection{Opozorilo pri uporabi}
+Pri apliciranju ukazov je potrebna pazljivost — nekateri ukazi ne delujejo kot pričakovano:
 \begin{itemize}
-    \item Pravilo za ohranjanje stanj: dovoli \texttt{established} in \texttt{related} povezave.
-    \item Pravilo za SSH: na javnem vmesniku \texttt{eth0} je dovoljeno TCP dst port \texttt{22} za novo povezavo.
+    \item Ukaz \verb|set| pri vmesnikih (\verb|interface|) ne nastavlja vrednosti, ampak jo dodaja (deluje kot \verb|add|). To lahko vodi do podvajanja nastavitev.
+  \\item Originalne konfiguracije \\verb|v1.commands| in \\verb|v3.commands| so zgodovinski osnutki; za trenutno stanje uporabljaj \\verb|v4.conf| in \\verb|v4.commands|.
+  \item Najnovejšo in pravilno konfiguracijo (\verb|v4.commands|) generirajte avtomatsko z ukazom (zunaj \verb|configure| moda):
 \end{itemize}
-\begin{longtable}{|l|l|p{8cm}|}
+\begin{lstlisting}
+show configuration commands > v4.commands
+\end{lstlisting}
+
+Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenutnih nastavitev.
+
+\section{DNS}
+DNS posredovanje na VyOS sprejema poizvedbe iz notranjih omrežij in uporablja conditional forward za AD domeno.
+
+\textbf{Ključna split-DNS logika:}
+\begin{itemize}
+  \item poizvedbe za \texttt{startup11.local} se na VyOS preusmerijo na AD DNS \texttt{192.168.11.201};
+  \item vse ostale poizvedbe gredo na javne upstream DNS strežnike (ARNES + Cloudflare).
+\end{itemize}
+
+\textbf{AD DNS server (authoritative):} \texttt{192.168.11.201} / \texttt{2001:1470:fffd:a9::201}
+
+\subsection{Trenutno stanje AD DNS}
+Trenutna AD zona \texttt{startup11.local} vsebuje klju\v{c}ne notranje zapise za domeno, DC in DMZ stre\v{z}nike:
+
+\begin{itemize}
+  \item korenski zapis \texttt{@} vsebuje A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::201};
+  \item NS in SOA na vrhu cone kažeta na \texttt{win-sgi52j8519e.startup11.local.};
+  \item standardni AD SRV zapisi so prisotni za \verb|_gc._tcp|, \verb|_kerberos._tcp|, \verb|_kerberos._udp|, \verb|_ldap._tcp| in \verb|_kpasswd._tcp| ter ustrezne \verb|Default-First-Site-Name| in \verb|ForestDnsZones| / \verb|DomainDnsZones| podcone;
+  \item glavni DC gostitelj \texttt{win-sgi52j8519e} ima A zapis \texttt{192.168.11.201} in AAAA zapis \newline
+\texttt{2001:1470:fffd:a9::201};
+  \item dodatna notranja zapisa sta \texttt{rest.startup11.local} \textrightarrow{} \texttt{192.168.11.104} in \texttt{snmp.startup11.local} \textrightarrow{} \texttt{192.168.11.107}.
+\end{itemize}
+
+\textbf{Forwarderji na AD DNS:}
+\begin{itemize}
+  \item IPv4: \texttt{193.2.1.66}, \texttt{1.1.1.1}
+  \item IPv6: \texttt{2001:1470:8000::66}, \texttt{2606:4700:4700::1111}
+\end{itemize}
+
+\textbf{Dovoljena omrežja za VyOS DNS forwarding:} 10.11.0.0/24, 192.168.11.0/24, 2001:1470:fffd:aa::/64, 2001:1470:fffd:a9::/64, fd11:11:11::/64.
+
+\textbf{Upstream DNS strežniki:}
+\begin{longtable}{|l|l|l|}
 \hline
-\textbf{IP verzija} & \textbf{Veriga} & \textbf{Ključno pravilo / opis} \\
+\textbf{Ponudnik} & \textbf{IPv4} & \textbf{IPv6} \\
 \hline
-IPv4 & INPUT & Dovoli vzpostavljene in sorodne povezave (established, related). \\
+\endhead
 \hline
-IPv4 & INPUT & Dovoli nove TCP povezave na port 22 na vmesniku eth0 (SSH). \\
+\endlastfoot
+ARNES & 193.2.1.66 & 2001:1470:8000::66 \\
 \hline
-IPv4 & FORWARD & Dovoli nove UDP povezave iz eth0 proti 192.168.11.106:51820 (WireGuard). \\
-\hline
-IPv6 & INPUT & Dovoli vzpostavljene in sorodne povezave; dovoli nove TCP povezave na port 22 na eth0. \\
-\hline
-IPv6 & FORWARD & Dovoli nove UDP povezave na port 51820 na vhodnem vmesniku eth0 (WireGuard). \\
+Cloudflare & 1.1.1.1 & 2606:4700:4700::1111 \\
 \hline
 \end{longtable}
 
-\subsection{IPv4 - forward (posredovanje)}
+\subsection{Split DNS (dnsmasq)}
+Strežnik \texttt{dns-srv} (192.168.11.105) z \textbf{dnsmasq} je opcijski notranji resolver. Trenutna pravilna konfiguracija uporablja \texttt{server=/.../} in ne \texttt{address=/.../} za AD domeno, da se ohranijo SRV zapisi za AD prijavo.
+
+\textbf{Trenutna konfiguracija:}
 \begin{itemize}
-  \item Pravilo za WireGuard: dovoli novo UDP povezavo iz \texttt{eth0} proti \texttt{192.168.11.106:51820} s prehodi na \texttt{eth1}.
-  \item Pravila 210-241 eksplicitno dovolijo dostop iz \texttt{eth2} do AD DNS/DC na \texttt{192.168.11.201} (DNS, Kerberos, LDAP, Global Catalog, SMB/RPC, dynamic RPC).
+    \item dnsmasq posluša na: \texttt{192.168.11.105:53} (DMZ naslov)
+    \item \texttt{startup11.local} se posreduje na AD DNS: \texttt{192.168.11.201} in \texttt{2001:1470:fffd:a9::201}
+    \item Konfiguracija: \verb|/etc/dnsmasq.d/startup11.conf|
 \end{itemize}
-% Forward rule summary already in firewall table above.
 
-\subsection{IPv6 - vhodni promet in posredovanje}
-IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \texttt{eth0}), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku \texttt{eth0}) in pravila 210-241 za dostop do AD strežnika na \texttt{2001:1470:fffd:a9::201}.
-% IPv6 firewall rules summarized in the firewall table above.
+\textbf{Pomembno za AD prijavo:} notranji odjemalci morajo za \texttt{startup11.local} dobiti SRV zapise iz AD DNS, ne samo A/AAAA zapisov. Zato je v VyOS nastavljen:
+\begin{lstlisting}
+set service dns forwarding domain startup11.local name-server 192.168.11.201
+set service dns forwarding domain startup11.local recursion-desired
+\end{lstlisting}
 
-\section{Storitve}
+\textbf{Sprememba konfiguracije:}
+\begin{lstlisting}
+# Edit configuration file
+sudo nano /etc/dnsmasq.d/startup11.conf
+
+# Test configuration
+sudo dnsmasq --test
+
+# Restart service
+sudo systemctl restart dnsmasq
+
+# Check service status
+sudo systemctl status dnsmasq
+
+# Check listening on port 53
+ss -ltnup '( sport = :53 )'
+
+# Test DNS response
+dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
+dig +short example.com @192.168.11.105
+\end{lstlisting}
+
+\subsection{dnsmasq - aktivna konfiguracija in ponovna postavitev}
+Spodaj je preverjena konfiguracija, ki trenutno teče na \texttt{192.168.11.105:53}.
+
+\begin{lstlisting}
+# /etc/dnsmasq.d/startup11.conf
+# Bind only to the DMZ address to avoid conflicts with systemd-resolved on localhost
+listen-address=192.168.11.105
+bind-interfaces
+
+# Forward AD domain to AD DNS (preserves SRV records)
+server=/startup11.local/192.168.11.201
+server=/startup11.local/2001:1470:fffd:a9::201
+
+# Upstream resolvers for non-local domains
+server=1.1.1.1
+server=193.2.1.66
+server=2001:1470:8000::66
+server=2606:4700:4700::1111
+\end{lstlisting}
+
+Koraki za ponovno postavitev:
+\begin{enumerate}
+  \item Namesti pakete.
+  \begin{lstlisting}
+sudo apt update
+sudo apt install -y dnsmasq dnsutils
+  \end{lstlisting}
+  \item Ustvari konfiguracijsko datoteko.
+  \begin{lstlisting}
+sudo tee /etc/dnsmasq.d/startup11.conf > /dev/null << 'EOF'
+# (vsebina kot zgoraj)
+EOF
+  \end{lstlisting}
+  \item Preveri sintakso in ponovno zaženi storitev.
+  \begin{lstlisting}
+sudo dnsmasq --test
+sudo systemctl restart dnsmasq
+sudo systemctl enable dnsmasq
+  \end{lstlisting}
+  \item Preveri delovanje.
+  \begin{lstlisting}
+ss -ltnup '( sport = :53 )'
+dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
+dig +short example.com @192.168.11.105
+  \end{lstlisting}
+\end{enumerate}
+
+\subsection{mDNS in systemd-resolved: rešitev za .local}
+
+Na nekaterih Ubuntu gostiteljih storitev \texttt{systemd-resolved} obravnava domeno \texttt{.local} kot mDNS (Avahi). Posledično lahko DNS poizvedbe za \texttt{startup11.local} prejmejo odgovor \texttt{REFUSED} ali pa jih sistem poskuša obdelati z mDNS namesto prek omrežnega DNS resolverja.
+
+Na gostitelju, kjer teče \texttt{wg-portal}, smo uporabili preprost popravek: za vmesnik smo nastavili routing domain in onemogočili mDNS, tako da se poizvedbe za \texttt{startup11.local} pošljejo na DHCP-provided resolver (192.168.11.1) in dosežejo AD DNS.
+
+\begin{lstlisting}
+# Nastavi routing domain (tilde pomeni routing domain)
+sudo resolvectl domain ens160 ~startup11.local
+
+# Onemogoci mdns na vmesniku
+sudo resolvectl mdns ens160 no
+
+# Pocisti predpomnilnik, ce je potrebno
+sudo resolvectl flush-caches
+
+# Persistent alternative: use NetworkManager to persist the routing domain and DNS per-connection
+#+ This makes the `resolvectl` change survive reboot and service restarts on hosts managed by NetworkManager.
+\begin{lstlisting}
+# Nastavi routing domain (tilde pomeni routing domain) temporarily
+sudo resolvectl domain ens160 ~startup11.local
+
+# Onemogoci mdns na vmesniku
+sudo resolvectl mdns ens160 no
+
+# Pocisti predpomnilnik, ce je potrebno
+sudo resolvectl flush-caches
+
+# Persist via NetworkManager for connection 'netplan-ens160'
+sudo nmcli connection modify netplan-ens160 ipv6.dns fd11:11:11::1
+sudo nmcli connection modify netplan-ens160 ipv6.dns-search "~startup11.local"
+sudo nmcli connection modify netplan-ens160 ipv6.ignore-auto-dns yes
+sudo nmcli connection up netplan-ens160
+\end{lstlisting}
+
+\paragraph{Preizkus}
+\begin{lstlisting}
+resolvectl query startup11.local
+dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
+\end{lstlisting}
+
+Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za \texttt{startup11.local} dosežejo avtoritativni AD DNS.
+
+\section{DHCP}
+
 \subsection{DHCPv4}
 DHCP server ima dve skupini: \textbf{SERVERS} (192.168.11.0/24) z navedenimi statičnimi mapami in \textbf{USERS} (10.11.0.0/24) za uporabniške naprave z avtomatskim razponom.
 \begin{longtable}{|l|l|}
@@ -236,7 +442,7 @@ USERS & 10.11.0.0/24 (dinamični range 10.11.0.100-200) \\
 \hline
 \end{longtable}
 
-\subsection{DHCP - statične mape}
+\subsection{DHCPv4 - statične mape}
 Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
 \begin{longtable}{|l|l|l|}
 \hline
@@ -289,175 +495,377 @@ new\_wg & 2001:1470:fffd:a9::108 & 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 \\
 \hline
 \end{longtable}
 
-\subsection{DNS (posredovanje in split DNS)}
-DNS posredovanje na VyOS sprejema poizvedbe iz notranjih omrežij in uporablja conditional forward za AD domeno.
+\section{NAT in preusmeritve vrat}
 
-\textbf{Ključna split-DNS logika:}
-\begin{itemize}
-  \item poizvedbe za \texttt{startup11.local} se na VyOS preusmerijo na AD DNS \texttt{192.168.11.201};
-  \item vse ostale poizvedbe gredo na javne upstream DNS strežnike (ARNES + Cloudflare).
-\end{itemize}
+\paragraph{Namen}
+Kratek, pregleden povzetek aktivnih NAT pravil: DNAT (port forwarding) za izbrane javne storitve, SNAT/masquerade za odhodni promet ter NAT66 (NPTv6) za IPv6-only odjemalce. Hairpin DNAT/SNAT omogoča, da notranji ali DMZ klienti dosežejo storitve preko javnega WAN naslova.
 
-\textbf{AD DNS server (authoritative):} \texttt{192.168.11.201} / \texttt{2001:1470:fffd:a9::201}
-
-\subsubsection{Trenutno stanje AD DNS}
-Trenutna AD zona \texttt{startup11.local} vsebuje klju\v{c}ne notranje zapise za domeno, DC in DMZ stre\v{z}nike:
-
-\begin{itemize}
-  \item korenski zapis \texttt{@} vsebuje A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::201};
-  \item NS in SOA na vrhu cone kažeta na \texttt{win-sgi52j8519e.startup11.local.};
-  \item standardni AD SRV zapisi so prisotni za \verb|_gc._tcp|, \verb|_kerberos._tcp|, \verb|_kerberos._udp|, \verb|_ldap._tcp| in \verb|_kpasswd._tcp| ter ustrezne \verb|Default-First-Site-Name| in \verb|ForestDnsZones| / \verb|DomainDnsZones| podcone;
-  \item glavni DC gostitelj \texttt{win-sgi52j8519e} ima A zapis \texttt{192.168.11.201} in AAAA zapis \newline
-\texttt{2001:1470:fffd:a9::201};
-  \item dodatna notranja zapisa sta \texttt{rest.startup11.local} \textrightarrow{} \texttt{192.168.11.104} in \texttt{snmp.startup11.local} \textrightarrow{} \texttt{192.168.11.107}.
-\end{itemize}
-
-\textbf{Forwarderji na AD DNS:}
-\begin{itemize}
-  \item IPv4: \texttt{193.2.1.66}, \texttt{1.1.1.1}
-  \item IPv6: \texttt{2001:1470:8000::66}, \texttt{2606:4700:4700::1111}
-\end{itemize}
-
-\textbf{Dovoljena omrežja za VyOS DNS forwarding:} 10.11.0.0/24, 192.168.11.0/24, 2001:1470:fffd:aa::/64, 2001:1470:fffd:a9::/64, fd11:11:11::/64.
-
-\textbf{Upstream DNS strežniki:}
-\begin{longtable}{|l|l|l|}
+\subsection{Ključne mape (kratko)}
+\begin{longtable}{|l|l|p{6cm}|p{4.5cm}|}
 \hline
-\textbf{Ponudnik} & \textbf{IPv4} & \textbf{IPv6} \\
+\textbf{Pravila / ID} & \textbf{Tip} & \textbf{Match} & \textbf{Prevod / cilj} \\
+\hline
+110 & DNAT & in eth0, UDP dst 51820 & 192.168.11.106 (WireGuard) \\
+130 & DNAT & in eth0, TCP dst 8080 & 192.168.11.104 (scriptum) \\
+135 & DNAT & in eth0, TCP dst 4443 & 192.168.11.104 (scriptum TLS) \\
+140 & DNAT & in eth0, TCP dst 3443 & 192.168.11.104 (library HTTPS) \\
+210,211 & Hairpin DNAT & in eth2/eth1, dst 88.200.24.241:8080,4443,3443 & map to 192.168.11.104 (internal hairpin) \\
+100,110 & SNAT (masquerade) & out eth0, src 10.11.0.0/24 / 192.168.11.0/24 & masquerade (internet egress) \\
+120,121 & Hairpin SNAT & out eth1 for hairpin flows & translate source to 192.168.11.1 (ensure return) \\
+10 & NAT66 (NPTv6) & out eth0, src fd11:11:11::/64 & 2001:1470:fffd:ab::/64 \\
+\hline
+\end{longtable}
+
+\subsection{Opombe in primeri}
+\begin{itemize}
+  \item DNAT in pripadajoča forward pravila so omejena na specifične porte in ciljne gostitelje — ni splošnega "port forward all" vedenja.
+  \item Hairpin (DNAT+SNAT) obstaja samo za izbrane storitve (primarno HTTP/TLS porti), tako da notranji promet, ki cilja na WAN IP, pravilno doseže DMZ gostitelje.
+  \item SNAT (masquerade) je uporabljen izključno za odhodni promet preko \texttt{eth0}; interni in DMZ segmenti ohranjajo ločeno notranje naslavljanje.
+\end{itemize}
+
+\subsection{Podrobne tabele NAT pravil}
+Spodaj so tabelarični izvlečki aktivnih NAT pravil (glej `v5.10.conf` za originalne vnose).
+
+\subsubsection{IPv4 -- NAT destination (DNAT / port forwarding)}
+\begin{longtable}{|l|l|p{6cm}|p{4.5cm}|}
+\hline
+\textbf{Pravilo} & \textbf{Proto} & \textbf{Match (vhod)} & \textbf{Prevod / cilj} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Pravilo} & \textbf{Proto} & \textbf{Match (vhod)} & \textbf{Prevod / cilj} \\
 \hline
 \endhead
-\hline
-\endlastfoot
-ARNES & 193.2.1.66 & 2001:1470:8000::66 \\
-\hline
-Cloudflare & 1.1.1.1 & 2606:4700:4700::1111 \\
+110 & UDP & in eth0, dst port 51820 & 192.168.11.106:51820 (WireGuard) \\
+130 & TCP & in eth0, dst port 8080 & 192.168.11.104:8080 (scriptum) \\
+135 & TCP & in eth0, dst port 4443 & 192.168.11.104:4443 (scriptum TLS) \\
+140 & TCP & in eth0, dst port 3443 & 192.168.11.104:3443 (library HTTPS) \\
+210 & TCP/UDP & hairpin from internal/dmz to 88.200.24.241:8080 & map to 192.168.11.104:8080 (internal hairpin) \\
+211 & TCP/UDP & hairpin from internal/dmz to 88.200.24.241:4443/3443 & map to 192.168.11.104:4443/3443 (internal hairpin) \\
 \hline
 \end{longtable}
 
-\subsubsection{Split DNS (dnsmasq)}
-Strežnik \texttt{dns-srv} (192.168.11.105) z \textbf{dnsmasq} je opcijski notranji resolver. Trenutna pravilna konfiguracija uporablja \texttt{server=/.../} in ne \texttt{address=/.../} za AD domeno, da se ohranijo SRV zapisi za AD prijavo.
+\subsubsection{IPv4 -- NAT source (SNAT / masquerade)}
+\begin{longtable}{|l|l|p{6cm}|p{4.5cm}|}
+\hline
+\textbf{Pravilo} & \textbf{Tip} & \textbf{Match (odhod)} & \textbf{Prevod / opomba} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Pravilo} & \textbf{Tip} & \textbf{Match (odhod)} & \textbf{Prevod / opomba} \\
+\hline
+\endhead
+100 & SNAT & out eth0, src 10.11.0.0/24 & translation: masquerade (internet egress) \\
+110 & SNAT & out eth0, src 192.168.11.0/24 & translation: masquerade (internet egress) \\
+120 & Hairpin-SNAT & out eth1 for selected hairpin flows & translate source to 192.168.11.1 (ensure return path) \\
+121 & Hairpin-SNAT & out eth1 for selected hairpin flows & translate source to 192.168.11.1 (ensure return path) \\
+\hline
+\end{longtable}
 
-\textbf{Trenutna konfiguracija:}
+\subsubsection{IPv6 -- NAT66 (NPTv6)}
+\begin{longtable}{|l|p{8.5cm}|p{4.5cm}|}
+\hline
+\textbf{Pravilo} & \textbf{Match} & \textbf{Prevod / cilj} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Pravilo} & \textbf{Match} & \textbf{Prevod / cilj} \\
+\hline
+\endhead
+10 & out eth0, src prefix fd11:11:11::/64 & translation prefix 2001:1470:fffd:ab::/64 (NPTv6) \\
+\hline
+\end{longtable}
+
+Konfiguracija v `v5.10.conf` ostaja avtoritativna za podrobne vnose; tukaj so tabele namenjene hitremu pregledu in dokumentaciji.
+
+\section{Firewall}
+\subsection{Kratek povzetek}
 \begin{itemize}
-    \item dnsmasq posluša na: \texttt{192.168.11.105:53} (DMZ naslov)
-    \item \texttt{startup11.local} se posreduje na AD DNS: \texttt{192.168.11.201} in \texttt{2001:1470:fffd:a9::201}
-    \item Konfiguracija: \verb|/etc/dnsmasq.d/startup11.conf|
+  \item \textbf{Model:} privzeto-zavrni (default-deny) — vse povezave niso dovoljene, razen izrecno dovoljenih.
+  \item \textbf{Kaj je dovoljeno:} odjemalci v notranji mreži (INTERNAL) in DMZ lahko dostopajo do interneta; iz interne in DMZ mreže so izrecno dovoljeni dostopi do DMZ storitev (DNS, web, monitoring, AD), WireGuard gostom so dovoljeni upravljalni dostopi; ICMP/ICMPv6 za diagnostične potrebe je omejeno, a omogočeno tam, kjer je potrebno.
+  \item \textbf{Kaj je blokirano:} naključni vhodni promet z interneta je privzeto zavrnjen, medsegmentni dostopi so blokirani, razen če obstaja specifično pravilo (npr. upravljanje, AD, monitoring).
+  \item \textbf{Hairpin NAT:} notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT za izbrane services.
+  \item \textbf{IPv6:} obstaja vzporedna zbirka pravil za IPv6; za IPv6-only odjemalce so posebej omogočena pravila in NAT66 (NPTv6) za izhod v internet.
 \end{itemize}
 
-\textbf{Pomembno za AD prijavo:} notranji odjemalci morajo za \texttt{startup11.local} dobiti SRV zapise iz AD DNS, ne samo A/AAAA zapisov. Zato je v VyOS nastavljen:
-\begin{lstlisting}
-set service dns forwarding domain startup11.local name-server 192.168.11.201
-set service dns forwarding domain startup11.local recursion-desired
-\end{lstlisting}
-
-\textbf{Sprememba konfiguracije:}
-\begin{lstlisting}
-# Edit configuration file
-sudo nano /etc/dnsmasq.d/startup11.conf
-
-# Test configuration
-sudo dnsmasq --test
-
-# Restart service
-sudo systemctl restart dnsmasq
-
-# Check service status
-sudo systemctl status dnsmasq
-
-# Check listening on port 53
-ss -ltnup '( sport = :53 )'
-
-# Test DNS response
-dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
-dig +short example.com @192.168.11.105
-\end{lstlisting}
-
-\subsubsection{dnsmasq - aktivna konfiguracija in ponovna postavitev}
-Spodaj je preverjena konfiguracija, ki trenutno teče na \texttt{192.168.11.105:53}.
-
-\begin{lstlisting}
-# /etc/dnsmasq.d/startup11.conf
-# Bind only to the DMZ address to avoid conflicts with systemd-resolved on localhost
-listen-address=192.168.11.105
-bind-interfaces
-
-# Forward AD domain to AD DNS (preserves SRV records)
-server=/startup11.local/192.168.11.201
-server=/startup11.local/2001:1470:fffd:a9::201
-
-# Upstream resolvers for non-local domains
-server=1.1.1.1
-server=193.2.1.66
-server=2001:1470:8000::66
-server=2606:4700:4700::1111
-\end{lstlisting}
-
-Koraki za ponovno postavitev:
-\begin{enumerate}
-  \item Namesti pakete.
-  \begin{lstlisting}
-sudo apt update
-sudo apt install -y dnsmasq dnsutils
-  \end{lstlisting}
-  \item Ustvari konfiguracijsko datoteko.
-  \begin{lstlisting}
-sudo tee /etc/dnsmasq.d/startup11.conf > /dev/null << 'EOF'
-# (vsebina kot zgoraj)
-EOF
-  \end{lstlisting}
-  \item Preveri sintakso in ponovno zaženi storitev.
-  \begin{lstlisting}
-sudo dnsmasq --test
-sudo systemctl restart dnsmasq
-sudo systemctl enable dnsmasq
-  \end{lstlisting}
-  \item Preveri delovanje.
-  \begin{lstlisting}
-ss -ltnup '( sport = :53 )'
-dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
-dig +short example.com @192.168.11.105
-  \end{lstlisting}
-\end{enumerate}
-
-\subsubsection{mDNS in systemd-resolved: rešitev za .local}
-
-Na nekaterih Ubuntu gostiteljih storitev \texttt{systemd-resolved} obravnava domeno \texttt{.local} kot mDNS (Avahi). Posledično lahko DNS poizvedbe za \texttt{startup11.local} prejmejo odgovor \texttt{REFUSED} ali pa jih sistem poskuša obdelati z mDNS namesto prek omrežnega DNS resolverja.
-
-Na gostitelju, kjer teče \texttt{wg-portal}, smo uporabili preprost popravek: za vmesnik smo nastavili routing domain in onemogočili mDNS, tako da se poizvedbe za \texttt{startup11.local} pošljejo na DHCP-provided resolver (192.168.11.1) in dosežejo AD DNS.
-
-\begin{lstlisting}
-# Nastavi routing domain (tilde pomeni routing domain)
-sudo resolvectl domain ens160 ~startup11.local
-
-# Onemogoci mdns na vmesniku
-sudo resolvectl mdns ens160 no
-
-# Pocisti predpomnilnik, ce je potrebno
-sudo resolvectl flush-caches
-
-# Preizkus
-resolvectl query startup11.local
-dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
-\end{lstlisting}
-
-Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za \texttt{startup11.local} dosežejo avtoritativni AD DNS.
-
-\subsection{NTP}
-NTP sinhronizacija uporablja naslednje strežnike:
-
-\begin{longtable}{|l|}
+\subsection{IPv4 - vhodni promet (input)}
+\begin{itemize}
+    \item Pravilo za ohranjanje stanj: dovoli \texttt{established} in \texttt{related} povezave.
+    \item Pravilo za SSH: na javnem vmesniku \texttt{eth0} je dovoljeno TCP dst port \texttt{22} za novo povezavo.
+\end{itemize}
+\begin{longtable}{|l|l|p{8cm}|}
 \hline
-\textbf{NTP strežnik} \\
+\textbf{IP verzija} & \textbf{Veriga} & \textbf{Ključno pravilo / opis} \\
 \hline
-ntp.arnes.si \\
+IPv4 & INPUT & Dovoli vzpostavljene in sorodne povezave (established, related). \\
 \hline
-time1.vyos.net \\
+IPv4 & INPUT & Dovoli nove TCP povezave na port 22 na vmesniku eth0 (SSH). \\
 \hline
-time2.vyos.net \\
+IPv4 & FORWARD & Dovoli nove UDP povezave iz eth0 proti 192.168.11.106:51820 (WireGuard). \\
 \hline
-time3.vyos.net \\
+IPv6 & INPUT & Dovoli vzpostavljene in sorodne povezave; dovoli nove TCP povezave na port 22 na eth0. \\
+\hline
+IPv6 & FORWARD & Dovoli nove UDP povezave na port 51820 na vhodnem vmesniku eth0 (WireGuard). \\
 \hline
 \end{longtable}
+
+\subsection{IPv4 - forward (posredovanje)}
+\begin{itemize}
+  \item Pravilo za WireGuard: dovoli novo UDP povezavo iz \texttt{eth0} proti \texttt{192.168.11.106:51820} s prehodi na \texttt{eth1}.
+  \item Pravila 210-241 eksplicitno dovolijo dostop iz \texttt{eth2} do AD DNS/DC na \texttt{192.168.11.201} (DNS, Kerberos, LDAP, Global Catalog, SMB/RPC, dynamic RPC).
+\end{itemize}
+% Forward rule summary already in firewall table above.
+
+\subsection{IPv6 - vhodni promet in posredovanje}
+IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \texttt{eth0}), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku \texttt{eth0}) in pravila 210-241 za dostop do AD strežnika na \texttt{2001:1470:fffd:a9::201}.
+% IPv6 firewall rules summarized in the firewall table above.
+
+\subsection{Podrobna pravila požarnega zidu}
+
+Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela uporablja \texttt{longtable} za lep izpis večstranskih tabel.
+
+\subsubsection{IPv4 -- Forward}
+\begin{longtable}{|l|l|p{5.5cm}|p{6cm}|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{Match} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{Match} \\
+\hline
+\endhead
+1 & accept & stateful-return & state established,related \\
+50 & accept & internal-to-internet & eth2 -> eth0, src 10.11.0.0/24, all protocols \\
+51 & accept & dmz-to-internet & eth1 -> eth0, src 192.168.11.0/24, all protocols \\
+52 & accept & internal-to-dmz-icmp & eth2 -> eth1, ICMP \\
+53 & accept & dmz-to-internal-icmp & eth1 -> eth2, ICMP \\
+110 & accept & wan-to-wg0-51820 & eth0 -> eth1, dst 192.168.11.106:51820/udp \\
+130 & accept & wan-to-scriptum-8080 & eth0 -> eth1, dst 192.168.11.104:8080/tcp \\
+135 & accept & wan-to-scriptum-4443 & eth0 -> eth1, dst 192.168.11.104:4443/tcp \\
+140 & accept & wan-to-library-https-3443 & eth0 -> eth1, dst 192.168.11.104:3443/tcp \\
+210 & accept & internal-to-dmz-dns-udp53 & eth2 -> eth1, dst 192.168.11.105:53/udp \\
+211 & accept & internal-to-dmz-dns-tcp53 & eth2 -> eth1, dst 192.168.11.105:53/tcp \\
+220 & accept & internal-to-wg-portal-8888 & eth2 -> eth1, dst 192.168.11.106:8888/tcp \\
+230 & accept & internal-to-scriptum-8080 & eth2 -> eth1, dst 192.168.11.104:8080/tcp \\
+231 & accept & internal-to-scriptum-4443 & eth2 -> eth1, dst 192.168.11.104:4443/tcp \\
+240 & accept & internal-to-library-http-3000 & eth2 -> eth1, dst 192.168.11.104:3000/tcp \\
+241 & accept & internal-to-library-https-3443 & eth2 -> eth1, dst 192.168.11.104:3443/tcp \\
+242 & accept & internal-to-library-graphql-32484 & eth2 -> eth1, dst 192.168.11.104:32484/tcp \\
+250 & accept & internal-to-grafana-3000 & eth2 -> eth1, dst 192.168.11.107:3000/tcp \\
+251 & accept & internal-to-prometheus-9090 & eth2 -> eth1, dst 192.168.11.107:9090/tcp \\
+252 & accept & internal-to-snmp-exporter-9116 & eth2 -> eth1, dst 192.168.11.107:9116/tcp \\
+260 & accept & internal-to-ad-dns-udp53 & eth2 -> eth1, dst 192.168.11.201:53/udp \\
+261 & accept & internal-to-ad-dns-tcp53 & eth2 -> eth1, dst 192.168.11.201:53/tcp \\
+262 & accept & internal-to-ad-kerberos & eth2 -> eth1, dst 192.168.11.201:88/tcp\_udp \\
+263 & accept & internal-to-ad-ldap & eth2 -> eth1, dst 192.168.11.201:389/tcp\_udp \\
+264 & accept & internal-to-ad-global-catalog & eth2 -> eth1, dst 192.168.11.201:3268, 3269 / tcp \\
+265 & accept & internal-to-ad-smb-rpc-time & eth2 -> eth1, dst 192.168.11.201:135, 123, 445, 464 / tcp\_udp \\
+266 & accept & internal-to-ad-dynamic-rpc & eth2 -> eth1, dst 192.168.11.201:49152-65535/tcp \\
+310 & accept & wg-host-to-dmz-mgmt & eth1 -> eth1, src 192.168.11.106, dst 192.168.11.0/24:22, 3389 / tcp \\
+311 & accept & wg-host-to-internal-mgmt & eth1 -> eth2, src 192.168.11.106, dst 10.11.0.0/24:22, 3389 / tcp \\
+312 & accept & internal-to-dmz-mgmt & eth2 -> eth1, src 10.11.0.0/24, dst 192.168.11.0/24:22, 3389 / tcp \\
+315 & accept & dmz-peers-to-scriptum-services & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.104:8080, 3000, 3443, 4443, 32484 / tcp \\
+316 & accept & dmz-peers-to-dmz-dns & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.105:53/tcp\_udp \\
+317 & accept & dmz-peers-to-wg-portal & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.106:8888/tcp \\
+318 & accept & dmz-peers-to-monitoring & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.107:3000, 9090, 9116 / tcp \\
+319 & accept & dmz-peers-to-ad-services & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.201:53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 / tcp\_udp \\
+320 & accept & snmp-exporter-to-vyos-snmp & eth1 -> eth1, src 192.168.11.107, dst 192.168.11.1:161/udp \\
+330 & accept & wg-host-to-internal-ssh & eth1 -> eth2, src 192.168.11.106, dst 10.11.0.0/24:22/tcp \\
+\hline
+\end{longtable}
+
+\subsubsection{IPv4 -- Input}
+\begin{longtable}{|l|l|p{9cm}|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\hline
+\endhead
+1 & accept & state established,related \\
+10 & accept & wan-ssh-to-vyos (in eth0 dst port 22/tcp) \\
+12 & accept & ssh-to-vyos-via-wan-ip-from-internal (in eth2 dst 88.200.24.241:22/tcp) \\
+13 & accept & ssh-to-vyos-via-wan-ip-from-dmz (in eth1 dst 88.200.24.241:22/tcp) \\
+20 & accept & dns-from-dmz (in eth1 dst port 53/tcp\_udp) \\
+21 & accept & dns-from-internal (in eth2 dst port 53/tcp\_udp) \\
+30 & accept & dhcpv4-from-dmz (in eth1 dst port 67/udp) \\
+31 & accept & dhcpv4-from-internal (in eth2 dst port 67/udp) \\
+40 & accept & snmp-to-vyos-from-monitoring (in eth1 src 192.168.11.107 dst port 161/udp) \\
+41 & accept & icmp-to-vyos-from-dmz (in eth1 ICMP) \\
+42 & accept & icmp-to-vyos-from-internal (in eth2 ICMP) \\
+\hline
+\end{longtable}
+
+\subsubsection{IPv4 -- Output}
+\begin{longtable}{|l|l|p{9cm}|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\hline
+\endhead
+1 & accept & state established,related \\
+10 & accept & state established,related \\
+20 & accept & destination 192.168.11.201:53/tcp\_udp \\
+\hline
+\end{longtable}
+
+\subsubsection{IPv6 -- Forward}
+\begin{longtable}{|l|l|p{5.5cm}|p{6cm}|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{Match} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{Match} \\
+\hline
+\endhead
+1 & accept & stateful-return & state established,related \\
+50 & accept & internal6-to-internet & eth2 -> eth0, src 2001:1470:fffd:aa::/64, all protocols \\
+51 & accept & dmz6-to-internet & eth1 -> eth0, src 2001:1470:fffd:a9::/64, all protocols \\
+52 & accept & ipv6only-to-internet & eth3 -> eth0, src fd11:11:11::/64, all protocols \\
+53 & accept & internal6-to-dmz-icmpv6 & eth2 -> eth1, ICMPv6 \\
+54 & accept & dmz6-to-internal-icmpv6 & eth1 -> eth2, ICMPv6 \\
+55 & accept & internal6-to-ipv6only-icmpv6 & eth2 -> eth3, ICMPv6 \\
+56 & accept & ipv6only-to-internal6-icmpv6 & eth3 -> eth2, ICMPv6 \\
+57 & accept & dmz6-to-ipv6only-icmpv6 & eth1 -> eth3, ICMPv6 \\
+58 & accept & ipv6only-to-dmz-icmpv6 & eth3 -> eth1, ICMPv6 \\
+110 & accept & wan6-to-wg0-51820 & eth0 -> eth1, dst 2001:1470:fffd:a9::106:51820/udp \\
+130 & accept & wan6-to-scriptum-8080 & eth0 -> eth1, dst 2001:1470:fffd:a9::104:8080/tcp \\
+135 & accept & wan6-to-scriptum-4443 & eth0 -> eth1, dst 2001:1470:fffd:a9::104:4443/tcp \\
+140 & accept & wan6-to-library-https-3443 & eth0 -> eth1, dst 2001:1470:fffd:a9::104:3443/tcp \\
+210 & accept & internal6-to-dmz-dns-udp53 & eth2 -> eth1, dst 2001:1470:fffd:a9::105:53/udp \\
+211 & accept & internal6-to-dmz-dns-tcp53 & eth2 -> eth1, dst 2001:1470:fffd:a9::105:53/tcp \\
+220 & accept & internal6-to-wg-portal-8888 & eth2 -> eth1, dst 2001:1470:fffd:a9::106:8888/tcp \\
+230 & accept & internal6-to-scriptum-8080 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:8080/tcp \\
+231 & accept & internal6-to-scriptum-4443 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:4443/tcp \\
+240 & accept & internal6-to-library-http-3000 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:3000/tcp \\
+241 & accept & internal6-to-library-https-3443 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:3443/tcp \\
+242 & accept & internal6-to-library-graphql-32484 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:32484/tcp \\
+250 & accept & internal6-to-grafana-3000 & eth2 -> eth1, dst 2001:1470:fffd:a9::107:3000/tcp \\
+251 & accept & internal6-to-prometheus-9090 & eth2 -> eth1, dst 2001:1470:fffd:a9::107:9090/tcp \\
+252 & accept & internal6-to-snmp-exporter-9116 & eth2 -> eth1, dst 2001:1470:fffd:a9::107:9116/tcp \\
+260 & accept & internal6-to-ad-dns-udp53 & eth2 -> eth1, dst 2001:1470:fffd:a9::201:53/udp \\
+261 & accept & internal6-to-ad-dns-tcp53 & eth2 -> eth1, dst 2001:1470:fffd:a9::201:53/tcp \\
+262 & accept & internal6-to-ad-kerberos & eth2 -> eth1, dst 2001:1470:fffd:a9::201:88/tcp\_udp \\
+263 & accept & internal6-to-ad-ldap & eth2 -> eth1, dst 2001:1470:fffd:a9::201:389/tcp\_udp \\
+264 & accept & internal6-to-ad-global-catalog & eth2 -> eth1, dst 2001:1470:fffd:a9::201:3268, 3269 / tcp \\
+265 & accept & internal6-to-ad-smb-rpc-time & eth2 -> eth1, dst 2001:1470:fffd:a9::201:135, 123, 445, 464 / tcp\_udp \\
+266 & accept & internal6-to-ad-dynamic-rpc & eth2 -> eth1, dst 2001:1470:fffd:a9::201:49152-65535/tcp \\
+310 & accept & wg-host6-to-dmz-mgmt & eth1 -> eth1, src 2001:1470:fffd:a9::106, dst 2001:1470:fffd:a9::/64:22, 3389 / tcp \\
+311 & accept & wg-host6-to-internal-mgmt & eth1 -> eth2, src 2001:1470:fffd:a9::106, dst 2001:1470:fffd:aa::/64:22, 3389 / tcp \\
+312 & accept & wg-host6-to-ipv6only-mgmt & eth1 -> eth3, src 2001:1470:fffd:a9::106, dst fd11:11:11::/64:22, 3389 / tcp \\
+313 & accept & internal6-to-dmz-mgmt & eth2 -> eth1, src 2001:1470:fffd:aa::/64, dst 2001:1470:fffd:a9::/64:22, 3389 / tcp \\
+314 & accept & ipv6only-to-dmz-mgmt & eth3 -> eth1, src fd11:11:11::/64, dst 2001:1470:fffd:a9::/64:22, 3389 / tcp \\
+321 & accept & internal6-to-ipv6only-mgmt & eth2 -> eth3, src 2001:1470:fffd:aa::/64, dst fd11:11:11::/64:22, 3389 / tcp \\
+322 & accept & dmz6-to-ipv6only-mgmt & eth1 -> eth3, src 2001:1470:fffd:a9::/64, dst fd11:11:11::/64:22, 3389 / tcp \\
+315 & accept & dmz6-peers-to-scriptum-services & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::104:8080, 3000, 3443, 4443, 32484 / tcp \\
+316 & accept & dmz6-peers-to-dmz-dns & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::105:53/tcp\_udp \\
+317 & accept & dmz6-peers-to-wg-portal & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::106:8888/tcp \\
+318 & accept & dmz6-peers-to-monitoring & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::107:3000, 9090, 9116 / tcp \\
+319 & accept & dmz6-peers-to-ad-services & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::201:53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 / tcp\_udp \\
+320 & accept & snmp-exporter6-to-vyos-snmp & eth1 -> eth1, src 2001:1470:fffd:a9::107, dst 2001:1470:fffd:a9::1:161/udp \\
+410 & accept & ipv6only-to-dmz-dns-udp53 & eth3 -> eth1, dst 2001:1470:fffd:a9::105:53/udp \\
+411 & accept & ipv6only-to-dmz-dns-tcp53 & eth3 -> eth1, dst 2001:1470:fffd:a9::105:53/tcp \\
+412 & accept & ipv6only-to-dmz-icmpv6 & eth3 -> eth1, ICMPv6 \\
+420 & accept & ipv6only-to-wg-portal-8888 & eth3 -> eth1, dst 2001:1470:fffd:a9::106:8888/tcp \\
+430 & accept & ipv6only-to-scriptum-8080 & eth3 -> eth1, dst 2001:1470:fffd:a9::104:8080/tcp \\
+440 & accept & ipv6only-to-library-http-3000 & eth3 -> eth1, dst 2001:1470:fffd:a9::104:3000/tcp \\
+441 & accept & ipv6only-to-library-https-3443 & eth3 -> eth1, dst 2001:1470:fffd:a9::104:3443/tcp \\
+442 & accept & ipv6only-to-library-graphql-32484 & eth3 -> eth1, dst 2001:1470:fffd:a9::104:32484/tcp \\
+450 & accept & ipv6only-to-grafana-3000 & eth3 -> eth1, dst 2001:1470:fffd:a9::107:3000/tcp \\
+451 & accept & ipv6only-to-prometheus-9090 & eth3 -> eth1, dst 2001:1470:fffd:a9::107:9090/tcp \\
+452 & accept & ipv6only-to-snmp-exporter-9116 & eth3 -> eth1, dst 2001:1470:fffd:a9::107:9116/tcp \\
+460 & accept & ipv6only-to-ad-dns-udp53 & eth3 -> eth1, dst 2001:1470:fffd:a9::201:53/udp \\
+461 & accept & ipv6only-to-ad-dns-tcp53 & eth3 -> eth1, dst 2001:1470:fffd:a9::201:53/tcp \\
+462 & accept & ipv6only-to-ad-kerberos & eth3 -> eth1, dst 2001:1470:fffd:a9::201:88/tcp\_udp \\
+463 & accept & ipv6only-to-ad-ldap & eth3 -> eth1, dst 2001:1470:fffd:a9::201:389/tcp\_udp \\
+464 & accept & ipv6only-to-ad-global-catalog & eth3 -> eth1, dst 2001:1470:fffd:a9::201:3268, 3269 / tcp \\
+465 & accept & ipv6only-to-ad-smb-rpc-time & eth3 -> eth1, dst 2001:1470:fffd:a9::201:135, 123, 445, 464 / tcp\_udp \\
+466 & accept & ipv6only-to-ad-dynamic-rpc & eth3 -> eth1, dst 2001:1470:fffd:a9::201:49152-65535/tcp \\
+\hline
+\end{longtable}
+
+\subsubsection{IPv6 -- Input}
+\begin{longtable}{|l|l|p{9cm}|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\hline
+\endhead
+1 & accept & state established,related \\
+10 & accept & wan6-ssh-to-vyos (in eth0 dst port 22/tcp) \\
+11 & accept & icmpv6-from-wan (in eth0 protocol icmpv6) \\
+12 & accept & ssh6-to-vyos-via-wan-ip-from-internal (in eth2 dst 2001:1470:fffd:a8::2:22/tcp) \\
+13 & accept & ssh6-to-vyos-via-wan-ip-from-dmz (in eth1 dst 2001:1470:fffd:a8::2:22/tcp) \\
+14 & accept & ssh6-to-vyos-via-wan-ip-from-ipv6only (in eth3 dst 2001:1470:fffd:a8::2:22/tcp) \\
+20 & accept & dns6-from-dmz (in eth1 dst port 53/tcp\_udp) \\
+21 & accept & dns6-from-internal (in eth2 dst port 53/tcp\_udp) \\
+22 & accept & dns6-from-ipv6only (in eth3 dst port 53/tcp\_udp) \\
+30 & accept & dhcpv6-server-on-dmz (in eth1 dst port 547/udp) \\
+40 & accept & icmpv6-from-dmz (in eth1 protocol icmpv6) \\
+41 & accept & icmpv6-from-internal (in eth2 protocol icmpv6) \\
+42 & accept & icmpv6-from-ipv6only (in eth3 protocol icmpv6) \\
+\hline
+\end{longtable}
+
+\subsubsection{NAT (IPv4) -- DNAT}
+\begin{longtable}{|l|p{5cm}|p{5cm}|p{3cm}|}
+\hline
+\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\hline
+\endhead
+110 & wan-to-wg0-51820-dnat & in eth0, dst port 51820/udp & 192.168.11.106 \\
+130 & wan-to-scriptum-8080-dnat & in eth0, dst port 8080/tcp & 192.168.11.104 \\
+135 & wan-to-scriptum-4443-dnat & in eth0, dst port 4443/tcp & 192.168.11.104 \\
+140 & wan-to-library-https-3443-dnat & in eth0, dst port 3443/tcp & 192.168.11.104 \\
+210 & hairpin-internal-to-public-services-dnat & in eth2, dst 88.200.24.241:8080,4443,3443/tcp & 192.168.11.104 \\
+211 & hairpin-dmz-to-public-services-dnat & in eth1, dst 88.200.24.241:8080,4443,3443/tcp & 192.168.11.104 \\
+\hline
+\end{longtable}
+
+\subsubsection{NAT (IPv4) -- SNAT}
+\begin{longtable}{|l|p{6cm}|p{6cm}|p{2.5cm}|}
+\hline
+\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\hline
+\endhead
+100 & snat-internal-to-internet & out eth0, src 10.11.0.0/24 & masquerade \\
+110 & snat-dmz-to-internet & out eth0, src 192.168.11.0/24 & masquerade \\
+120 & hairpin-internal-to-public-snat & out eth1, src 10.11.0.0/24, dst 192.168.11.104 & 192.168.11.1 \\
+121 & hairpin-dmz-to-public-snat & out eth1, src 192.168.11.0/24, dst 192.168.11.104 & 192.168.11.1 \\
+\hline
+\end{longtable}
+
+\subsubsection{NAT66 (NPTv6)}
+\begin{longtable}{|l|p{6cm}|p{6cm}|p{2.5cm}|}
+\hline
+\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\hline
+\endhead
+10 & nat66-ipv6only-to-internet & out eth0, src fd11:11:11::/64 & 2001:1470:fffd:ab::/64 \\
+\hline
+\end{longtable}
+
 
 \section{Monitoring in SNMP}
 Za spremljanje metrik v DMZ uporabljamo preprost monitoring stack: Prometheus (scrape in shranjevanje), \texttt{snmp\_exporter} (pretvornik SNMP→Prometheus) in Grafana (vizualizacija). \texttt{snmp\_exporter} pobira metrike z naprave VyOS prek SNMP v2c in jih izpostavi na svojem HTTP vmesniku, ki ga nato pobira Prometheus.
@@ -543,68 +951,6 @@ curl "http://192.168.11.107:9116/snmp?module=vyos&target=192.168.11.1"
 snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0
 \end{lstlisting}
 
-\subsection{Router Advertisements (RA)}
-RA so omogočeni na:
-\begin{itemize}
-    \item \texttt{eth1}: prefix \texttt{2001:1470:fffd:a9::/64} (managed flag, no-autonomous)
-    \item \texttt{eth2}: prefix \texttt{2001:1470:fffd:aa::/64}
-    \item \texttt{eth3}: prefix \texttt{fd11:11:11::/64}, name-server \texttt{fd11:11:11::1}
-\end{itemize}
-
-\subsection{SSH}
-SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Če želite začasno omogočiti prijavo z geslom, uredite datoteko \newline  \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}, nato ponovno zaženite \texttt{sshd}.
-
-\section{Sistem}
-\subsection{Uporabniki in ključi}
-Glavni lokalni uporabnik na napravi je \texttt{vyos}. V konfiguraciji so vpisani javni ključi za uporabnika \texttt{vyos}:
-\begin{itemize}
-    \item \textbf{pavle}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h}
-    \item \textbf{zanzan}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL}
-\end{itemize}
-
-Za začasno ponovno omogočanje SSH gesel: uredite \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}.
-
-\subsection{Uporabniška imena}
-Uporabniki na dmz virtualkag so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke.
-Na klientih TODO.
-
-\subsection{Splošno geslo}
-\begin{center}
-\boxed{\texttt{123NajboljseGeslo456!}}
-\end{center}
-
-\section{Upravljanje s konfiguracijami}
-
-\subsection{Nalaganje celotne konfiguracije}
-Če želite naložiti celotno konfiguracijo iz datoteke (npr. \verb|v4.conf|), uporabite:
-\begin{lstlisting}
-configure
-load v4.conf
-commit
-save
-\end{lstlisting}
-
-\subsection{Apliciranje seznama ukazov}
-Če želite aplicirati seznam ukazov iz datoteke (npr. \verb|v4.commands|), uporabite:
-\begin{lstlisting}
-configure
-source v4.commands
-commit
-save
-\end{lstlisting}
-
-\subsection{Opozorilo pri uporabi}
-Pri apliciranju ukazov je potrebna pazljivost — nekateri ukazi ne delujejo kot pričakovano:
-\begin{itemize}
-    \item Ukaz \verb|set| pri vmesnikih (\verb|interface|) ne nastavlja vrednosti, ampak jo dodaja (deluje kot \verb|add|). To lahko vodi do podvajanja nastavitev.
-  \\item Originalne konfiguracije \\verb|v1.commands| in \\verb|v3.commands| so zgodovinski osnutki; za trenutno stanje uporabljaj \\verb|v4.conf| in \\verb|v4.commands|.
-  \item Najnovejšo in pravilno konfiguracijo (\verb|v4.commands|) generirajte avtomatsko z ukazom (zunaj \verb|configure| moda):
-\end{itemize}
-\begin{lstlisting}
-show configuration commands > v4.commands
-\end{lstlisting}
-
-Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenutnih nastavitev.
 
 \section{Active Directory (Windows Server)}
 \subsection{Osnovne informacije}

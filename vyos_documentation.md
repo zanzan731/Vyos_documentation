@@ -118,7 +118,7 @@ V nadaljevanju dokumentacije so podrobnosti konfiguracij in primeri ukazov za Vy
 | wireguard | 192.168.11.106 | 2001:1470:fffd:a9::1c8 | WireGuard VPN končna točka |
 | snmp | 192.168.11.107 | 2001:1470:fffd:a9::17a | SNMP / monitoring cilj |
 | new_wg | 192.168.11.108 | 2001:1470:fffd:a9::18d | New WireGuard-related host |
-| AD (dmz windows 1) | 192.168.11.201 | 2001:1470:fffd:a9::185 | Active Directory (Domain Controller) |
+| AD (dmz windows 1) | 192.168.11.201 | 2001:1470:fffd:a9::201 | Active Directory (Domain Controller) |
 
 # NAT in preusmeritve vrat
 
@@ -175,7 +175,7 @@ Prevod naslovov: `fd11:11:11::/64` se prevaja na `2001:1470:fffd:ab::/64` za pro
 
 ## IPv6 - vhodni promet in posredovanje
 
-IPv6 ima podobna vhodna pravila (dovoli `established/related` in SSH na `eth0`), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku `eth0`) in pravila 210-241 za dostop do AD strežnika na `2001:1470:fffd:a9::185`.
+IPv6 ima podobna vhodna pravila (dovoli `established/related` in SSH na `eth0`), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku `eth0`) in pravila 210-241 za dostop do AD strežnika na `2001:1470:fffd:a9::201`.
 
 # Storitve
 
@@ -214,7 +214,7 @@ Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporablja
 
 | **Host** | **DHCPv6 naslov** | **DUID / identifier** |
 |:---|:---|:---|
-| dmz-windows-AD | 2001:1470:fffd:a9::185 | 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 |
+| dmz-windows-AD | 2001:1470:fffd:a9::201 | 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 |
 | raft1 | 2001:1470:fffd:a9::124 | 00:02:00:00:ab:11:2b:e2:d4:90:70:f3:b3:37 |
 | raft2 | 2001:1470:fffd:a9::114 | 00:02:00:00:ab:11:e1:94:d4:8a:18:52:ad:98 |
 | raft3 | 2001:1470:fffd:a9::16b | 00:02:00:00:ab:11:92:37:c8:9a:00:b8:67:77 |
@@ -233,20 +233,20 @@ DNS posredovanje na VyOS sprejema poizvedbe iz notranjih omrežij in uporablja c
 
 - vse ostale poizvedbe gredo na javne upstream DNS strežnike (ARNES + Cloudflare).
 
-**AD DNS server (authoritative):** `192.168.11.201` / `2001:1470:fffd:a9::185`
+**AD DNS server (authoritative):** `192.168.11.201` / `2001:1470:fffd:a9::201`
 
 ### Trenutno stanje AD DNS
 
 Trenutna AD zona `startup11.local` vsebuje ključne notranje zapise za domeno, DC in DMZ strežnike:
 
-- korenski zapis `@` vsebuje A zapis `192.168.11.201` in AAAA zapis `2001:1470:fffd:a9::185`;
+- korenski zapis `@` vsebuje A zapis `192.168.11.201` in AAAA zapis `2001:1470:fffd:a9::201`;
 
 - NS in SOA na vrhu cone kažeta na `win-sgi52j8519e.startup11.local.`;
 
 - standardni AD SRV zapisi so prisotni za `_gc._tcp`, `_kerberos._tcp`, `_kerberos._udp`, `_ldap._tcp` in `_kpasswd._tcp` ter ustrezne `Default-First-Site-Name` in `ForestDnsZones` / `DomainDnsZones` podcone;
 
 - glavni DC gostitelj `win-sgi52j8519e` ima A zapis `192.168.11.201` in AAAA zapis\
-  `2001:1470:fffd:a9::185`;
+  `2001:1470:fffd:a9::201`;
 
 - dodatna notranja zapisa sta `rest.startup11.local` `192.168.11.104` in `snmp.startup11.local` `192.168.11.107`.
 
@@ -273,13 +273,14 @@ Strežnik `dns-srv` (192.168.11.105) z **dnsmasq** je opcijski notranji resolver
 
 - dnsmasq posluša na: `192.168.11.105:53` (DMZ naslov)
 
-- `startup11.local` se posreduje na AD DNS: `192.168.11.201` in `2001:1470:fffd:a9::185`
+- `startup11.local` se posreduje na AD DNS: `192.168.11.201` in `2001:1470:fffd:a9::201`
 
 - Konfiguracija: `/etc/dnsmasq.d/startup11.conf`
 
 **Pomembno za AD prijavo:** notranji odjemalci morajo za `startup11.local` dobiti SRV zapise iz AD DNS, ne samo A/AAAA zapisov. Zato je v VyOS nastavljen:
 
     set service dns forwarding domain startup11.local name-server 192.168.11.201
+  set service dns forwarding domain startup11.local name-server 2001:1470:fffd:a9::201
     set service dns forwarding domain startup11.local recursion-desired
 
 **Sprememba konfiguracije:**
@@ -314,7 +315,7 @@ Spodaj je preverjena konfiguracija, ki trenutno teče na `192.168.11.105:53`.
 
     # Forward AD domain to AD DNS (preserves SRV records)
     server=/startup11.local/192.168.11.201
-    server=/startup11.local/2001:1470:fffd:a9::185
+    server=/startup11.local/2001:1470:fffd:a9::201
 
     # Upstream resolvers for non-local domains
     server=1.1.1.1
@@ -353,6 +354,8 @@ Na nekaterih Ubuntu gostiteljih storitev `systemd-resolved` obravnava domeno `.l
 
 Na gostitelju, kjer teče `wg-portal`, smo uporabili preprost popravek: za vmesnik smo nastavili routing domain in onemogočili mDNS, tako da se poizvedbe za `startup11.local` pošljejo na DHCP-provided resolver (192.168.11.1) in dosežejo AD DNS.
 
+Pri novem Ubuntu Desktop 26.04 na `ipv6only` je bil dejanski problem enak: DHCPv6 je sicer dostavil DNS strežnik `fd11:11:11::1`, vendar je `systemd-resolved` za `.local` še vedno uporabljal lokalni stub na `127.0.0.1` in brez routing domene `~startup11.local` ni pošiljal poizvedb na unicast DNS.
+
     # Nastavi routing domain (tilde pomeni routing domain)
     sudo resolvectl domain ens160 ~startup11.local
 
@@ -365,6 +368,14 @@ Na gostitelju, kjer teče `wg-portal`, smo uporabili preprost popravek: za vmesn
     # Preizkus
     resolvectl query startup11.local
     dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
+
+  Za trajno nastavitev v NetworkManager profilu:
+
+    nmcli connection show
+    nmcli connection modify "<connection-name>" ipv6.dns "fd11:11:11::1"
+    nmcli connection modify "<connection-name>" ipv6.dns-search "~startup11.local"
+    nmcli connection modify "<connection-name>" ipv6.ignore-auto-dns yes
+    nmcli connection up "<connection-name>"
 
 Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za `startup11.local` dosežejo avtoritativni AD DNS.
 
