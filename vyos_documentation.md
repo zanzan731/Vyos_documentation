@@ -1,5 +1,5 @@
 ---
-date: 2026-05-25
+date: 2026-05-30
 title: Dokumentacija VyOS usmerjevalnika - startup11
 ---
 
@@ -601,6 +601,58 @@ Disable-ADAccount -Identity "ime"
 Remove-ADUser -Identity "ime" -Confirm:$false
 ```
 
+## Priključitev računalnikov v domeno
+
+Vsi računalniki, ki bodo uporabljali storitve domene `startup11.local`, morajo biti ustrezno pridruženi domeni Active Directory. Postopek se nekoliko razlikuje glede na operacijski sistem.
+
+### Linux
+
+Pri novejših različicah Ubuntu Linuxa je med grafično namestitvijo sistema na voljo možnost *Use Active Directory*. Ta se nahaja v koraku *Create your account*. V tem primeru:
+
+1.  Označite možnost *Use Active Directory*.
+
+2.  Vnesite ime domene: `startup11.local`.
+
+3.  Za pridružitev uporabite uporabniški račun z ustreznimi pravicami v domeni.
+
+Če sistem med namestitvijo ni bil priključen v domeno, je to mogoče storiti naknadno z uporabo naslednjih orodij.
+
+Najprej namestimo vse potrebne pakete:
+
+    sudo apt install sssd sssd-ad realmd adcli krb5-user
+
+Preverimo, ali je domena dosegljiva:
+
+    sudo realm discover startup11.local
+
+Nato računalnik priključimo v domeno:
+
+    sudo realm join startup11.local
+
+Po uspešni prijavi je priporočljiv ponovni zagon sistema.
+
+### Windows
+
+V operacijskem sistemu Windows lahko računalnik pridružimo domeni prek grafičnega vmesnika:
+
+1.  Odprite **Nastavitve** (*Settings*).
+
+2.  Izberite **Sistem** (*System*).
+
+3.  Odprite **Informacije o sistemu** (*About*).
+
+4.  Kliknite **Preimenuj ta računalnik (napredno)** (*Rename this PC (advanced)*).
+
+5.  Izberite možnost **ID omrežja** (*Network ID*).
+
+6.  Sledite čarovniku za pridružitev domeni.
+
+7.  Kot ime domene vnesite `startup11.local`.
+
+8.  Ob pozivu vnesite poverilnice uporabniškega računa, ki ima pravico dodajati računalnike v domeno.
+
+Po uspešni pridružitvi bo sistem zahteval ponovni zagon. Po ponovnem zagonu se lahko uporabniki prijavijo z domenimi računi.
+
 ## Prijava v domeno
 
 Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko priklopimo v domeno `startup11.local`. Po uspešnem priklopu se uporabniki prijavljajo z:
@@ -963,14 +1015,28 @@ Raft storitev poteka na treh serverjih 192.168.11.101, 192.168.11.102, 192.168.1
 
 - `create-author.js`, `manual-replicate.js` - pomožne skripte za pomoč pri testiranju pisanja in repliciranja
 
-## Branje baze
+## Pregled in preverjanje baze podatkov
 
-Če želite manualno prebrati bazo predvsem za testiranje in če se vam zdi da niso sinhornizirane.
+Za namene testiranja ali preverjanja pravilne sinhronizacije podatkov med vozlišči lahko vsebino baze podatkov preberete neposredno iz ukazne vrstice.
 
     cd ~/library-api
     node query-ha-db.js
 
-To vam bo izpisalo vsebino baze.
+Skript privzeto izvede poizvedbo:
+
+``` sql
+SELECT id, name FROM authors;
+```
+
+Rezultat poizvedbe se izpiše v terminalu, kar omogoča hitro preverjanje vsebine baze podatkov.
+
+Če želite izvesti druge SQL poizvedbe, lahko ustrezno prilagodite datoteko `query-ha-db.js` in vanjo vnesete želen SQL stavek.
+
+Podatkovna baza se nahaja v datoteki:
+
+    library-ha.db
+
+Priporočljivo je, da se pred posegi v podatkovno bazo ustvari varnostna kopija, zlasti v produkcijskem okolju.
 
 # Pretvorba med Markdown in LaTeX
 
