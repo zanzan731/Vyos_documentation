@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2026.2.28)  31 MAY 2026 00:52
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2026.2.28)  31 MAY 2026 22:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -239,8 +239,7 @@ File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ex.def
 File: l3backend-pdftex.def 2025-06-09 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count298
-)
-No file vyos_rest_graphql_commands.aux.
+) (vyos_rest_graphql_commands.aux)
 \openout1 = `vyos_rest_graphql_commands.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
@@ -262,8 +261,11 @@ LaTeX Font Info:    ... okay on input line 14.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 14.
 LaTeX Font Info:    ... okay on input line 14.
 Package hyperref Info: Link coloring OFF on input line 14.
+ (vyos_rest_graphql_commands.out)
+(vyos_rest_graphql_commands.out)
 \@outlinefile=\write3
 \openout3 = `vyos_rest_graphql_commands.out'.
+
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -352,22 +354,15 @@ ta/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}]
 LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-07-19>
  ***********
-
-
-Package rerunfilecheck Warning: File `vyos_rest_graphql_commands.out' has chang
-ed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `vyos_rest_graphql_commands.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  9C15CA8105EE62634BEE6C277414444F;273.
+Package rerunfilecheck Info: File `vyos_rest_graphql_commands.out' has not chan
+ged.
+(rerunfilecheck)             Checksum: 9C15CA8105EE62634BEE6C277414444F;273.
  ) 
 Here is how much of TeX's memory you used:
- 8549 strings out of 468149
- 134750 string characters out of 5431566
- 545637 words of memory out of 5000000
- 37065 multiletter control sequences out of 15000+600000
+ 8560 strings out of 468149
+ 135295 string characters out of 5431566
+ 545716 words of memory out of 5000000
+ 37070 multiletter control sequences out of 15000+600000
  657542 words of font info for 60 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,6n,79p,275b,620s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -376,9 +371,9 @@ Here is how much of TeX's memory you used:
 C:/Users/žan/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:
 /Users/žan/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/U
 sers/žan/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
-Output written on vyos_rest_graphql_commands.pdf (2 pages, 134994 bytes).
+Output written on vyos_rest_graphql_commands.pdf (2 pages, 133355 bytes).
 PDF statistics:
- 51 PDF objects out of 1000 (max. 8388607)
+ 58 PDF objects out of 1000 (max. 8388607)
  7 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 17 words of extra memory for PDF output out of 10000 (max. 10000000)
 

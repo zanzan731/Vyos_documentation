@@ -8,7 +8,7 @@
 \usepackage{geometry}
 \geometry{margin=1in}
 \title{Library API - REST and GraphQL Commands}
-\author{Auto-generated for VyOS documentation}
+\author{Žan Perat}
 \date{}
 
 \begin{document}
@@ -61,7 +61,7 @@ curl -k -u username -X PUT -H "Content-Type: application/json" \
 # Toggle availability (PATCH)
 curl -k -i -X PATCH https://192.168.11.104:3443/books/3/availability  \
  -H "Content-Type: application/json"  \
--u zan_lib   -d '{"available":false}'
+-u username   -d '{"available":false}'
 
 # Delete book (admin only)
 curl -k -u username -X DELETE https://192.168.11.104:3443/books/3
@@ -83,7 +83,19 @@ curl -k -u username -X POST -H "Content-Type: application/json" \
 
 # GraphiQL IDE (browser)
 Open a browser to: https://192.168.11.104:30443/graphql
+
+#En primer:
+{
+  authors {
+    id
+    name
+    birth_year
+    nationality
+  }
+}
 \end{verbatim}
+
+
 
 
 \end{document}
