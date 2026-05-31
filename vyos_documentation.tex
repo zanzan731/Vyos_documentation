@@ -1347,6 +1347,12 @@ Pomen posameznih ukazov:
   \item Po potrebi preveri še \texttt{/health} endpoint in loge storitve.
 \end{enumerate}
 
+\subsection{Popravki kode}
+Če rabiste kako spremeniti storitev popravite kodo, naložite jo na vse tri serverje in nato znova zaženite storitev:
+\begin{lstlisting}
+sudo systemctl restart library-api
+\end{lstlisting}
+Če ste vse pravilno naredili bi to moralo še vedno ohraniti bazo tako, da lahko to naredite brez izgub.
 
 
 % Pretvorba med Markdown in LaTeX
