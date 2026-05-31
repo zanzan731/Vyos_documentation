@@ -6,7 +6,7 @@
 \contentsline {subsection}{\numberline {2.1}usmerjevalnik}{4}{subsection.2.1}%
 \contentsline {subsection}{\numberline {2.2}internal}{4}{subsection.2.2}%
 \contentsline {subsection}{\numberline {2.3}ipv6only}{4}{subsection.2.3}%
-\contentsline {subsection}{\numberline {2.4}DMZ strežniki - označi subnet}{5}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.4}DMZ strežniki - označi subnet}{4}{subsection.2.4}%
 \contentsline {section}{\numberline {3}Povzetek storitev}{5}{section.3}%
 \contentsline {section}{\numberline {4}VyOS}{5}{section.4}%
 \contentsline {subsection}{\numberline {4.1}Osnovne informacije}{5}{subsection.4.1}%

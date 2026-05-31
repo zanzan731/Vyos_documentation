@@ -30,13 +30,13 @@ frame=single
 \vspace{1em}
 
 \section{Naloga in zasnova omrežja}
-V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture; cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
+V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture, cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
 
 \subsection{Cilji naloge}
 \begin{itemize}
   \item Postaviti omrežje z ločenimi segmenti za \textbf{uporabnike} in \textbf{strežnike} (strogo ločeno prometno okolje).
   \item Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
-  \item Izpostaviti navzven le izbrane storitve: WireGuard, \texttt{wg-portal} (HTTPS) in REST frontend (HTTPS).
+  \item Izpostaviti navzven le izbrane storitve: WireGuard in REST frontend (HTTPS).
   \item Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo znotraj omrežja in preko VPN (ni direktnega WAN dostopa).
   \item Ohranjati poseben \textbf{ipv6only} segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
 \end{itemize}
@@ -53,7 +53,7 @@ Segmenti se izolirajo z naslednjimi ukrepi:
 \begin{itemize}
   \item \textbf{Layer-3 ločitev (VyOS routing + ACL)}: vsak segment ima ločen subnet in VyOS izvaja routing ter aplikacijo politk (default-deny ter strog seznam izjem).
   \item \textbf{VLAN/PortGroup} na hipervizorju: DMZ, INTERNAL in IPV6ONLY so v ločenih PortGroup/VLANih, management port group pa ločen in omejen.
-  \item \textbf{Host-firewall} (vsak strežnik in vsaka delovna postaja): default-deny inbound, dovoljenje samo za nujne storitve; admin dostop omejen na internal in VPN izvore.
+  \item \textbf{Host-firewall} (vsak strežnik in vsaka delovna postaja): default-deny inbound, dovoljenje samo za nujne storitve; admin dostop omejen na internal in VPN izvoru.
   \item \textbf{Split DNS / conditional forward}: notranji klienti uporabljajo AD DNS za `startup11.local`, zunanji resolverji pa javne strežnike — prepreči izpostavitev notranjih zapisov.
   \item \textbf{Monitoring in logging}: monitoring host ima izključno dovoljenje za SNMP/agent promet; centralizirano beleženje (syslog) in netflow/sflow za analizo.
 \end{itemize}
@@ -65,11 +65,11 @@ Segmenti se izolirajo z naslednjimi ukrepi:
 sk11-vyos
 
 \subsection{internal}
-sk11-internal-linux
+sk11-internal-linux,
 sk11-internal-windows
 
 \subsection{ipv6only}
-sk11-ipv6only-linux
+sk11-ipv6only-linux,
 sk11-ipv6only-windows
 
 
@@ -103,15 +103,15 @@ AD & 192.168.11.201 & 2001:1470:fffd:a9::201 & Active Directory (Domain Controll
 
 \begin{longtable}{|p{4.1cm}|p{2.4cm}|p{2.5cm}|p{1.3cm}|p{5.0cm}|}
 \hline
-\textbf{Service} & \textbf{Host} & \textbf{Port (proto)} & \textbf{Public?} & \textbf{Notes} \\
+\textbf{Service} & \textbf{Host} & \textbf{Port (protokol)} & \textbf{Public?} & \textbf{Notes} \\
 \hline
-RDP & all internal and ipv6only + AD server & 3389 (tcp) & No & RDP enabled all devices that have a GUI \\
+RDP & internal in ipv6only + AD server & 3389 (tcp) & No & RDP je omočočen na vseh napravah, ki imajo GUI \\
 \hline
-SSH & all devices & 22 (tcp) & only vyos & SSH service present on all devices; WAN SSH allowed only on vyos \\
+SSH & vsi linux serverji v dmz + vyos & 22 (tcp) & samo vyos & SSH na vseh linux serverjih ; WAN SSH dovoljen samo na vyos \\
 \hline
-SNMP target (VyOS) & vyos & 161 (udp) & No & SNMP on VyOS; exporter scrapes this target \\
+SNMP target (VyOS) & vyos & 161 (udp) & No & SNMP na VyOS; exporter scrapes this target \\
 \hline
-REST service (scriptum) & rest & 8080 (tcp) & Yes & Public DNAT exists \\
+REST service (scriptum) & rest & 8080 (tcp) & Yes & Public DNAT obstaja \\
 \hline
 scriptum backend & rest & 4443 (tcp) & Yes & Public backend endpoint \\
 \hline
@@ -119,11 +119,11 @@ Library API (HTTP) & rest & 3000 (tcp) & No & Internal HTTP API \\
 \hline
 Library API (HTTPS) & rest & 3443 (tcp) & Yes & Public HTTPS endpoint \\
 \hline
-Library API (GraphQL) & rest & 32484 (tcp) & No & Internal GraphQL endpoint \\
+Library API (GraphQL) & rest & 30443 (tcp) & No & Internal GraphQL endpoint \\
 \hline
 DMZ DNS & dns-srv & 53 (udp/tcp) & No & Internal DNS for DMZ clients \\
 \hline
-WireGuard server & wireguard & 51820 (udp) & Yes & PiVPN, uses its own NAT/masquerade \\
+WireGuard server & wireguard & 51820 (udp) & Yes & PiVPN, uporablja svoj NAT/masquerade \\
 \hline
 wg-portal UI & wireguard & 8888 (tcp) & No & Local portal UI (internal only) \\
 \hline
@@ -205,7 +205,7 @@ time3.vyos.net \\
 
 \subsection{Uporabniška imena}
 Uporabniki na linux \texttt{dmz} virtualkah so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke (npr sk11-dmz-linux-04).
-Na \texttt{internal} in  \texttt{ipv6only} odjemalcih je uporabnik vedno samo \texttt{zanzann}.
+Na \texttt{internal} in  \texttt{ipv6only} odjemalcih je lokalni uporabnik vedno samo \texttt{zanzan}, drugi so dodeljeni preko AD.
 
 \subsection{Splošno geslo}
 \begin{center}
