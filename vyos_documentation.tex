@@ -148,7 +148,7 @@ Library API (HTTP) & rest & 3000 (tcp) & No & Internal HTTP API \\
 \hline
 Library API (HTTPS) & rest & 3443 (tcp) & Yes & Public HTTPS endpoint \\
 \hline
-Library API (GraphQL) & rest & 32484 (tcp) & No & Internal GraphQL endpoint \\
+Library API (GraphQL) & rest & 30080, 30443 (tcp) & No & Internal GraphQL endpoint \\
 \hline
 DMZ DNS & dns-srv & 53 (udp/tcp) & No & Internal DNS for DMZ clients \\
 \hline
@@ -203,14 +203,21 @@ eth3 & IPv6-only & - & fd11:11:11::1/64 \\
 \end{longtable}
 
 \subsection{Router Advertisements (RA)}
-RA (router advertisements) so omogočeni per-vmesnik. Pregled in učinek na avtomatsko konfiguracijo naslovov:
-\begin{itemize}
-  \item \texttt{eth1} (DMZ): oglaša \texttt{2001:1470:fffd:a9::/64} z \emph{managed} in \emph{no-autonomous} zastavicama — odjemalci morajo uporabiti DHCPv6 za pridobitev naslova (SLAAC izključen).
-  \item \texttt{eth2} (INTERNAL): oglaša \texttt{2001:1470:fffd:aa::/64} kot avtonomni prefix — SLAAC je omogočen, DHCPv6 je lahko v uporabi za dodatne nastavitve.
-  \item \texttt{eth3} (IPV6ONLY): oglaša \texttt{fd11:11:11::/64} kot avtonomni prefix; name-server je \texttt{fd11:11:11::1} — SLAAC je omogočen.
-\end{itemize}
+RA (Router Advertisements) per interface and SLAAC status:
+\begin{longtable}{|l|l|l|l|}
+\hline
+\textbf{Interface} & \textbf{Announced prefix} & \textbf{RA flags} & \textbf{SLAAC enabled?} \\
+\hline
+eth1 (DMZ) & 2001:1470:fffd:a9::/64 & managed, no-autonomous & No (DHCPv6 preferred) \\
+eth2 (INTERNAL) & 2001:1470:fffd:aa::/64 & autonomous & Yes (SLAAC) \\
+eth3 (IPV6ONLY) & fd11:11:11::/64 & autonomous & Yes (SLAAC) \\
+\hline
+\end{longtable}
 
-Kratko pojasnilo: \texttt{managed + no-autonomous} pomeni, da naslova ni mogoče avtonomno ustvariti z SLAAC in da je treba uporabiti DHCPv6 (statične DHCPv6 mape so še vedno možne za strežnike). Vmesnika \texttt{eth2} in \texttt{eth3} dovoljujeta SLAAC, razen če je za posamezen gostitelj izrecno določena statična DHCPv6 mapa.
+Notes:
+- For IPv4 we use DHCP with static DHCPv4 maps for servers and important hosts (match by MAC address).
+- For IPv6 SLAAC is enabled on INTERNAL and IPV6ONLY so clients auto-configure addresses from the announced prefix. Use DHCPv6 static maps only for hosts that require a stable, administratively assigned address (servers, controllers).
+- If an interface advertises both \texttt{managed} and \texttt{no-autonomous}, SLAAC is effectively disabled and hosts must obtain an address via DHCPv6.
 
 \subsection{NTP}
 NTP sinhronizacija uporablja naslednje strežnike:
@@ -363,10 +370,23 @@ new\_wg & 00:0c:29:f9:2a:a8 & 192.168.11.108 \\
 \hline
 AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
 \hline
+internal-linux-01 & 00:0c:29:aa:aa:01 & 10.11.0.101 \\
+\hline
+internal-win-01 & 00:0c:29:bb:bb:01 & 10.11.0.201 \\
+\hline
+internal-monitor & 00:0c:29:cc:cc:01 & 10.11.0.107 \\
+\hline
 \end{longtable}
 
 \subsection{DHCPv6}
-DHCPv6 podeljuje naslove v subnetu \texttt{2001:1470:fffd:a9::/64} z range \texttt{::100} - \texttt{::1ff}. Ime strežnika za DHCPv6 je \texttt{2001:1470:fffd:a9::1}.
+DHCPv6 in SLAAC usage:
+\begin{itemize}
+  \item DMZ: DHCPv6 is used for servers (range \texttt{2001:1470:fffd:a9::100}--\texttt{::1ff}) and static DHCPv6 maps are configured for important hosts.
+  \item INTERNAL: SLAAC is the default for clients on \texttt{2001:1470:fffd:aa::/64}; use DHCPv6 static maps only for servers that require a fixed IPv6 address.
+  \item IPV6ONLY: SLAAC is the default on \texttt{fd11:11:11::/64}; these hosts autoconfigure addresses and do not normally require DHCPv6 static mappings.
+\end{itemize}
+
+The DHCPv6 server address for DMZ static allocations remains \texttt{2001:1470:fffd:a9::1}.
 
 \paragraph{Statične DHCPv6 mape}
 Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporabljajo v konfiguraciji VyOS.
@@ -523,7 +543,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 231 & accept & internal-to-scriptum-4443 & eth2 & eth1 & & 192.168.11.104 & 4443 & tcp \\
 240 & accept & internal-to-library-http-3000 & eth2 & eth1 & & 192.168.11.104 & 3000 & tcp \\
 241 & accept & internal-to-library-https-3443 & eth2 & eth1 & & 192.168.11.104 & 3443 & tcp \\
-242 & accept & internal-to-library-graphql-32484 & eth2 & eth1 & & 192.168.11.104 & 32484 & tcp \\
+242 & accept & internal-to-library-graphql & eth2 & eth1 & & 192.168.11.104 & 30080, 30443 & tcp \\
 250 & accept & internal-to-grafana-3000 & eth2 & eth1 & & 192.168.11.107 & 3000 & tcp \\
 251 & accept & internal-to-prometheus-9090 & eth2 & eth1 & & 192.168.11.107 & 9090 & tcp \\
 252 & accept & internal-to-snmp-exporter-9116 & eth2 & eth1 & & 192.168.11.107 & 9116 & tcp \\
@@ -550,7 +570,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 310 & accept & wg-host-to-dmz-mgmt & eth1 & eth1 & 192.168.11.106 & 192.168.11.0/24 & 22, 3389 & tcp \\
 311 & accept & wg-host-to-internal-mgmt & eth1 & eth2 & 192.168.11.106 & 10.11.0.0/24 & 22, 3389 & tcp \\
 312 & accept & internal-to-dmz-mgmt & eth2 & eth1 & 10.11.0.0/24 & 192.168.11.0/24 & 22, 3389 & tcp \\
-315 & accept & dmz-peers-to-scriptum-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.104 & 8080, 3000, 3443, 4443, 32484 & tcp \\
+315 & accept & dmz-peers-to-scriptum-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.104 & 8080, 3000, 3443, 4443, 30080, 30443 & tcp \\
 316 & accept & dmz-peers-to-dmz-dns & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.105 & 53 & tcp\_udp \\
 317 & accept & dmz-peers-to-wg-portal & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.106 & 8888 & tcp \\
 318 & accept & dmz-peers-to-monitoring & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.107 & 3000, 9090, 9116 & tcp \\
@@ -658,7 +678,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 231 & accept & internal6-to-scriptum-4443 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 4443 & tcp \\
 240 & accept & internal6-to-library-http-3000 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 3000 & tcp \\
 241 & accept & internal6-to-library-https-3443 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 3443 & tcp \\
-242 & accept & internal6-to-library-graphql-32484 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 32484 & tcp \\
+242 & accept & internal6-to-library-graphql & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 30080, 30443 & tcp \\
 250 & accept & internal6-to-grafana-3000 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 3000 & tcp \\
 251 & accept & internal6-to-prometheus-9090 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 9090 & tcp \\
 252 & accept & internal6-to-snmp-exporter-9116 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 9116 & tcp \\
@@ -687,7 +707,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 312 & accept & wg-host6-to-ipv6only-mgmt & eth1 & eth3 & 2001:1470:fffd:a9::106 & fd11:11:11::/64 & 22, 3389 & tcp \\
 313 & accept & internal6-to-dmz-mgmt & eth2 & eth1 & 2001:1470:fffd:aa::/64 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp \\
 314 & accept & ipv6only-to-dmz-mgmt & eth3 & eth1 & fd11:11:11::/64 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp \\
-315 & accept & dmz6-peers-to-scriptum-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::104 & 8080, 3000, 3443, 4443, 32484 & tcp \\
+315 & accept & dmz6-peers-to-scriptum-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::104 & 8080, 3000, 3443, 4443, 30080, 30443 & tcp \\
 316 & accept & dmz6-peers-to-dmz-dns & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::105 & 53 & tcp\_udp \\
 317 & accept & dmz6-peers-to-wg-portal & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::106 & 8888 & tcp \\
 318 & accept & dmz6-peers-to-monitoring & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::107 & 3000, 9090, 9116 & tcp \\
@@ -715,7 +735,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 430 & accept & ipv6only-to-scriptum-8080 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 8080 & tcp \\
 440 & accept & ipv6only-to-library-http-3000 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 3000 & tcp \\
 441 & accept & ipv6only-to-library-https-3443 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 3443 & tcp \\
-442 & accept & ipv6only-to-library-graphql-32484 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 32484 & tcp \\
+442 & accept & ipv6only-to-library-graphql & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 30080, 30443 & tcp \\
 450 & accept & ipv6only-to-grafana-3000 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 3000 & tcp \\
 451 & accept & ipv6only-to-prometheus-9090 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 9090 & tcp \\
 452 & accept & ipv6only-to-snmp-exporter-9116 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 9116 & tcp \\
@@ -749,6 +769,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 21 & accept & eth2 & & & 53 & tcp\_udp \\
 22 & accept & eth3 & & & 53 & tcp\_udp \\
 30 & accept & eth1 & & & 547 & udp \\
+31 & accept & eth3 & & & 547 & udp \\
 40 & accept & eth1 & & & & icmpv6 \\
 41 & accept & eth2 & & & & icmpv6 \\
 42 & accept & eth3 & & & & icmpv6 \\
@@ -1237,7 +1258,7 @@ sudo update-ca-certificates
 \subsubsection{GraphQL}
 GraphQL strežnik uporablja isto okolje in isto logiko sinhronizacije, vendar deluje na ločenih vratih:
 \begin{lstlisting}
-curl -k -X POST "https://192.168.11.104:32484/graphql" \
+curl -k -X POST "https://192.168.11.104:30443/graphql" \
   -H "Content-Type: application/json" \
   -d '{"query":"{ authors { id name } }"}'
 \end{lstlisting}
@@ -1248,10 +1269,17 @@ $b64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('username:passw
 $body = @{ query = 'mutation { createAuthor(name: "GraphQL Test") { id name } }' } | ConvertTo-Json
 
 Invoke-RestMethod `
-  -Uri 'https://192.168.11.104:32484/graphql' `
+  -Uri 'https://192.168.11.104:30443/graphql' `
   -Method Post `
   -Headers @{ Authorization = "Basic $b64"; 'Content-Type'='application/json' } `
   -Body $body
+\end{lstlisting}
+
+Za nešifrirani dostop uporabimo HTTP vrata 30080:
+\begin{lstlisting}
+curl -X POST "http://192.168.11.104:30080/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ authors { id name } }"}'
 \end{lstlisting}
 
 \subsubsection{Scriptum\_kp}
