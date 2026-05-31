@@ -19,7 +19,7 @@ breaklines=false,
 frame=single
 }
 
-\title{Dokumentacija VyOS usmerjevalnika - startup11}
+\title{Dokumentacija poslovnega omrežja - startup11}
 \author{}
 \date{\today}
 
@@ -143,7 +143,8 @@ AD services (DNS/Kerberos/LDAP/etc.) & AD & 53, 88, 389, 3268, 135, 123, 445, 46
 \begin{itemize}
     \item \textbf{Ime naprave:} startup11-vyos
     \item \textbf{Domena:} startup11.local
-    \item \textbf{Uporabnik:} vyos (prijava prek SSH ključa)
+    \item \textbf{Uporabnik:} vyos 
+    \item \textbf prijava možna izključno preko SSH ključa!!!
 \end{itemize}
 
 \subsection{Omrežni vmesniki}
@@ -180,6 +181,8 @@ RA so omogočeni na:
     \item \texttt{eth3}: prefix \texttt{fd11:11:11::/64}, name-server \texttt{fd11:11:11::1}
 \end{itemize}
 
+Opomba o SLAAC/DHCPv6: ker je za \texttt{eth1} nastavljen \texttt{managed-flag} in \texttt{no-autonomous-flag}, odjemalci na DMZ (\texttt{eth1}) uporabljajo DHCPv6 (ni SLAAC). Nasprotno pa sta na \texttt{eth2} in \texttt{eth3} oglašena avtonomna prefixa brez \texttt{no-autonomous-flag}, to pomeni, da so na teh vmesnikih privzeto dovoljene SLAAC samokonfiguracije naslovov (razen kjer je eksplicitno dodelan statični DHCPv6 mapping).
+
 \subsection{NTP}
 NTP sinhronizacija uporablja naslednje strežnike:
 
@@ -201,8 +204,8 @@ time3.vyos.net \\
 \section{Nastavitve na napravah}
 
 \subsection{Uporabniška imena}
-Uporabniki na dmz virtualkah so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke.
-Na klientih TODO.
+Uporabniki na linux \texttt{dmz} virtualkah so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke (npr sk11-dmz-linux-04).
+Na \texttt{internal} in  \texttt{ipv6only} odjemalcih je uporabnik vedno samo \texttt{zanzann}.
 
 \subsection{Splošno geslo}
 \begin{center}
@@ -224,209 +227,133 @@ saj za RDP uporablja različno geslo ki je privzeto avtogenerirano.
 
 \section{Upravljanje s konfiguracijami}
 
-\subsection{Nalaganje celotne konfiguracije}
-Če želite naložiti celotno konfiguracijo iz datoteke (npr. \verb|v4.conf|), uporabite:
+\subsection{Shranjevanje celotne konfiguracije}
+Če želite shraniti celotno trenutno konfiguracijo uporabite:
 \begin{lstlisting}
 configure
-load v4.conf
+save v6.conf
+exit
+\end{lstlisting}
+
+\subsection{Nalaganje celotne konfiguracije}
+Če želite naložiti celotno konfiguracijo iz datoteke (npr. \verb|v6.conf|), uporabite:
+\begin{lstlisting}
+configure
+load v6.conf
 commit
 save
+exit
+\end{lstlisting}
+
+\subsection{Shranjevanje seznama ukazov}
+Če želite shraniti konfiguracijo v ukaznem formatu:
+\begin{lstlisting}
+show configuration commands > v6.commands
 \end{lstlisting}
 
 \subsection{Apliciranje seznama ukazov}
-Če želite aplicirati seznam ukazov iz datoteke (npr. \verb|v4.commands|), uporabite:
+Če želite aplicirati seznam ukazov iz datoteke (npr. \verb|v6.commands|), uporabite:
 \begin{lstlisting}
 configure
-source v4.commands
+source v6.commands
 commit
 save
+exit
 \end{lstlisting}
 
-\subsection{Opozorilo pri uporabi}
-Pri apliciranju ukazov je potrebna pazljivost — nekateri ukazi ne delujejo kot pričakovano:
-\begin{itemize}
-    \item Ukaz \verb|set| pri vmesnikih (\verb|interface|) ne nastavlja vrednosti, ampak jo dodaja (deluje kot \verb|add|). To lahko vodi do podvajanja nastavitev.
-  \\item Originalne konfiguracije \\verb|v1.commands| in \\verb|v3.commands| so zgodovinski osnutki; za trenutno stanje uporabljaj \\verb|v4.conf| in \\verb|v4.commands|.
-  \item Najnovejšo in pravilno konfiguracijo (\verb|v4.commands|) generirajte avtomatsko z ukazom (zunaj \verb|configure| moda):
-\end{itemize}
-\begin{lstlisting}
-show configuration commands > v4.commands
-\end{lstlisting}
 
-Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenutnih nastavitev.
 
 \section{DNS}
-DNS posredovanje na VyOS sprejema poizvedbe iz notranjih omrežij in uporablja conditional forward za AD domeno.
+DNS resolver je nameščen neposredno na VyOS in se odjemalcem oglašuje prek DHCP kot privzeti notranji resolver. Notranji odjemalci zato najprej uporabljajo VyOS DNS, zunanje poizvedbe pa se iz VyOS posredujejo proti upstream resolverjem.
 
-\textbf{Ključna split-DNS logika:}
-\begin{itemize}
-  \item poizvedbe za \texttt{startup11.local} se na VyOS preusmerijo na AD DNS \texttt{192.168.11.201};
-  \item vse ostale poizvedbe gredo na javne upstream DNS strežnike (ARNES + Cloudflare).
-\end{itemize}
-
-\textbf{AD DNS server (authoritative):} \texttt{192.168.11.201} / \texttt{2001:1470:fffd:a9::201}
-
-\subsection{Trenutno stanje AD DNS}
-Trenutna AD zona \texttt{startup11.local} vsebuje klju\v{c}ne notranje zapise za domeno, DC in DMZ stre\v{z}nike:
-
-\begin{itemize}
-  \item korenski zapis \texttt{@} vsebuje A zapis \texttt{192.168.11.201} in AAAA zapis \texttt{2001:1470:fffd:a9::201};
-  \item NS in SOA na vrhu cone kažeta na \texttt{win-sgi52j8519e.startup11.local.};
-  \item standardni AD SRV zapisi so prisotni za \verb|_gc._tcp|, \verb|_kerberos._tcp|, \verb|_kerberos._udp|, \verb|_ldap._tcp| in \verb|_kpasswd._tcp| ter ustrezne \verb|Default-First-Site-Name| in \verb|ForestDnsZones| / \verb|DomainDnsZones| podcone;
-  \item glavni DC gostitelj \texttt{win-sgi52j8519e} ima A zapis \texttt{192.168.11.201} in AAAA zapis \newline
-\texttt{2001:1470:fffd:a9::201};
-  \item dodatna notranja zapisa sta \texttt{rest.startup11.local} \textrightarrow{} \texttt{192.168.11.104} in \texttt{snmp.startup11.local} \textrightarrow{} \texttt{192.168.11.107}.
-\end{itemize}
-
-\textbf{Forwarderji na AD DNS:}
-\begin{itemize}
-  \item IPv4: \texttt{193.2.1.66}, \texttt{1.1.1.1}
-  \item IPv6: \texttt{2001:1470:8000::66}, \texttt{2606:4700:4700::1111}
-\end{itemize}
-
-\textbf{Dovoljena omrežja za VyOS DNS forwarding:} 10.11.0.0/24, 192.168.11.0/24, 2001:1470:fffd:aa::/64, 2001:1470:fffd:a9::/64, fd11:11:11::/64.
-
-\textbf{Upstream DNS strežniki:}
-\begin{longtable}{|l|l|l|}
+\subsection{Upstream DNS strežniki}
+VyOS za neskupne domene posreduje poizvedbe na javne upstream strežnike.
+\begin{longtable}{|p{3.4cm}|p{4.0cm}|p{5.0cm}|}
+\hline
+\textbf{Ponudnik} & \textbf{IPv4} & \textbf{IPv6} \\
+\hline
+\endfirsthead
 \hline
 \textbf{Ponudnik} & \textbf{IPv4} & \textbf{IPv6} \\
 \hline
 \endhead
-\hline
-\endlastfoot
 ARNES & 193.2.1.66 & 2001:1470:8000::66 \\
 \hline
 Cloudflare & 1.1.1.1 & 2606:4700:4700::1111 \\
 \hline
 \end{longtable}
 
-\subsection{Split DNS (dnsmasq)}
-Strežnik \texttt{dns-srv} (192.168.11.105) z \textbf{dnsmasq} je opcijski notranji resolver. Trenutna pravilna konfiguracija uporablja \texttt{server=/.../} in ne \texttt{address=/.../} za AD domeno, da se ohranijo SRV zapisi za AD prijavo.
+VyOS posluša DNS na naslovih \texttt{10.11.0.1}, \texttt{192.168.11.1}, \texttt{2001:1470:fffd:aa::1}, \texttt{2001:1470:fffd:a9::1} in \texttt{fd11:11:11::1}. 
+Poizvedbe so sprejete le iz naslednjih omrežij: \texttt{10.11.0.0/24}, \texttt{192.168.11.0/24}, \texttt{2001:1470:fffd:aa::/64}, \texttt{2001:1470:fffd:a9::/64} in \texttt{fd11:11:11::/64}. 
 
-\textbf{Trenutna konfiguracija:}
+\subsection{Split DNS}
+Split DNS je nastavljen tako, da se poizvedbe za \texttt{startup11.local} ne pošiljajo na javne resolverje, ampak na notranji AD DNS strežnik. To pomeni:
 \begin{itemize}
-    \item dnsmasq posluša na: \texttt{192.168.11.105:53} (DMZ naslov)
-    \item \texttt{startup11.local} se posreduje na AD DNS: \texttt{192.168.11.201} in \texttt{2001:1470:fffd:a9::201}
-    \item Konfiguracija: \verb|/etc/dnsmasq.d/startup11.conf|
+  \item VyOS za domeno \texttt{startup11.local} uporablja conditional forward na AD DNS \texttt{192.168.11.201} oziroma \texttt{2001:1470:fffd:a9::201};
+  \item AD DNS ostane avtoritativni vir za notranje zapise, predvsem za SRV zapise, ki so potrebni pri prijavi v domeno;
+  \item vse ostale poizvedbe grejo prek upstream strežnikov iz prejšnje tabele;
+  \item stari Linux DNS strežnik na \texttt{192.168.11.105} trenutno ni v uporabi; lokalne DNS zahteve zato gredo neposredno na notranji AD DNS server.
 \end{itemize}
 
-\textbf{Pomembno za AD prijavo:} notranji odjemalci morajo za \texttt{startup11.local} dobiti SRV zapise iz AD DNS, ne samo A/AAAA zapisov. Zato je v VyOS nastavljen:
-\begin{lstlisting}
-set service dns forwarding domain startup11.local name-server 192.168.11.201
-set service dns forwarding domain startup11.local recursion-desired
-\end{lstlisting}
+\subsection{AD DNS zapisi}
+Spodnji tabeli povzemata trenutno dejansko stanje cone \texttt{startup11.local}. Prva tabela prikazuje A/AAAA zapise, druga pa ključne NS, SOA in SRV zapise za prijavo v domeno in AD storitve.
 
-\textbf{Sprememba konfiguracije:}
-\begin{lstlisting}
-# Edit configuration file
-sudo nano /etc/dnsmasq.d/startup11.conf
+\paragraph{A in AAAA zapisi}
+\begin{longtable}{|p{3cm}|l|l|p{4.2cm}|}
+\hline
+\textbf{Hostname} & \textbf{A zapis} & \textbf{AAAA zapis} & \textbf{Opombe} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Hostname} & \textbf{A zapis} & \textbf{AAAA zapis} & \textbf{Opombe} \\
+\hline
+\endhead
+@ & 192.168.11.201 & 2001:1470:fffd:a9::201 & cono apex, AD DNS strežnik \\
+ad & 192.168.11.201 & 2001:1470:fffd:a9::201 & dodatno ime AD strežnika \\
+dns-srv & 192.168.11.105 & - & legacy Linux DNS host record, trenutno ni v uporabi \\
+DomainDnsZones & 192.168.11.201 & 2001:1470:fffd:a9::201 & AD podcona \\
+ForestDnsZones & 192.168.11.201 & 2001:1470:fffd:a9::201 & AD podcona \\
+DESKTOP-V812KCI & 10.11.0.108 & 2001:1470:fffd:aa:bc05:4278:8907:6955 & notranji odjemalec \\
+IPV6ONLY-W1 & - & fd11:11:11:0:2d54:15fc:c908:fad1 & IPv6-only odjemalec \\
+new-wg & 192.168.11.108 & 2001:1470:fffd:a9::108 & nov WireGuard gostitelj \\
+raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & raft vozlišče \\
+raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & raft vozlišče \\
+raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & raft vozlišče \\
+rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST / web storitev \\
+snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & monitoring gostitelj \\
+wg & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard gostitelj \\
+win-sgi52j8519e & 192.168.11.201 & 2001:1470:fffd:a9::201 & glavni AD strežnik / DC \\
+\hline
+\end{longtable}
 
-# Test configuration
-sudo dnsmasq --test
+\paragraph{NS, SOA in SRV zapisi}
+\begin{longtable}{|p{4.8cm}|l|p{4.7cm}|p{4.6cm}|}
+\hline
+\textbf{Hostname} & \textbf{Type} & \textbf{Target / Port} & \textbf{Opombe} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Hostname} & \textbf{Type} & \textbf{Target / Port} & \textbf{Opombe} \\
+\hline
+\endhead
+@ & NS & win-sgi52j8519e.startup11.local. & cona apex name server \\
+@ & SOA & win-sgi52j8519e.startup11.local. & authority za cono \\
+\_msdcs & NS & win-sgi52j8519e.startup11.local. & AD podcona \\
+\_gc.\_tcp & SRV & 3268 -> win-sgi52j8519e.startup11.local. & global catalog \\
+\_gc.\_tcp.Default-First-Site-Name & SRV & 3268 -> win-sgi52j8519e.startup11.local. & site-specific AD zapis \\
+\_kerberos.\_tcp & SRV & 88 -> win-sgi52j8519e.startup11.local. & Kerberos TCP \\
+\_kerberos.\_udp & SRV & 88 -> win-sgi52j8519e.startup11.local. & Kerberos UDP \\
+\_ldap.\_tcp & SRV & 389 -> win-sgi52j8519e.startup11.local. & LDAP \\
+\_ldap.\_tcp.Default-First-Site-Name & SRV & 389 -> win-sgi52j8519e.startup11.local. & site-specific AD zapis \\
+\_ldap.\_tcp.DomainDnsZones & SRV & 389 -> win-sgi52j8519e.startup11.local. & AD podcona \\
+\_ldap.\_tcp.ForestDnsZones & SRV & 389 -> win-sgi52j8519e.startup11.local. & AD podcona \\
+\_kpasswd.\_tcp & SRV & 464 -> win-sgi52j8519e.startup11.local. & Kerberos password change \\
+\_kpasswd.\_udp & SRV & 464 -> win-sgi52j8519e.startup11.local. & Kerberos password change \\
+\hline
+\end{longtable}
 
-# Restart service
-sudo systemctl restart dnsmasq
-
-# Check service status
-sudo systemctl status dnsmasq
-
-# Check listening on port 53
-ss -ltnup '( sport = :53 )'
-
-# Test DNS response
-dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
-dig +short example.com @192.168.11.105
-\end{lstlisting}
-
-\subsection{dnsmasq - aktivna konfiguracija in ponovna postavitev}
-Spodaj je preverjena konfiguracija, ki trenutno teče na \texttt{192.168.11.105:53}.
-
-\begin{lstlisting}
-# /etc/dnsmasq.d/startup11.conf
-# Bind only to the DMZ address to avoid conflicts with systemd-resolved on localhost
-listen-address=192.168.11.105
-bind-interfaces
-
-# Forward AD domain to AD DNS (preserves SRV records)
-server=/startup11.local/192.168.11.201
-server=/startup11.local/2001:1470:fffd:a9::201
-
-# Upstream resolvers for non-local domains
-server=1.1.1.1
-server=193.2.1.66
-server=2001:1470:8000::66
-server=2606:4700:4700::1111
-\end{lstlisting}
-
-Koraki za ponovno postavitev:
-\begin{enumerate}
-  \item Namesti pakete.
-  \begin{lstlisting}
-sudo apt update
-sudo apt install -y dnsmasq dnsutils
-  \end{lstlisting}
-  \item Ustvari konfiguracijsko datoteko.
-  \begin{lstlisting}
-sudo tee /etc/dnsmasq.d/startup11.conf > /dev/null << 'EOF'
-# (vsebina kot zgoraj)
-EOF
-  \end{lstlisting}
-  \item Preveri sintakso in ponovno zaženi storitev.
-  \begin{lstlisting}
-sudo dnsmasq --test
-sudo systemctl restart dnsmasq
-sudo systemctl enable dnsmasq
-  \end{lstlisting}
-  \item Preveri delovanje.
-  \begin{lstlisting}
-ss -ltnup '( sport = :53 )'
-dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
-dig +short example.com @192.168.11.105
-  \end{lstlisting}
-\end{enumerate}
-
-\subsection{mDNS in systemd-resolved: rešitev za .local}
-
-Na nekaterih Ubuntu gostiteljih storitev \texttt{systemd-resolved} obravnava domeno \texttt{.local} kot mDNS (Avahi). Posledično lahko DNS poizvedbe za \texttt{startup11.local} prejmejo odgovor \texttt{REFUSED} ali pa jih sistem poskuša obdelati z mDNS namesto prek omrežnega DNS resolverja.
-
-Na gostitelju, kjer teče \texttt{wg-portal}, smo uporabili preprost popravek: za vmesnik smo nastavili routing domain in onemogočili mDNS, tako da se poizvedbe za \texttt{startup11.local} pošljejo na DHCP-provided resolver (192.168.11.1) in dosežejo AD DNS.
-
-\begin{lstlisting}
-# Nastavi routing domain (tilde pomeni routing domain)
-sudo resolvectl domain ens160 ~startup11.local
-
-# Onemogoci mdns na vmesniku
-sudo resolvectl mdns ens160 no
-
-# Pocisti predpomnilnik, ce je potrebno
-sudo resolvectl flush-caches
-
-# Persistent alternative: use NetworkManager to persist the routing domain and DNS per-connection
-#+ This makes the `resolvectl` change survive reboot and service restarts on hosts managed by NetworkManager.
-\begin{lstlisting}
-# Nastavi routing domain (tilde pomeni routing domain) temporarily
-sudo resolvectl domain ens160 ~startup11.local
-
-# Onemogoci mdns na vmesniku
-sudo resolvectl mdns ens160 no
-
-# Pocisti predpomnilnik, ce je potrebno
-sudo resolvectl flush-caches
-
-# Persist via NetworkManager for connection 'netplan-ens160'
-sudo nmcli connection modify netplan-ens160 ipv6.dns fd11:11:11::1
-sudo nmcli connection modify netplan-ens160 ipv6.dns-search "~startup11.local"
-sudo nmcli connection modify netplan-ens160 ipv6.ignore-auto-dns yes
-sudo nmcli connection up netplan-ens160
-\end{lstlisting}
-
-\paragraph{Preizkus}
-\begin{lstlisting}
-resolvectl query startup11.local
-dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
-\end{lstlisting}
-
-Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za \texttt{startup11.local} dosežejo avtoritativni AD DNS.
+\subsection{Opomba o upravljanju DNS}
+Ukazi za administracijo AD DNS strežnika so zbrani v ločeni datoteki \texttt{ad-dns-upravljanje.md}.
 
 \section{DHCP}
 
@@ -444,6 +371,7 @@ USERS & 10.11.0.0/24 (dinamični range 10.11.0.100-200) \\
 
 \subsection{DHCPv4 - statične mape}
 Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
+Konvencija je da je zadnja številka v naslovu 1XX za linux in 2XX za windows strežnike.
 \begin{longtable}{|l|l|l|}
 \hline
 \textbf{Ime} & \textbf{MAC naslov} & \textbf{IP naslov} \\
@@ -472,7 +400,8 @@ AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
 DHCPv6 podeljuje naslove v subnetu \texttt{2001:1470:fffd:a9::/64} z range \texttt{::100} - \texttt{::1ff}. Ime strežnika za DHCPv6 je \texttt{2001:1470:fffd:a9::1}.
 
 \paragraph{Statične DHCPv6 mape}
-Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporabljajo v konfiguraciji VyOS:
+Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporabljajo v konfiguraciji VyOS.
+Spet je konvencija da je zadnja številka v naslovu 1XX za linux in 2XX za windows naprave.
 \begin{longtable}{|l|l|l|}
 \hline
 \textbf{Host} & \textbf{DHCPv6 naslov} & \textbf{DUID / identifier} \\
@@ -499,22 +428,6 @@ new\_wg & 2001:1470:fffd:a9::108 & 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 \\
 
 \paragraph{Namen}
 Kratek, pregleden povzetek aktivnih NAT pravil: DNAT (port forwarding) za izbrane javne storitve, SNAT/masquerade za odhodni promet ter NAT66 (NPTv6) za IPv6-only odjemalce. Hairpin DNAT/SNAT omogoča, da notranji ali DMZ klienti dosežejo storitve preko javnega WAN naslova.
-
-\subsection{Ključne mape (kratko)}
-\begin{longtable}{|l|l|p{6cm}|p{4.5cm}|}
-\hline
-\textbf{Pravila / ID} & \textbf{Tip} & \textbf{Match} & \textbf{Prevod / cilj} \\
-\hline
-110 & DNAT & in eth0, UDP dst 51820 & 192.168.11.106 (WireGuard) \\
-130 & DNAT & in eth0, TCP dst 8080 & 192.168.11.104 (scriptum) \\
-135 & DNAT & in eth0, TCP dst 4443 & 192.168.11.104 (scriptum TLS) \\
-140 & DNAT & in eth0, TCP dst 3443 & 192.168.11.104 (library HTTPS) \\
-210,211 & Hairpin DNAT & in eth2/eth1, dst 88.200.24.241:8080,4443,3443 & map to 192.168.11.104 (internal hairpin) \\
-100,110 & SNAT (masquerade) & out eth0, src 10.11.0.0/24 / 192.168.11.0/24 & masquerade (internet egress) \\
-120,121 & Hairpin SNAT & out eth1 for hairpin flows & translate source to 192.168.11.1 (ensure return) \\
-10 & NAT66 (NPTv6) & out eth0, src fd11:11:11::/64 & 2001:1470:fffd:ab::/64 \\
-\hline
-\end{longtable}
 
 \subsection{Opombe in primeri}
 \begin{itemize}
@@ -853,7 +766,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsubsection{NAT66 (NPTv6)}
-\begin{longtable}{|l|p{6cm}|p{6cm}|p{2.5cm}|}
+\begin{longtable}{|l|l|l|l|}
 \hline
 \textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
 \hline
@@ -865,6 +778,124 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 10 & nat66-ipv6only-to-internet & out eth0, src fd11:11:11::/64 & 2001:1470:fffd:ab::/64 \\
 \hline
 \end{longtable}
+
+\section{WireGuard}
+
+\subsection{Splošne informacije}
+WireGuard VPN teče na napravi z notranjim naslovom \texttt{192.168.11.106} v DMZ omrežju. Strežnik je bil postavljen z \textbf{pivpn} skripto.
+Lahko z konfiguracijami upravljamo z PiVPN ali preko \texttt{wg-portal} vmesnika.
+
+\subsection{Dostop in port}
+\begin{itemize}
+  \item \textbf{Notranji naslov:} 192.168.11.106
+  \item \textbf{Javni port:} UDP 51820 (preusmerjen z DNAT na \texttt{192.168.11.106})
+  \item \textbf{Storitev:} aktivna in dostopna iz javnega interneta prek obstoječe NAT nastavitve
+\end{itemize}
+
+\subsection{Upravljanje VPN uporabnikov}
+Upravljanje ostaja preko \texttt{pivpn} skripte. Najpogostejši ukazi:
+\begin{lstlisting}
+# Dodaj novega VPN uporabnika
+pivpn add
+
+# Ogled aktivnih povezav
+pivpn -c
+
+# Generiranje/izpis QR kode za peer
+pivpn -qr
+
+# Brisanje uporabnika
+pivpn remove
+\end{lstlisting}
+
+\subsection{Konfiguracija in nastavitve}
+Privzete lokacije in nastavitve (trenutna postavitev):
+\begin{itemize}
+  \item Podatkovna mapa: \verb|/etc/wireguard/|
+  \item Datoteka strežnika: \verb|/etc/wireguard/wg0.conf|
+  \item Konfiguracije VPN uporabnikov (QR kode, ključi): \verb|~/configs/|
+  \item VPN subnet v našem sistemu: \texttt{10.4.103.0/24}
+\end{itemize}
+
+\subsection{Odpravljanje težav}
+Če se pojavijo težave pri povezovanju ali dostopnosti, preverite:
+\begin{lstlisting}
+# Preverka stanja vmesnika
+ip link show wg0
+
+# Preverka aktivnih povezav in statistik
+wg show
+
+# Ponovni zagon vmesnika (ko je potrebno)
+sudo systemctl restart wg-quick@wg0
+\end{lstlisting}
+
+\subsection{wg-portal (WireGuard portal) in integracija z Active Directory}
+\texttt{wg-portal} je spletna aplikacija za upravljanje WireGuard peer konfiguracij, vključno z upravljanjem dovoljenj in samopostrežnim generiranjem konfiguracij za uporabnike. 
+V našem okolju \texttt{wg-portal} teče kot upravni vmesnik nad obstoječo PiVPN postavitvijo in je dostopen na \texttt{http://192.168.11.106:8888} (če je nameščen na istem DMZ gostitelju).
+
+\subsubsection{Kaj počne}
+\begin{itemize}
+  \item Omogoča ustvarjanje in upravljanje peer konfiguracij ter izdajanje QR kod za uporabnike.
+  \item Povezuje se na Active Directory za preverjanje uporabnikov in določanje administratorskih pravic preko članstev v AD skupinah.
+  \item Upravni vmesnik ne nadomešča same PiVPN postavitve; deluje kot nadgradnja/upravljanje nad obstoječim strežnikom.
+\end{itemize}
+
+\subsubsection{LDAP / AD nastavitve (osnutek)}
+Za povezavo z AD je običajno potrebno konfigurirati bind uporabnika, base DN in filtre. Primerne nastavitve v \texttt{wgportal.yaml}:
+\begin{itemize}
+  \item \textbf{LDAP URL:} ldap://192.168.11.201:389 (ali ldaps://... z ustreznimi certifikati)
+  \item \textbf{Bind DN:} CN=wgportal\_bind,OU=ServiceAccounts,DC=startup11,DC=local
+  \item \textbf{Bind password:} (varno shranjen v konfiguraciji ali vault)
+  \item \textbf{User search base:} OU=Users,DC=startup11,DC=local
+  \item \textbf{User filter:} \texttt{(|(sAMAccountName=\%s)(userPrincipalName=\%s))} --- poišče uporabnika po sAMAccountName ali UPN
+  \item \textbf{Group(s) za admins:} merilo, npr. cn=Admin,OU=Groups,DC=startup11,DC=local
+\end{itemize}
+
+\subsubsection{Praktični PowerShell primeri}
+Spodaj so osnovni primeri za ustvarjanje bind uporabnika in dodajanje v administratorsko skupino v AD:
+\begin{lstlisting}
+# Ustvari servisnega uporabnika (prilagodi geslo varno)
+New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind \
+  -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) \
+  -Enabled $true -Path 'OU=ServiceAccounts,DC=startup11,DC=local'
+
+# Dodeli geslo/izmena obvezna glede na politiko
+Set-ADAccountPassword -Identity wgportal_bind -Reset -NewPassword \
+  (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force)
+
+# Dodaj bind account v administratorsko skupino za aplikacijo (po potrebi)
+Add-ADGroupMember -Identity 'Admin' -Members 'wgportal_bind'
+\end{lstlisting}
+
+\subsubsection{Podatkovna baza in pravice}
+\texttt{wg-portal} je nameščen na lokaciji \texttt{/opt/wg-portal/}. Privzeta shrmba je SQLite podatkovna baza na \texttt{data/sqlite.db}. 
+Moramo dobro poskrbiti da proces ki poganja wg-portal ima adekvatne pravice. V praksi smo morali ustvariti sistemskega uporabnika \texttt{wgportal} 
+in nastaviti tega uporabnika kot lastnika vseh datotek v \texttt{/opt/wg-portal}, saj so sicer nastajale napake s pravicami ob zagonu aplikacije. 
+Spodaj so primeri ukazov, ki smo jih uporabili (izvedite kot \texttt{root} ali z \texttt{sudo}):
+\begin{lstlisting}
+# Ustvari sistemskega uporabnika brez prijave in z domaco mapo na /opt/wg-portal
+useradd --system --no-create-home --shell /usr/sbin/nologin --home-dir /opt/wg-portal wgportal
+
+# Nastavi lastnistvo in varne pravice za podatkovno mapo
+chown -R wgportal:wgportal /opt/wg-portal
+chmod -R 750 /opt/wg-portal
+\end{lstlisting}
+
+\subsubsection{Preizkusi in dnevniški pregledi}
+\begin{itemize}
+  \item Testirajte LDAP poizvedbe z orodjem \texttt{ldapsearch} ali z uporabo PowerShell \texttt{Get-ADUser} za preverjanje bind/a in iskanja.
+  \item Preverite dnevniške zapise aplikacije za napake pri bindanju ali pomanjkanju pravic.
+  \item Če uporabniki ne vidijo konfiguracij ali niso v pravilnih skupinah, preverite filtre v \texttt{wgportal.yaml} in članstva v AD.
+\end{itemize}
+
+\subsubsection{Varnostne opombe}
+\begin{itemize}
+  \item Shrani bind geslo varno (uporabi secrets manager ali datoteko z omejenimi pravicami).
+  \item Če omogočite LDAP preko TLS (LDAPS), poskrbite za verodostojne certifikate in ustrezne revizijske postopke.
+  \item Redno preverjajte dnevnike in omejite dostop do upravnega vmesnika z dodatnimi omejitvami (npr. firewall, reverse proxy z avtentikacijo).
+\end{itemize}
+
 
 
 \section{Monitoring in SNMP}
@@ -883,8 +914,9 @@ Za spremljanje metrik v DMZ uporabljamo preprost monitoring stack: Prometheus (s
 Omogočite SNMP na VyOS in ga vežite na DMZ naslov:
 \begin{lstlisting}
 set service snmp community startup11 authorization 'ro'
-set service snmp contact 'ops@startup11.local'
+set service snmp contact 'pd43760@student.uni-lj.si'
 set service snmp listen-address 192.168.11.1
+set service snmp location 'FRI'
 commit
 save
 \end{lstlisting}
@@ -1067,137 +1099,7 @@ Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko prik
 \end{itemize}
 
 \subsection{Upravljanje AD DNS streznika}
-AD DNS je avtoritativen za \texttt{startup11.local} in vraca AD SRV zapise (npr. \verb|_ldap._tcp.dc._msdcs.startup11.local|).
-
-\textbf{Preverjanje forwarderjev:}
-\begin{lstlisting}[language=bash, breaklines=true]
-Get-DnsServerForwarder
-\end{lstlisting}
-
-\textbf{Preverjanje, da je DNS na AD strezniku lokalen:}
-\begin{lstlisting}[language=bash, breaklines=true]
-Get-DnsClientServerAddress
-Get-DnsServerZone
-\end{lstlisting}
-
-\textbf{Izpis DNS zapisov v AD zoni:}
-\begin{lstlisting}[language=bash, breaklines=true]
-Get-DnsServerResourceRecord -ZoneName "startup11.local" |
-  Select-Object HostName, RecordType, RecordData
-\end{lstlisting}
-
-\textbf{Preverjanje SRV zapisov na AD DNS:}
-\begin{lstlisting}[language=bash, breaklines=true]
-Resolve-DnsName _ldap._tcp.dc._msdcs.startup11.local -Type SRV -Server 127.0.0.1
-nslookup -type=SRV _ldap._tcp.dc._msdcs.startup11.local 192.168.11.201
-\end{lstlisting}
-
-\textbf{Dodajanje notranjih zapisov za DMZ streznike (primer):}
-\begin{lstlisting}[language=bash, breaklines=true]
-Add-DnsServerResourceRecordA -ZoneName "startup11.local" -Name "rest" -IPv4Address "192.168.11.104"
-Add-DnsServerResourceRecordA -ZoneName "startup11.local" -Name "snmp" -IPv4Address "192.168.11.107"
-\end{lstlisting}
-
-\textbf{Test novih zapisov po dodajanju:}
-\begin{lstlisting}[language=bash, breaklines=true]
-Resolve-DnsName rest.startup11.local -Type A -Server 127.0.0.1
-Resolve-DnsName snmp.startup11.local -Type A -Server 127.0.0.1
-\end{lstlisting}
-
-\textbf{Opomba o split DNS:} VyOS izvaja DNS posredovanje in conditional forward na AD DNS za \texttt{startup11.local}, AD DNS pa ostane avtoritativni vir notranjih zapisov.
-
-
-\section{WireGuard}
-
-\subsection{Splošne informacije}
-WireGuard VPN je nastavljeno na napravi na IP naslovu \texttt{192.168.11.106} v DMZ omrežju. Konfiguracija je bila avtomatsko generirana s \textbf{pivpn} skripto, ki poenostavi upravljanje in vzpostavitev WireGuard VPN strežnika.
-
-Trenutna postavitev ostane nespremenjena v prvi fazi. Podroben fazni načrt, ki ohrani obstoječi PiVPN/NAT in nato v drugi fazi preseli dual WireGuard stack na novo VM z \texttt{wg-portal}, je opisan v \texttt{phased-firewall-plan.md}. Ta novi načrt nadomešča prejšnje pomožne predloge za \texttt{wg-client}.
-
-\subsection{Dostop in port}
-\begin{itemize}
-    \item \textbf{Notranji naslov:} 192.168.11.106
-    \item \textbf{Javni port:} UDP 51820 (preusmeran prek NAT/DNAT na eth0)
-    \item \textbf{Storitev:} Aktivna in dostopna iz javnega interneta
-\end{itemize}
-
-\subsection{Upravljanje VPN uporabnikov}
-WireGuard uporabnike upravljate s pivpn ukazom. Osnovni koraki:
-\begin{lstlisting}
-# Dodaj novega VPN uporabnika
-pivpn add
-
-# Ogled aktivnih povezav
-pivpn -c
-
-# Ogled konfiguracije in QR koda
-pivpn -qr
-
-# Brisanje uporabnika
-pivpn remove
-\end{lstlisting}
-
-\subsection{Konfiguracija in nastavitve}
-Privzete pivpn nastavitve:
-\begin{itemize}
-    \item Podatkovna mapa: \verb|/etc/wireguard/|
-    \item Datoteka strežnika: \verb|/etc/wireguard/wg0.conf|
-    \item Konfiguracije VPN uporabnikov (QR kode, ključi): \verb|~/configs/| (domača mapa pivpn skripty)
-    \item VPN subnet v našem sistemu: \texttt{10.4.103.0/24}
-\end{itemize}
-
-\subsection{Odpravljanje težav}
-Če WireGuard ni dostopen ali se ne povezuje:
-\begin{lstlisting}
-# Preverka stanja vmesnika
-ip link show wg0
-
-# Preverka aktivnih povezav
-wg show
-
-# Resetiranje WireGuard vmesnika
-sudo ip link delete wg0
-sudo systemctl restart wg-quick@wg0
-\end{lstlisting}
-
-\subsection{wg-portal (WireGuard portal) in integracija z Active Directory}
-
-\textbf{Kaj je wg-portal:} \texttt{wg-portal} je spletna aplikacija za upravljanje WireGuard konfiguracij, dovoljenj in omogočanje samopostrežnega ustvarjanja peer konfiguracij za uporabnike.
-
-\textbf{Kje teče:} Aplikacija je dosegljiva na \texttt{http://192.168.11.106:8888}. Lokacije ostalih storitev so navedene v razdelku "DMZ strežniki" zgoraj.
-
-\textbf{Kako se poveže z AD:}
-\begin{itemize}
-  \item Aplikacija uporablja LDAP bind račun za poizvedbe uporabnikov in preverjanje članstev v skupinah.
-  \item Avtentikacija poteka z bindanjem (bind) in iskanjem vnosa, ki ustreza \texttt{sAMAccountName} ali \texttt{userPrincipalName}.
-  \item Atribute AD lahko preslikamo, npr. uporabimo \texttt{userPrincipalName} kot \texttt{email}, kadar je \texttt{mail} prazen.
-  \item Administratorske pravice se določijo preko članstva v AD skupini \texttt{Admin}.
-\end{itemize}
-
-Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneeru/complete-guide-installing-and-configuring-wireguard-portal-on-linux-d23261027520 z nekaj lokalnimi modifikacijami prilagoditvami za naš okolje. Konfiguracija, ki smo jo uporabili v tem repozitoriju, je na voljo v datoteki \texttt{wgportal.yaml}.
-
-\textbf{Opombe:}
-\begin{itemize}
-  \item Privzeta podatkovna shramba aplikacije je SQLite (\texttt{data/sqlite.db}). Če aplikacija poroča o napaki \texttt{unable to open database file}, preverite, da mapa \texttt{data} obstaja in ima pravilne pravice/lastništvo (npr. \texttt{/opt/wg-portal/data}).
-  \item Primer ukazov za ustvarjanje bind uporabnika v AD (PowerShell):
-\end{itemize}
-\begin{lstlisting}
-# Ustvari servisnega uporabnika (prilagodi geslo varno)
-New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword
-(ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
-
-# Po potrebi dodaj uporabnike v administratorsko skupino
-Add-ADGroupMember -Identity "Admin" -Members "zanadmin","pavlogal"
-\end{lstlisting}
-
-\textbf{Preizkusi in dnevniški pregledi:}
-\begin{itemize}
-  \item Testirajte LDAP poizvedbe z orodjem \texttt{ldapsearch} kjer je na voljo.
-  \item Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
-  \item Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve \newline  \verb|create_default_peer_on_login| in \verb|self_provisioning_allowed|.
-\end{itemize}
-
-\textbf{Opomba:} Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
+Ukazi za upravljanje AD DNS strežnika so premaknjeni v ločeno datoteko \texttt{ad-dns-upravljanje.md}. V tej dokumentaciji ostaja samo kratek povzetek: AD DNS je avtoritativen za \texttt{startup11.local} in vrača notranje A/AAAA/SRV zapise za prijavo v domeno in povezane storitve.
 
 
 \section{REST}
@@ -1474,7 +1376,7 @@ Pomen posameznih ukazov:
 %--------------------------------
 % Ukazi, ki jih lahko uporabite za pretvorbo dokumentacije med formati.
 % Zahteva: pandoc mora biti nameščen.
-\section*{Pretvorba med Markdown in LaTeX}
+\section{Pretvorba med Markdown in LaTeX}
 \begin{itemize}
   \item LaTeX \textrightarrow{} Markdown (GitHub-flavored):
 \begin{lstlisting}
