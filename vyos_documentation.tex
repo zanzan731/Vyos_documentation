@@ -2,13 +2,18 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{geometry}
+\usepackage{array}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{graphicx}
 \usepackage{longtable}
+\usepackage{pdflscape}
 \usepackage{amsmath}
 \usepackage{hyperref}
 
 \geometry{margin=1in}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \lstset{
 backgroundcolor=\color{gray!10},
@@ -30,88 +35,112 @@ frame=single
 \vspace{1em}
 
 \section{Naloga in zasnova omrežja}
-V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture, cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
+V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture; cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
 
 \subsection{Cilji naloge}
 \begin{itemize}
   \item Postaviti omrežje z ločenimi segmenti za \textbf{uporabnike} in \textbf{strežnike} (strogo ločeno prometno okolje).
   \item Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
-  \item Izpostaviti navzven le izbrane storitve: WireGuard in REST frontend (HTTPS).
+  \item Izpostaviti navzven le izbrane storitve: WireGuard, \texttt{wg-portal} (HTTPS) in REST frontend (HTTPS).
   \item Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo znotraj omrežja in preko VPN (ni direktnega WAN dostopa).
   \item Ohranjati poseben \textbf{ipv6only} segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
 \end{itemize}
 
 \subsection{Opredelitev segmentov}
 \begin{itemize}
-  \item \textbf{DMZ (eth1, 192.168.X.0/24)}: vsi strežniki (REST, wg-portal, WireGuard endpoint, AD/DNS, SNMP, ostali). Fizični lokaciji strežnikov sta v DMZ, vendar dostopi do nekaterih storitev omejeni z omrežnimi ACL.
-  \item \textbf{INTERNAL (eth2, 10.X.0.0/24)}: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
-  \item \textbf{IPV6ONLY (eth3, ULA + NPTv6)}: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
+  \item \textbf{DMZ (eth1)}: vsi strežniki (REST, wg-portal, WireGuard endpoint, AD/DNS, SNMP, ostali). Fizični lokaciji strežnikov sta v DMZ, vendar dostopi do nekaterih storitev omejeni z omrežnimi ACL.
+  \item \textbf{INTERNAL (eth2)}: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
+  \item \textbf{IPV6ONLY (eth3)}: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
 \end{itemize}
-
-\subsection{Izolacija segmentov}
-Segmenti se izolirajo z naslednjimi ukrepi:
-\begin{itemize}
-  \item \textbf{Layer-3 ločitev (VyOS routing + ACL)}: vsak segment ima ločen subnet in VyOS izvaja routing ter aplikacijo politk (default-deny ter strog seznam izjem).
-  \item \textbf{VLAN/PortGroup} na hipervizorju: DMZ, INTERNAL in IPV6ONLY so v ločenih PortGroup/VLANih, management port group pa ločen in omejen.
-  \item \textbf{Host-firewall} (vsak strežnik in vsaka delovna postaja): default-deny inbound, dovoljenje samo za nujne storitve; admin dostop omejen na internal in VPN izvoru.
-  \item \textbf{Split DNS / conditional forward}: notranji klienti uporabljajo AD DNS za `startup11.local`, zunanji resolverji pa javne strežnike — prepreči izpostavitev notranjih zapisov.
-  \item \textbf{Monitoring in logging}: monitoring host ima izključno dovoljenje za SNMP/agent promet; centralizirano beleženje (syslog) in netflow/sflow za analizo.
-\end{itemize}
-
 
 \section{Naprave}
 
-\subsection{usmerjevalnik}
-sk11-vyos
+\subsection{Seznam virtualk}
+% Insert VM screenshot and naming convention
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.9\textwidth]{serverlist.png}
+  \caption{Screenshot of VM names (serverlist.png)}
+\end{figure}
 
-\subsection{internal}
-sk11-internal-linux,
-sk11-internal-windows
+\subsection{Konvencija poimenovanja virtualk}
+Ime virtualke se vedno začne z \texttt{sk11} (naša skupina), nato sledi segment, operacijski sistem, zaporedna številka in kratek opis storitve. Oblika:
+\begin{center}
+  \texttt{sk11-<segment>-<OS>-<NN>-<storitev>} \ e.g. \texttt{sk11-dmz-linux-04-rest}
+\end{center}
 
-\subsection{ipv6only}
-sk11-ipv6only-linux,
-sk11-ipv6only-windows
+\subsection{Operacijski sistemi}
+\begin{itemize}
+  \item DMZ Linux virtualke uporabljajo \textbf{Ubuntu Server 26.04}.
+  \item DMZ Active Directory virtualka uporablja \textbf{Windows Server 2022}.
+  \item Internal Linux virtualke uporabljajo \textbf{Ubuntu Server 26.04}.
+  \item Internal Windows virtualke uporabljajo \textbf{Windows 10}.
+  \item IPv6-only Linux virtualke uporabljajo \textbf{Ubuntu Server 26.04}.
+  \item IPv6-only Windows virtualke uporabljajo \textbf{Windows 10}.
+\end{itemize}
 
-
-\subsection{DMZ strežniki - označi subnet}
+\subsection{DMZ strežniki}
 \begin{longtable}{|l|l|l|l|}
 \hline
-\textbf{Ime strežnika} & \textbf{IP naslov} & \textbf{IPv6 naslov} & \textbf{Namen} \\
+\textbf{VM name} & \textbf{IPv4 naslov} & \textbf{IPv6 naslov} & \textbf{Namen} \\
 \hline
-raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & Raft (cluster node) \\
+sk11-dmz-linux-01-raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & Raft \\
 \hline
-raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & Raft (cluster node) \\
+sk11-dmz-linux-02-raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & Raft \\
 \hline
-raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & Raft (cluster node) \\
+sk11-dmz-linux-03-raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & Raft \\
 \hline
-rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST API / ostali servisi \\
+sk11-dmz-linux-04-rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST storitve \\
 \hline
-dns-srv & 192.168.11.105 & - & DNS strežnik (lokalni) (ni v uporabi)\\
+sk11-dmz-linux-05-dns & 192.168.11.105 & - & DNS, ni v uporabi \\
 \hline
-wireguard & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard VPN končna točka \\
+sk11-dmz-linux-06-wg & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard VPN endpoint \\
 \hline
-snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & SNMP / monitoring cilj \\
+sk11-dmz-linux-07-snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & SNMP / monitoring target \\
 \hline
-wg2 & 192.168.11.108 & 2001:1470:fffd:a9::108 & drugi wireguard strežnik (ni v uporabi) \\
+sk11-dmz-linux-08-wg2 & 192.168.11.108 & 2001:1470:fffd:a9::108 & neuporabljena \\
 \hline
-AD & 192.168.11.201 & 2001:1470:fffd:a9::201 & Active Directory (Domain Controller) \\
+sk11-dmz-windows-01-ad & 192.168.11.201 & 2001:1470:fffd:a9::201 & Active Directory, DNS\\
 \hline
 \end{longtable}
 
+\section{Nastavitve na napravah}
+
+\subsection{Uporabniška imena}
+Uporabniki na linux \texttt{dmz} virtualkah so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke (npr sk11-dmz-linux-04).
+Na \texttt{internal} in \texttt{ipv6only} odjemalcih je uporabnik vedno samo \texttt{zanzann}.
+
+\subsection{Splošno geslo}
+\begin{center}
+\boxed{\texttt{123NajboljseGeslo456!}}
+\end{center}
+
+\subsection{SSH}
+SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. 
+\begin{itemize}
+    \item \textbf{pavle}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h}
+    \item \textbf{zanzan}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL}
+\end{itemize}
+Če želite začasno omogočiti prijavo z geslom, uredite datoteko \newline  \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}, nato ponovno zaženite \texttt{sshd}.
+
+\subsection{RDP}
+RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 3389.
+Na Ubuntu ga omogočimo z Settings > System > Remote Desktop, in moramo potem nastaviti geslo, 
+saj za RDP uporablja različno geslo ki je privzeto avtogenerirano.
 
 \section{Povzetek storitev}
 
-\begin{longtable}{|p{4.1cm}|p{2.4cm}|p{2.5cm}|p{1.3cm}|p{5.0cm}|}
+\begin{longtable}{|p{4.1cm}|p{2cm}|p{2.5cm}|p{1.3cm}|p{5.0cm}|}
 \hline
-\textbf{Service} & \textbf{Host} & \textbf{Port (protokol)} & \textbf{Public?} & \textbf{Notes} \\
+\textbf{Service} & \textbf{Host} & \textbf{Port (proto)} & \textbf{Public?} & \textbf{Notes} \\
 \hline
-RDP & internal in ipv6only + AD server & 3389 (tcp) & No & RDP je omočočen na vseh napravah, ki imajo GUI \\
+RDP & all GUI & 3389 (tcp) & No & all internal and ipv6only, AD server \\
 \hline
-SSH & vsi linux serverji v dmz + vyos & 22 (tcp) & samo vyos & SSH na vseh linux serverjih ; WAN SSH dovoljen samo na vyos \\
+SSH & all dmz + vyos & 22 (tcp) & only vyos & SSH service present on all dmz servers; WAN SSH allowed only on vyos \\
 \hline
-SNMP target (VyOS) & vyos & 161 (udp) & No & SNMP na VyOS; exporter scrapes this target \\
+SNMP target (VyOS) & vyos & 161 (udp) & No & SNMP on VyOS; exporter scrapes this target \\
 \hline
-REST service (scriptum) & rest & 8080 (tcp) & Yes & Public DNAT obstaja \\
+REST service (scriptum) & rest & 8080 (tcp) & Yes & Public DNAT exists \\
 \hline
 scriptum backend & rest & 4443 (tcp) & Yes & Public backend endpoint \\
 \hline
@@ -119,13 +148,13 @@ Library API (HTTP) & rest & 3000 (tcp) & No & Internal HTTP API \\
 \hline
 Library API (HTTPS) & rest & 3443 (tcp) & Yes & Public HTTPS endpoint \\
 \hline
-Library API (GraphQL) & rest & 30443 (tcp) & No & Internal GraphQL endpoint \\
+Library API (GraphQL) & rest & 32484 (tcp) & No & Internal GraphQL endpoint \\
 \hline
 DMZ DNS & dns-srv & 53 (udp/tcp) & No & Internal DNS for DMZ clients \\
 \hline
-WireGuard server & wireguard & 51820 (udp) & Yes & PiVPN, uporablja svoj NAT/masquerade \\
+WireGuard server & wg & 51820 (udp) & Yes & PiVPN, uses its own NAT/masquerade \\
 \hline
-wg-portal UI & wireguard & 8888 (tcp) & No & Local portal UI (internal only) \\
+wg-portal UI & wg & 8888 (tcp) & No & Local portal UI (internal only) \\
 \hline
 Prometheus & snmp & 9090 (tcp) & No & Prometheus scrape UI/service \\
 \hline
@@ -144,7 +173,7 @@ AD services (DNS/Kerberos/LDAP/etc.) & AD & 53, 88, 389, 3268, 135, 123, 445, 46
     \item \textbf{Ime naprave:} startup11-vyos
     \item \textbf{Domena:} startup11.local
     \item \textbf{Uporabnik:} vyos 
-    \item \textbf Prijava možna izključno preko SSH ključa!!!
+    \item \textbf{Prijava možna izključno preko SSH ključa!!!}
 \end{itemize}
 
 \subsection{Omrežni vmesniki}
@@ -174,14 +203,14 @@ eth3 & IPv6-only & - & fd11:11:11::1/64 \\
 \end{longtable}
 
 \subsection{Router Advertisements (RA)}
-RA so omogočeni na:
+RA (router advertisements) so omogočeni per-vmesnik. Pregled in učinek na avtomatsko konfiguracijo naslovov:
 \begin{itemize}
-    \item \texttt{eth1}: prefix \texttt{2001:1470:fffd:a9::/64} (managed flag, no-autonomous)
-    \item \texttt{eth2}: prefix \texttt{2001:1470:fffd:aa::/64}
-    \item \texttt{eth3}: prefix \texttt{fd11:11:11::/64}, name-server \texttt{fd11:11:11::1}
+  \item \texttt{eth1} (DMZ): oglaša \texttt{2001:1470:fffd:a9::/64} z \emph{managed} in \emph{no-autonomous} zastavicama — odjemalci morajo uporabiti DHCPv6 za pridobitev naslova (SLAAC izključen).
+  \item \texttt{eth2} (INTERNAL): oglaša \texttt{2001:1470:fffd:aa::/64} kot avtonomni prefix — SLAAC je omogočen, DHCPv6 je lahko v uporabi za dodatne nastavitve.
+  \item \texttt{eth3} (IPV6ONLY): oglaša \texttt{fd11:11:11::/64} kot avtonomni prefix; name-server je \texttt{fd11:11:11::1} — SLAAC je omogočen.
 \end{itemize}
 
-Opomba o SLAAC/DHCPv6: ker je za \texttt{eth1} nastavljen \texttt{managed-flag} in \texttt{no-autonomous-flag}, odjemalci na DMZ (\texttt{eth1}) uporabljajo DHCPv6 (ni SLAAC). Nasprotno pa sta na \texttt{eth2} in \texttt{eth3} oglašena avtonomna prefixa brez \texttt{no-autonomous-flag}, to pomeni, da so na teh vmesnikih privzeto dovoljene SLAAC samokonfiguracije naslovov (razen kjer je eksplicitno dodelan statični DHCPv6 mapping).
+Kratko pojasnilo: \texttt{managed + no-autonomous} pomeni, da naslova ni mogoče avtonomno ustvariti z SLAAC in da je treba uporabiti DHCPv6 (statične DHCPv6 mape so še vedno možne za strežnike). Vmesnika \texttt{eth2} in \texttt{eth3} dovoljujeta SLAAC, razen če je za posamezen gostitelj izrecno določena statična DHCPv6 mapa.
 
 \subsection{NTP}
 NTP sinhronizacija uporablja naslednje strežnike:
@@ -200,34 +229,9 @@ time3.vyos.net \\
 \hline
 \end{longtable}
 
+\subsection{Upravljanje s konfiguracijami}
 
-\section{Nastavitve na napravah}
-
-\subsection{Uporabniška imena}
-Uporabniki na linux \texttt{dmz} virtualkah so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke (npr sk11-dmz-linux-04).
-Na \texttt{internal} in  \texttt{ipv6only} odjemalcih je lokalni uporabnik vedno samo \texttt{zanzan}, drugi so dodeljeni preko AD.
-
-\subsection{Splošno geslo}
-\begin{center}
-\boxed{\texttt{123NajboljseGeslo456!}}
-\end{center}
-
-\subsection{SSH}
-SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. 
-\begin{itemize}
-    \item \textbf{pavle}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h}
-    \item \textbf{zanzan}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL}
-\end{itemize}
-Če želite začasno omogočiti prijavo z geslom, uredite datoteko \newline  \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}, nato ponovno zaženite \texttt{sshd}.
-
-\subsection{RDP}
-RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 3389.
-Na Ubuntu ga omogočimo z Settings > System > Remote Desktop, in moramo potem nastaviti geslo, 
-saj za RDP uporablja različno geslo ki je privzeto avtogenerirano.
-
-\section{Upravljanje s konfiguracijami}
-
-\subsection{Shranjevanje celotne konfiguracije}
+\subsubsection{Shranjevanje celotne konfiguracije}
 Če želite shraniti celotno trenutno konfiguracijo uporabite:
 \begin{lstlisting}
 configure
@@ -235,7 +239,7 @@ save v6.conf
 exit
 \end{lstlisting}
 
-\subsection{Nalaganje celotne konfiguracije}
+\subsubsection{Nalaganje celotne konfiguracije}
 Če želite naložiti celotno konfiguracijo iz datoteke (npr. \verb|v6.conf|), uporabite:
 \begin{lstlisting}
 configure
@@ -245,13 +249,13 @@ save
 exit
 \end{lstlisting}
 
-\subsection{Shranjevanje seznama ukazov}
+\subsubsection{Shranjevanje seznama ukazov}
 Če želite shraniti konfiguracijo v ukaznem formatu:
 \begin{lstlisting}
 show configuration commands > v6.commands
 \end{lstlisting}
 
-\subsection{Apliciranje seznama ukazov}
+\subsubsection{Apliciranje seznama ukazov}
 Če želite aplicirati seznam ukazov iz datoteke (npr. \verb|v6.commands|), uporabite:
 \begin{lstlisting}
 configure
@@ -260,7 +264,6 @@ commit
 save
 exit
 \end{lstlisting}
-
 
 
 \section{DNS}
@@ -296,9 +299,7 @@ Split DNS je nastavljen tako, da se poizvedbe za \texttt{startup11.local} ne po�
 \end{itemize}
 
 \subsection{AD DNS zapisi}
-Spodnji tabeli povzemata trenutno dejansko stanje cone \texttt{startup11.local}. Prva tabela prikazuje A/AAAA zapise, druga pa ključne NS, SOA in SRV zapise za prijavo v domeno in AD storitve.
-
-\paragraph{A in AAAA zapisi}
+AD privzeto generira DNS zapise potrebne za njegovo delovanje, spodnja tabela pa prikazuje ročno dodane lokalne DNS zapise: 
 \begin{longtable}{|p{3cm}|l|l|p{4.2cm}|}
 \hline
 \textbf{Hostname} & \textbf{A zapis} & \textbf{AAAA zapis} & \textbf{Opombe} \\
@@ -308,47 +309,15 @@ Spodnji tabeli povzemata trenutno dejansko stanje cone \texttt{startup11.local}.
 \textbf{Hostname} & \textbf{A zapis} & \textbf{AAAA zapis} & \textbf{Opombe} \\
 \hline
 \endhead
-@ & 192.168.11.201 & 2001:1470:fffd:a9::201 & cono apex, AD DNS strežnik \\
-ad & 192.168.11.201 & 2001:1470:fffd:a9::201 & dodatno ime AD strežnika \\
-dns-srv & 192.168.11.105 & - & legacy Linux DNS host record, trenutno ni v uporabi \\
-DomainDnsZones & 192.168.11.201 & 2001:1470:fffd:a9::201 & AD podcona \\
-ForestDnsZones & 192.168.11.201 & 2001:1470:fffd:a9::201 & AD podcona \\
-DESKTOP-V812KCI & 10.11.0.108 & 2001:1470:fffd:aa:bc05:4278:8907:6955 & notranji odjemalec \\
-IPV6ONLY-W1 & - & fd11:11:11:0:2d54:15fc:c908:fad1 & IPv6-only odjemalec \\
-new-wg & 192.168.11.108 & 2001:1470:fffd:a9::108 & nov WireGuard gostitelj \\
 raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & raft vozlišče \\
 raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & raft vozlišče \\
 raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & raft vozlišče \\
 rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST / web storitev \\
-snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & monitoring gostitelj \\
+dns-srv & 192.168.11.105 & - & legacy Linux DNS host record, trenutno ni v uporabi \\
 wg & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard gostitelj \\
-win-sgi52j8519e & 192.168.11.201 & 2001:1470:fffd:a9::201 & glavni AD strežnik / DC \\
-\hline
-\end{longtable}
-
-\paragraph{NS, SOA in SRV zapisi}
-\begin{longtable}{|p{4.8cm}|l|p{4.7cm}|p{4.6cm}|}
-\hline
-\textbf{Hostname} & \textbf{Type} & \textbf{Target / Port} & \textbf{Opombe} \\
-\hline
-\endfirsthead
-\hline
-\textbf{Hostname} & \textbf{Type} & \textbf{Target / Port} & \textbf{Opombe} \\
-\hline
-\endhead
-@ & NS & win-sgi52j8519e.startup11.local. & cona apex name server \\
-@ & SOA & win-sgi52j8519e.startup11.local. & authority za cono \\
-\_msdcs & NS & win-sgi52j8519e.startup11.local. & AD podcona \\
-\_gc.\_tcp & SRV & 3268 -> win-sgi52j8519e.startup11.local. & global catalog \\
-\_gc.\_tcp.Default-First-Site-Name & SRV & 3268 -> win-sgi52j8519e.startup11.local. & site-specific AD zapis \\
-\_kerberos.\_tcp & SRV & 88 -> win-sgi52j8519e.startup11.local. & Kerberos TCP \\
-\_kerberos.\_udp & SRV & 88 -> win-sgi52j8519e.startup11.local. & Kerberos UDP \\
-\_ldap.\_tcp & SRV & 389 -> win-sgi52j8519e.startup11.local. & LDAP \\
-\_ldap.\_tcp.Default-First-Site-Name & SRV & 389 -> win-sgi52j8519e.startup11.local. & site-specific AD zapis \\
-\_ldap.\_tcp.DomainDnsZones & SRV & 389 -> win-sgi52j8519e.startup11.local. & AD podcona \\
-\_ldap.\_tcp.ForestDnsZones & SRV & 389 -> win-sgi52j8519e.startup11.local. & AD podcona \\
-\_kpasswd.\_tcp & SRV & 464 -> win-sgi52j8519e.startup11.local. & Kerberos password change \\
-\_kpasswd.\_udp & SRV & 464 -> win-sgi52j8519e.startup11.local. & Kerberos password change \\
+snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & monitoring gostitelj \\
+new-wg & 192.168.11.108 & 2001:1470:fffd:a9::108 & nov WireGuard gostitelj \\
+ad & 192.168.11.201 & 2001:1470:fffd:a9::201 & dodatno ime AD strežnika \\
 \hline
 \end{longtable}
 
@@ -424,72 +393,71 @@ new\_wg & 2001:1470:fffd:a9::108 & 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 \\
 \hline
 \end{longtable}
 
+\begin{landscape}
+
 \section{NAT in preusmeritve vrat}
 
 \paragraph{Namen}
-Kratek, pregleden povzetek aktivnih NAT pravil: DNAT (port forwarding) za izbrane javne storitve, SNAT/masquerade za odhodni promet ter NAT66 (NPTv6) za IPv6-only odjemalce. Hairpin DNAT/SNAT omogoča, da notranji ali DMZ klienti dosežejo storitve preko javnega WAN naslova.
+NAT je uporabljen za tri stvari: DNAT za izbrane javne storitve, SNAT/masquerade za odhodni promet in NAT66 (NPTv6) za IPv6-only segment. Hairpin pravila omogočajo dostop do javnih storitev tudi iz notranjega in DMZ omrežja.
 
 \subsection{Opombe in primeri}
 \begin{itemize}
-  \item DNAT in pripadajoča forward pravila so omejena na specifične porte in ciljne gostitelje — ni splošnega "port forward all" vedenja.
-  \item Hairpin (DNAT+SNAT) obstaja samo za izbrane storitve (primarno HTTP/TLS porti), tako da notranji promet, ki cilja na WAN IP, pravilno doseže DMZ gostitelje.
-  \item SNAT (masquerade) je uporabljen izključno za odhodni promet preko \texttt{eth0}; interni in DMZ segmenti ohranjajo ločeno notranje naslavljanje.
+  \item DNAT velja samo za izbrane porte in ciljne gostitelje.
+  \item Hairpin DNAT/SNAT je omejen na storitve, ki jih je treba doseči prek javnega WAN naslova tudi iz notranjega omrežja.
+  \item SNAT/masquerade se uporablja samo za odhodni promet prek \texttt{eth0}.
 \end{itemize}
 
-\subsection{Podrobne tabele NAT pravil}
-Spodaj so tabelarični izvlečki aktivnih NAT pravil (glej `v5.10.conf` za originalne vnose).
-
-\subsubsection{IPv4 -- NAT destination (DNAT / port forwarding)}
-\begin{longtable}{|l|l|p{6cm}|p{4.5cm}|}
+\subsection{IPv4 -- DNAT}
+\begin{longtable}{|l|l|l|l|L{2.2cm}|l|l|}
 \hline
-\textbf{Pravilo} & \textbf{Proto} & \textbf{Match (vhod)} & \textbf{Prevod / cilj} \\
+\textbf{Pravilo} & \textbf{Opis} & \textbf{In} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} & \textbf{Prevod / cilj} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Pravilo} & \textbf{Proto} & \textbf{Match (vhod)} & \textbf{Prevod / cilj} \\
+\textbf{Pravilo} & \textbf{Opis} & \textbf{In} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} & \textbf{Prevod / cilj} \\
 \hline
 \endhead
-110 & UDP & in eth0, dst port 51820 & 192.168.11.106:51820 (WireGuard) \\
-130 & TCP & in eth0, dst port 8080 & 192.168.11.104:8080 (scriptum) \\
-135 & TCP & in eth0, dst port 4443 & 192.168.11.104:4443 (scriptum TLS) \\
-140 & TCP & in eth0, dst port 3443 & 192.168.11.104:3443 (library HTTPS) \\
-210 & TCP/UDP & hairpin from internal/dmz to 88.200.24.241:8080 & map to 192.168.11.104:8080 (internal hairpin) \\
-211 & TCP/UDP & hairpin from internal/dmz to 88.200.24.241:4443/3443 & map to 192.168.11.104:4443/3443 (internal hairpin) \\
+110 & wan-to-wg0-51820-dnat & eth0 & & 51820 & udp & 192.168.11.106:51820 (WireGuard) \\
+130 & wan-to-scriptum-8080-dnat & eth0 & & 8080 & tcp & 192.168.11.104:8080 (scriptum) \\
+135 & wan-to-scriptum-4443-dnat & eth0 & & 4443 & tcp & 192.168.11.104:4443 (scriptum TLS) \\
+140 & wan-to-library-https-3443-dnat & eth0 & & 3443 & tcp & 192.168.11.104:3443 (library HTTPS) \\
+210 & hairpin-internal-to-public-services-dnat & eth2 & 88.200.24.241 & 8080 & tcp & 192.168.11.104:8080 \\
+211 & hairpin-dmz-to-public-services-dnat & eth1 & 88.200.24.241 & 4443, 3443 & tcp & 192.168.11.104:4443,3443 \\
 \hline
 \end{longtable}
 
-\subsubsection{IPv4 -- NAT source (SNAT / masquerade)}
-\begin{longtable}{|l|l|p{6cm}|p{4.5cm}|}
+\subsection{IPv4 -- SNAT}
+\begin{longtable}{|l|l|l|l|l|l|}
 \hline
-\textbf{Pravilo} & \textbf{Tip} & \textbf{Match (odhod)} & \textbf{Prevod / opomba} \\
+\textbf{Pravilo} & \textbf{Opis} & \textbf{Out} & \textbf{Source} & \textbf{Proto/Notes} & \textbf{Prevod / opomba} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Pravilo} & \textbf{Tip} & \textbf{Match (odhod)} & \textbf{Prevod / opomba} \\
+\textbf{Pravilo} & \textbf{Opis} & \textbf{Out} & \textbf{Source} & \textbf{Proto/Notes} & \textbf{Prevod / opomba} \\
 \hline
 \endhead
-100 & SNAT & out eth0, src 10.11.0.0/24 & translation: masquerade (internet egress) \\
-110 & SNAT & out eth0, src 192.168.11.0/24 & translation: masquerade (internet egress) \\
-120 & Hairpin-SNAT & out eth1 for selected hairpin flows & translate source to 192.168.11.1 (ensure return path) \\
-121 & Hairpin-SNAT & out eth1 for selected hairpin flows & translate source to 192.168.11.1 (ensure return path) \\
+100 & snat-internal-to-internet & eth0 & 10.11.0.0/24 & masquerade & internet egress \\
+110 & snat-dmz-to-internet & eth0 & 192.168.11.0/24 & masquerade & internet egress \\
+120 & hairpin-internal-to-public-snat & eth1 & 10.11.0.0/24, dst 192.168.11.104 & tcp & 192.168.11.1 (return path) \\
+121 & hairpin-dmz-to-public-snat & eth1 & 192.168.11.0/24, dst 192.168.11.104 & tcp & 192.168.11.1 (return path) \\
 \hline
 \end{longtable}
 
-\subsubsection{IPv6 -- NAT66 (NPTv6)}
-\begin{longtable}{|l|p{8.5cm}|p{4.5cm}|}
+\subsection{IPv6 -- NAT66}
+\begin{longtable}{|l|l|l|l|l|}
 \hline
-\textbf{Pravilo} & \textbf{Match} & \textbf{Prevod / cilj} \\
+\textbf{Pravilo} & \textbf{Out} & \textbf{Source} & \textbf{Proto/Notes} & \textbf{Prevod / cilj} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Pravilo} & \textbf{Match} & \textbf{Prevod / cilj} \\
+\textbf{Pravilo} & \textbf{Out} & \textbf{Source} & \textbf{Proto/Notes} & \textbf{Prevod / cilj} \\
 \hline
 \endhead
-10 & out eth0, src prefix fd11:11:11::/64 & translation prefix 2001:1470:fffd:ab::/64 (NPTv6) \\
+10 & eth0 & fd11:11:11::/64 & ipv6 & translation prefix 2001:1470:fffd:ab::/64 (NPTv6) \\
 \hline
 \end{longtable}
 
-Konfiguracija v `v5.10.conf` ostaja avtoritativna za podrobne vnose; tukaj so tabele namenjene hitremu pregledu in dokumentaciji.
+
 
 \section{Firewall}
 \subsection{Kratek povzetek}
@@ -500,284 +468,294 @@ Konfiguracija v `v5.10.conf` ostaja avtoritativna za podrobne vnose; tukaj so ta
   \item \textbf{Hairpin NAT:} notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT za izbrane services.
   \item \textbf{IPv6:} obstaja vzporedna zbirka pravil za IPv6; za IPv6-only odjemalce so posebej omogočena pravila in NAT66 (NPTv6) za izhod v internet.
 \end{itemize}
-
-\subsection{IPv4 - vhodni promet (input)}
-\begin{itemize}
-    \item Pravilo za ohranjanje stanj: dovoli \texttt{established} in \texttt{related} povezave.
-    \item Pravilo za SSH: na javnem vmesniku \texttt{eth0} je dovoljeno TCP dst port \texttt{22} za novo povezavo.
-\end{itemize}
-\begin{longtable}{|l|l|p{8cm}|}
-\hline
-\textbf{IP verzija} & \textbf{Veriga} & \textbf{Ključno pravilo / opis} \\
-\hline
-IPv4 & INPUT & Dovoli vzpostavljene in sorodne povezave (established, related). \\
-\hline
-IPv4 & INPUT & Dovoli nove TCP povezave na port 22 na vmesniku eth0 (SSH). \\
-\hline
-IPv4 & FORWARD & Dovoli nove UDP povezave iz eth0 proti 192.168.11.106:51820 (WireGuard). \\
-\hline
-IPv6 & INPUT & Dovoli vzpostavljene in sorodne povezave; dovoli nove TCP povezave na port 22 na eth0. \\
-\hline
-IPv6 & FORWARD & Dovoli nove UDP povezave na port 51820 na vhodnem vmesniku eth0 (WireGuard). \\
-\hline
-\end{longtable}
-
-\subsection{IPv4 - forward (posredovanje)}
-\begin{itemize}
-  \item Pravilo za WireGuard: dovoli novo UDP povezavo iz \texttt{eth0} proti \texttt{192.168.11.106:51820} s prehodi na \texttt{eth1}.
-  \item Pravila 210-241 eksplicitno dovolijo dostop iz \texttt{eth2} do AD DNS/DC na \texttt{192.168.11.201} (DNS, Kerberos, LDAP, Global Catalog, SMB/RPC, dynamic RPC).
-\end{itemize}
-% Forward rule summary already in firewall table above.
-
-\subsection{IPv6 - vhodni promet in posredovanje}
-IPv6 ima podobna vhodna pravila (dovoli \texttt{established/related} in SSH na \texttt{eth0}), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku \texttt{eth0}) in pravila 210-241 za dostop do AD strežnika na \texttt{2001:1470:fffd:a9::201}.
-% IPv6 firewall rules summarized in the firewall table above.
-
-\subsection{Podrobna pravila požarnega zidu}
-
 Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela uporablja \texttt{longtable} za lep izpis večstranskih tabel.
 
-\subsubsection{IPv4 -- Forward}
-\begin{longtable}{|l|l|p{5.5cm}|p{6cm}|}
+\subsection{IPv4 -- Forward}
+\subsubsection{IPv4 -- Forward (1--99)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-1 & accept & stateful-return & state established,related \\
-50 & accept & internal-to-internet & eth2 -> eth0, src 10.11.0.0/24, all protocols \\
-51 & accept & dmz-to-internet & eth1 -> eth0, src 192.168.11.0/24, all protocols \\
-52 & accept & internal-to-dmz-icmp & eth2 -> eth1, ICMP \\
-53 & accept & dmz-to-internal-icmp & eth1 -> eth2, ICMP \\
-110 & accept & wan-to-wg0-51820 & eth0 -> eth1, dst 192.168.11.106:51820/udp \\
-130 & accept & wan-to-scriptum-8080 & eth0 -> eth1, dst 192.168.11.104:8080/tcp \\
-135 & accept & wan-to-scriptum-4443 & eth0 -> eth1, dst 192.168.11.104:4443/tcp \\
-140 & accept & wan-to-library-https-3443 & eth0 -> eth1, dst 192.168.11.104:3443/tcp \\
-210 & accept & internal-to-dmz-dns-udp53 & eth2 -> eth1, dst 192.168.11.105:53/udp \\
-211 & accept & internal-to-dmz-dns-tcp53 & eth2 -> eth1, dst 192.168.11.105:53/tcp \\
-220 & accept & internal-to-wg-portal-8888 & eth2 -> eth1, dst 192.168.11.106:8888/tcp \\
-230 & accept & internal-to-scriptum-8080 & eth2 -> eth1, dst 192.168.11.104:8080/tcp \\
-231 & accept & internal-to-scriptum-4443 & eth2 -> eth1, dst 192.168.11.104:4443/tcp \\
-240 & accept & internal-to-library-http-3000 & eth2 -> eth1, dst 192.168.11.104:3000/tcp \\
-241 & accept & internal-to-library-https-3443 & eth2 -> eth1, dst 192.168.11.104:3443/tcp \\
-242 & accept & internal-to-library-graphql-32484 & eth2 -> eth1, dst 192.168.11.104:32484/tcp \\
-250 & accept & internal-to-grafana-3000 & eth2 -> eth1, dst 192.168.11.107:3000/tcp \\
-251 & accept & internal-to-prometheus-9090 & eth2 -> eth1, dst 192.168.11.107:9090/tcp \\
-252 & accept & internal-to-snmp-exporter-9116 & eth2 -> eth1, dst 192.168.11.107:9116/tcp \\
-260 & accept & internal-to-ad-dns-udp53 & eth2 -> eth1, dst 192.168.11.201:53/udp \\
-261 & accept & internal-to-ad-dns-tcp53 & eth2 -> eth1, dst 192.168.11.201:53/tcp \\
-262 & accept & internal-to-ad-kerberos & eth2 -> eth1, dst 192.168.11.201:88/tcp\_udp \\
-263 & accept & internal-to-ad-ldap & eth2 -> eth1, dst 192.168.11.201:389/tcp\_udp \\
-264 & accept & internal-to-ad-global-catalog & eth2 -> eth1, dst 192.168.11.201:3268, 3269 / tcp \\
-265 & accept & internal-to-ad-smb-rpc-time & eth2 -> eth1, dst 192.168.11.201:135, 123, 445, 464 / tcp\_udp \\
-266 & accept & internal-to-ad-dynamic-rpc & eth2 -> eth1, dst 192.168.11.201:49152-65535/tcp \\
-310 & accept & wg-host-to-dmz-mgmt & eth1 -> eth1, src 192.168.11.106, dst 192.168.11.0/24:22, 3389 / tcp \\
-311 & accept & wg-host-to-internal-mgmt & eth1 -> eth2, src 192.168.11.106, dst 10.11.0.0/24:22, 3389 / tcp \\
-312 & accept & internal-to-dmz-mgmt & eth2 -> eth1, src 10.11.0.0/24, dst 192.168.11.0/24:22, 3389 / tcp \\
-315 & accept & dmz-peers-to-scriptum-services & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.104:8080, 3000, 3443, 4443, 32484 / tcp \\
-316 & accept & dmz-peers-to-dmz-dns & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.105:53/tcp\_udp \\
-317 & accept & dmz-peers-to-wg-portal & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.106:8888/tcp \\
-318 & accept & dmz-peers-to-monitoring & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.107:3000, 9090, 9116 / tcp \\
-319 & accept & dmz-peers-to-ad-services & eth1 -> eth1, src 192.168.11.0/24, dst 192.168.11.201:53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 / tcp\_udp \\
-320 & accept & snmp-exporter-to-vyos-snmp & eth1 -> eth1, src 192.168.11.107, dst 192.168.11.1:161/udp \\
-330 & accept & wg-host-to-internal-ssh & eth1 -> eth2, src 192.168.11.106, dst 10.11.0.0/24:22/tcp \\
+1 & accept & stateful-return & & & & & & state established,related \\
+50 & accept & internal-to-internet & eth2 & eth0 & 10.11.0.0/24 & & & all protocols \\
+51 & accept & dmz-to-internet & eth1 & eth0 & 192.168.11.0/24 & & & all protocols \\
+52 & accept & internal-to-dmz-icmp & eth2 & eth1 & & & & ICMP \\
+53 & accept & dmz-to-internal-icmp & eth1 & eth2 & & & & ICMP \\
 \hline
 \end{longtable}
 
-\subsubsection{IPv4 -- Input}
-\begin{longtable}{|l|l|p{9cm}|}
+\subsubsection{IPv4 -- Forward (100--199)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-1 & accept & state established,related \\
-10 & accept & wan-ssh-to-vyos (in eth0 dst port 22/tcp) \\
-12 & accept & ssh-to-vyos-via-wan-ip-from-internal (in eth2 dst 88.200.24.241:22/tcp) \\
-13 & accept & ssh-to-vyos-via-wan-ip-from-dmz (in eth1 dst 88.200.24.241:22/tcp) \\
-20 & accept & dns-from-dmz (in eth1 dst port 53/tcp\_udp) \\
-21 & accept & dns-from-internal (in eth2 dst port 53/tcp\_udp) \\
-30 & accept & dhcpv4-from-dmz (in eth1 dst port 67/udp) \\
-31 & accept & dhcpv4-from-internal (in eth2 dst port 67/udp) \\
-40 & accept & snmp-to-vyos-from-monitoring (in eth1 src 192.168.11.107 dst port 161/udp) \\
-41 & accept & icmp-to-vyos-from-dmz (in eth1 ICMP) \\
-42 & accept & icmp-to-vyos-from-internal (in eth2 ICMP) \\
+110 & accept & wan-to-wg0-51820 & eth0 & eth1 & & 192.168.11.106 & 51820 & udp \\
+130 & accept & wan-to-scriptum-8080 & eth0 & eth1 & & 192.168.11.104 & 8080 & tcp \\
+135 & accept & wan-to-scriptum-4443 & eth0 & eth1 & & 192.168.11.104 & 4443 & tcp \\
+140 & accept & wan-to-library-https-3443 & eth0 & eth1 & & 192.168.11.104 & 3443 & tcp \\
 \hline
 \end{longtable}
 
-\subsubsection{IPv4 -- Output}
-\begin{longtable}{|l|l|p{9cm}|}
+\subsubsection{IPv4 -- Forward (200--299)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-1 & accept & state established,related \\
-10 & accept & state established,related \\
-20 & accept & destination 192.168.11.201:53/tcp\_udp \\
+210 & accept & internal-to-dmz-dns-udp53 & eth2 & eth1 & & 192.168.11.105 & 53 & udp \\
+211 & accept & internal-to-dmz-dns-tcp53 & eth2 & eth1 & & 192.168.11.105 & 53 & tcp \\
+220 & accept & internal-to-wg-portal-8888 & eth2 & eth1 & & 192.168.11.106 & 8888 & tcp \\
+230 & accept & internal-to-scriptum-8080 & eth2 & eth1 & & 192.168.11.104 & 8080 & tcp \\
+231 & accept & internal-to-scriptum-4443 & eth2 & eth1 & & 192.168.11.104 & 4443 & tcp \\
+240 & accept & internal-to-library-http-3000 & eth2 & eth1 & & 192.168.11.104 & 3000 & tcp \\
+241 & accept & internal-to-library-https-3443 & eth2 & eth1 & & 192.168.11.104 & 3443 & tcp \\
+242 & accept & internal-to-library-graphql-32484 & eth2 & eth1 & & 192.168.11.104 & 32484 & tcp \\
+250 & accept & internal-to-grafana-3000 & eth2 & eth1 & & 192.168.11.107 & 3000 & tcp \\
+251 & accept & internal-to-prometheus-9090 & eth2 & eth1 & & 192.168.11.107 & 9090 & tcp \\
+252 & accept & internal-to-snmp-exporter-9116 & eth2 & eth1 & & 192.168.11.107 & 9116 & tcp \\
+260 & accept & internal-to-ad-dns-udp53 & eth2 & eth1 & & 192.168.11.201 & 53 & udp \\
+261 & accept & internal-to-ad-dns-tcp53 & eth2 & eth1 & & 192.168.11.201 & 53 & tcp \\
+262 & accept & internal-to-ad-kerberos & eth2 & eth1 & & 192.168.11.201 & 88 & tcp\_udp \\
+263 & accept & internal-to-ad-ldap & eth2 & eth1 & & 192.168.11.201 & 389 & tcp\_udp \\
+264 & accept & internal-to-ad-global-catalog & eth2 & eth1 & & 192.168.11.201 & 3268, 3269 & tcp \\
+265 & accept & internal-to-ad-smb-rpc-time & eth2 & eth1 & & 192.168.11.201 & 135, 123, 445, 464 & tcp\_udp \\
+266 & accept & internal-to-ad-dynamic-rpc & eth2 & eth1 & & 192.168.11.201 & 49152-65535 & tcp \\
 \hline
 \end{longtable}
 
-\subsubsection{IPv6 -- Forward}
-\begin{longtable}{|l|l|p{5.5cm}|p{6cm}|}
+\subsubsection{IPv4 -- Forward (300--399)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-1 & accept & stateful-return & state established,related \\
-50 & accept & internal6-to-internet & eth2 -> eth0, src 2001:1470:fffd:aa::/64, all protocols \\
-51 & accept & dmz6-to-internet & eth1 -> eth0, src 2001:1470:fffd:a9::/64, all protocols \\
-52 & accept & ipv6only-to-internet & eth3 -> eth0, src fd11:11:11::/64, all protocols \\
-53 & accept & internal6-to-dmz-icmpv6 & eth2 -> eth1, ICMPv6 \\
-54 & accept & dmz6-to-internal-icmpv6 & eth1 -> eth2, ICMPv6 \\
-55 & accept & internal6-to-ipv6only-icmpv6 & eth2 -> eth3, ICMPv6 \\
-56 & accept & ipv6only-to-internal6-icmpv6 & eth3 -> eth2, ICMPv6 \\
-57 & accept & dmz6-to-ipv6only-icmpv6 & eth1 -> eth3, ICMPv6 \\
-58 & accept & ipv6only-to-dmz-icmpv6 & eth3 -> eth1, ICMPv6 \\
-110 & accept & wan6-to-wg0-51820 & eth0 -> eth1, dst 2001:1470:fffd:a9::106:51820/udp \\
-130 & accept & wan6-to-scriptum-8080 & eth0 -> eth1, dst 2001:1470:fffd:a9::104:8080/tcp \\
-135 & accept & wan6-to-scriptum-4443 & eth0 -> eth1, dst 2001:1470:fffd:a9::104:4443/tcp \\
-140 & accept & wan6-to-library-https-3443 & eth0 -> eth1, dst 2001:1470:fffd:a9::104:3443/tcp \\
-210 & accept & internal6-to-dmz-dns-udp53 & eth2 -> eth1, dst 2001:1470:fffd:a9::105:53/udp \\
-211 & accept & internal6-to-dmz-dns-tcp53 & eth2 -> eth1, dst 2001:1470:fffd:a9::105:53/tcp \\
-220 & accept & internal6-to-wg-portal-8888 & eth2 -> eth1, dst 2001:1470:fffd:a9::106:8888/tcp \\
-230 & accept & internal6-to-scriptum-8080 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:8080/tcp \\
-231 & accept & internal6-to-scriptum-4443 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:4443/tcp \\
-240 & accept & internal6-to-library-http-3000 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:3000/tcp \\
-241 & accept & internal6-to-library-https-3443 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:3443/tcp \\
-242 & accept & internal6-to-library-graphql-32484 & eth2 -> eth1, dst 2001:1470:fffd:a9::104:32484/tcp \\
-250 & accept & internal6-to-grafana-3000 & eth2 -> eth1, dst 2001:1470:fffd:a9::107:3000/tcp \\
-251 & accept & internal6-to-prometheus-9090 & eth2 -> eth1, dst 2001:1470:fffd:a9::107:9090/tcp \\
-252 & accept & internal6-to-snmp-exporter-9116 & eth2 -> eth1, dst 2001:1470:fffd:a9::107:9116/tcp \\
-260 & accept & internal6-to-ad-dns-udp53 & eth2 -> eth1, dst 2001:1470:fffd:a9::201:53/udp \\
-261 & accept & internal6-to-ad-dns-tcp53 & eth2 -> eth1, dst 2001:1470:fffd:a9::201:53/tcp \\
-262 & accept & internal6-to-ad-kerberos & eth2 -> eth1, dst 2001:1470:fffd:a9::201:88/tcp\_udp \\
-263 & accept & internal6-to-ad-ldap & eth2 -> eth1, dst 2001:1470:fffd:a9::201:389/tcp\_udp \\
-264 & accept & internal6-to-ad-global-catalog & eth2 -> eth1, dst 2001:1470:fffd:a9::201:3268, 3269 / tcp \\
-265 & accept & internal6-to-ad-smb-rpc-time & eth2 -> eth1, dst 2001:1470:fffd:a9::201:135, 123, 445, 464 / tcp\_udp \\
-266 & accept & internal6-to-ad-dynamic-rpc & eth2 -> eth1, dst 2001:1470:fffd:a9::201:49152-65535/tcp \\
-310 & accept & wg-host6-to-dmz-mgmt & eth1 -> eth1, src 2001:1470:fffd:a9::106, dst 2001:1470:fffd:a9::/64:22, 3389 / tcp \\
-311 & accept & wg-host6-to-internal-mgmt & eth1 -> eth2, src 2001:1470:fffd:a9::106, dst 2001:1470:fffd:aa::/64:22, 3389 / tcp \\
-312 & accept & wg-host6-to-ipv6only-mgmt & eth1 -> eth3, src 2001:1470:fffd:a9::106, dst fd11:11:11::/64:22, 3389 / tcp \\
-313 & accept & internal6-to-dmz-mgmt & eth2 -> eth1, src 2001:1470:fffd:aa::/64, dst 2001:1470:fffd:a9::/64:22, 3389 / tcp \\
-314 & accept & ipv6only-to-dmz-mgmt & eth3 -> eth1, src fd11:11:11::/64, dst 2001:1470:fffd:a9::/64:22, 3389 / tcp \\
-321 & accept & internal6-to-ipv6only-mgmt & eth2 -> eth3, src 2001:1470:fffd:aa::/64, dst fd11:11:11::/64:22, 3389 / tcp \\
-322 & accept & dmz6-to-ipv6only-mgmt & eth1 -> eth3, src 2001:1470:fffd:a9::/64, dst fd11:11:11::/64:22, 3389 / tcp \\
-315 & accept & dmz6-peers-to-scriptum-services & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::104:8080, 3000, 3443, 4443, 32484 / tcp \\
-316 & accept & dmz6-peers-to-dmz-dns & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::105:53/tcp\_udp \\
-317 & accept & dmz6-peers-to-wg-portal & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::106:8888/tcp \\
-318 & accept & dmz6-peers-to-monitoring & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::107:3000, 9090, 9116 / tcp \\
-319 & accept & dmz6-peers-to-ad-services & eth1 -> eth1, src 2001:1470:fffd:a9::/64, dst 2001:1470:fffd:a9::201:53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 / tcp\_udp \\
-320 & accept & snmp-exporter6-to-vyos-snmp & eth1 -> eth1, src 2001:1470:fffd:a9::107, dst 2001:1470:fffd:a9::1:161/udp \\
-410 & accept & ipv6only-to-dmz-dns-udp53 & eth3 -> eth1, dst 2001:1470:fffd:a9::105:53/udp \\
-411 & accept & ipv6only-to-dmz-dns-tcp53 & eth3 -> eth1, dst 2001:1470:fffd:a9::105:53/tcp \\
-412 & accept & ipv6only-to-dmz-icmpv6 & eth3 -> eth1, ICMPv6 \\
-420 & accept & ipv6only-to-wg-portal-8888 & eth3 -> eth1, dst 2001:1470:fffd:a9::106:8888/tcp \\
-430 & accept & ipv6only-to-scriptum-8080 & eth3 -> eth1, dst 2001:1470:fffd:a9::104:8080/tcp \\
-440 & accept & ipv6only-to-library-http-3000 & eth3 -> eth1, dst 2001:1470:fffd:a9::104:3000/tcp \\
-441 & accept & ipv6only-to-library-https-3443 & eth3 -> eth1, dst 2001:1470:fffd:a9::104:3443/tcp \\
-442 & accept & ipv6only-to-library-graphql-32484 & eth3 -> eth1, dst 2001:1470:fffd:a9::104:32484/tcp \\
-450 & accept & ipv6only-to-grafana-3000 & eth3 -> eth1, dst 2001:1470:fffd:a9::107:3000/tcp \\
-451 & accept & ipv6only-to-prometheus-9090 & eth3 -> eth1, dst 2001:1470:fffd:a9::107:9090/tcp \\
-452 & accept & ipv6only-to-snmp-exporter-9116 & eth3 -> eth1, dst 2001:1470:fffd:a9::107:9116/tcp \\
-460 & accept & ipv6only-to-ad-dns-udp53 & eth3 -> eth1, dst 2001:1470:fffd:a9::201:53/udp \\
-461 & accept & ipv6only-to-ad-dns-tcp53 & eth3 -> eth1, dst 2001:1470:fffd:a9::201:53/tcp \\
-462 & accept & ipv6only-to-ad-kerberos & eth3 -> eth1, dst 2001:1470:fffd:a9::201:88/tcp\_udp \\
-463 & accept & ipv6only-to-ad-ldap & eth3 -> eth1, dst 2001:1470:fffd:a9::201:389/tcp\_udp \\
-464 & accept & ipv6only-to-ad-global-catalog & eth3 -> eth1, dst 2001:1470:fffd:a9::201:3268, 3269 / tcp \\
-465 & accept & ipv6only-to-ad-smb-rpc-time & eth3 -> eth1, dst 2001:1470:fffd:a9::201:135, 123, 445, 464 / tcp\_udp \\
-466 & accept & ipv6only-to-ad-dynamic-rpc & eth3 -> eth1, dst 2001:1470:fffd:a9::201:49152-65535/tcp \\
+310 & accept & wg-host-to-dmz-mgmt & eth1 & eth1 & 192.168.11.106 & 192.168.11.0/24 & 22, 3389 & tcp \\
+311 & accept & wg-host-to-internal-mgmt & eth1 & eth2 & 192.168.11.106 & 10.11.0.0/24 & 22, 3389 & tcp \\
+312 & accept & internal-to-dmz-mgmt & eth2 & eth1 & 10.11.0.0/24 & 192.168.11.0/24 & 22, 3389 & tcp \\
+315 & accept & dmz-peers-to-scriptum-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.104 & 8080, 3000, 3443, 4443, 32484 & tcp \\
+316 & accept & dmz-peers-to-dmz-dns & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.105 & 53 & tcp\_udp \\
+317 & accept & dmz-peers-to-wg-portal & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.106 & 8888 & tcp \\
+318 & accept & dmz-peers-to-monitoring & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.107 & 3000, 9090, 9116 & tcp \\
+319 & accept & dmz-peers-to-ad-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.201 & 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 & tcp\_udp \\
+320 & accept & snmp-exporter-to-vyos-snmp & eth1 & eth1 & 192.168.11.107 & 192.168.11.1 & 161 & udp \\
+330 & accept & wg-host-to-internal-ssh & eth1 & eth2 & 192.168.11.106 & 10.11.0.0/24 & 22 & tcp \\
 \hline
 \end{longtable}
 
-\subsubsection{IPv6 -- Input}
-\begin{longtable}{|l|l|p{9cm}|}
+\subsection{IPv4 -- Input}
+\begin{longtable}{|l|l|l|l|l|L{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Match} \\
+\textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-1 & accept & state established,related \\
-10 & accept & wan6-ssh-to-vyos (in eth0 dst port 22/tcp) \\
-11 & accept & icmpv6-from-wan (in eth0 protocol icmpv6) \\
-12 & accept & ssh6-to-vyos-via-wan-ip-from-internal (in eth2 dst 2001:1470:fffd:a8::2:22/tcp) \\
-13 & accept & ssh6-to-vyos-via-wan-ip-from-dmz (in eth1 dst 2001:1470:fffd:a8::2:22/tcp) \\
-14 & accept & ssh6-to-vyos-via-wan-ip-from-ipv6only (in eth3 dst 2001:1470:fffd:a8::2:22/tcp) \\
-20 & accept & dns6-from-dmz (in eth1 dst port 53/tcp\_udp) \\
-21 & accept & dns6-from-internal (in eth2 dst port 53/tcp\_udp) \\
-22 & accept & dns6-from-ipv6only (in eth3 dst port 53/tcp\_udp) \\
-30 & accept & dhcpv6-server-on-dmz (in eth1 dst port 547/udp) \\
-40 & accept & icmpv6-from-dmz (in eth1 protocol icmpv6) \\
-41 & accept & icmpv6-from-internal (in eth2 protocol icmpv6) \\
-42 & accept & icmpv6-from-ipv6only (in eth3 protocol icmpv6) \\
+1 & accept & & & & & state established,related \\
+10 & accept & eth0 & & & 22 & tcp \\
+12 & accept & eth2 & & 88.200.24.241 & 22 & tcp \\
+13 & accept & eth1 & & 88.200.24.241 & 22 & tcp \\
+20 & accept & eth1 & & & 53 & tcp\_udp \\
+21 & accept & eth2 & & & 53 & tcp\_udp \\
+30 & accept & eth1 & & & 67 & udp \\
+31 & accept & eth2 & & & 67 & udp \\
+40 & accept & eth1 & 192.168.11.107 & & 161 & udp \\
+41 & accept & eth1 & & & & icmp \\
+42 & accept & eth2 & & & & icmp \\
 \hline
 \end{longtable}
 
-\subsubsection{NAT (IPv4) -- DNAT}
-\begin{longtable}{|l|p{5cm}|p{5cm}|p{3cm}|}
+\subsection{IPv4 -- Output}
+\begin{longtable}{|l|l|l|L{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-110 & wan-to-wg0-51820-dnat & in eth0, dst port 51820/udp & 192.168.11.106 \\
-130 & wan-to-scriptum-8080-dnat & in eth0, dst port 8080/tcp & 192.168.11.104 \\
-135 & wan-to-scriptum-4443-dnat & in eth0, dst port 4443/tcp & 192.168.11.104 \\
-140 & wan-to-library-https-3443-dnat & in eth0, dst port 3443/tcp & 192.168.11.104 \\
-210 & hairpin-internal-to-public-services-dnat & in eth2, dst 88.200.24.241:8080,4443,3443/tcp & 192.168.11.104 \\
-211 & hairpin-dmz-to-public-services-dnat & in eth1, dst 88.200.24.241:8080,4443,3443/tcp & 192.168.11.104 \\
+1 & accept & & & state established,related \\
+10 & accept & & & state established,related \\
+20 & accept & 192.168.11.201 & 53 & tcp\_udp / DNS to AD server \\
 \hline
 \end{longtable}
 
-\subsubsection{NAT (IPv4) -- SNAT}
-\begin{longtable}{|l|p{6cm}|p{6cm}|p{2.5cm}|}
+\subsection{IPv6 -- Forward}
+\subsubsection{IPv6 -- Forward (1--99)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-100 & snat-internal-to-internet & out eth0, src 10.11.0.0/24 & masquerade \\
-110 & snat-dmz-to-internet & out eth0, src 192.168.11.0/24 & masquerade \\
-120 & hairpin-internal-to-public-snat & out eth1, src 10.11.0.0/24, dst 192.168.11.104 & 192.168.11.1 \\
-121 & hairpin-dmz-to-public-snat & out eth1, src 192.168.11.0/24, dst 192.168.11.104 & 192.168.11.1 \\
+1 & accept & stateful-return & & & & & & state established,related \\
+50 & accept & internal6-to-internet & eth2 & eth0 & 2001:1470:fffd:aa::/64 & & & all protocols \\
+51 & accept & dmz6-to-internet & eth1 & eth0 & 2001:1470:fffd:a9::/64 & & & all protocols \\
+52 & accept & ipv6only-to-internet & eth3 & eth0 & fd11:11:11::/64 & & & all protocols \\
+53 & accept & internal6-to-dmz-icmpv6 & eth2 & eth1 & & & & ICMPv6 \\
+54 & accept & dmz6-to-internal-icmpv6 & eth1 & eth2 & & & & ICMPv6 \\
+55 & accept & internal6-to-ipv6only-icmpv6 & eth2 & eth3 & & & & ICMPv6 \\
+56 & accept & ipv6only-to-internal6-icmpv6 & eth3 & eth2 & & & & ICMPv6 \\
+57 & accept & dmz6-to-ipv6only-icmpv6 & eth1 & eth3 & & & & ICMPv6 \\
+58 & accept & ipv6only-to-dmz-icmpv6 & eth3 & eth1 & & & & ICMPv6 \\
 \hline
 \end{longtable}
 
-\subsubsection{NAT66 (NPTv6)}
-\begin{longtable}{|l|l|l|l|}
+\subsubsection{IPv6 -- Forward (100--199)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Description} & \textbf{Match} & \textbf{Translation} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-10 & nat66-ipv6only-to-internet & out eth0, src fd11:11:11::/64 & 2001:1470:fffd:ab::/64 \\
+110 & accept & wan6-to-wg0-51820 & eth0 & eth1 & & 2001:1470:fffd:a9::106 & 51820 & udp \\
+130 & accept & wan6-to-scriptum-8080 & eth0 & eth1 & & 2001:1470:fffd:a9::104 & 8080 & tcp \\
+135 & accept & wan6-to-scriptum-4443 & eth0 & eth1 & & 2001:1470:fffd:a9::104 & 4443 & tcp \\
+140 & accept & wan6-to-library-https-3443 & eth0 & eth1 & & 2001:1470:fffd:a9::104 & 3443 & tcp \\
 \hline
 \end{longtable}
+
+\subsubsection{IPv6 -- Forward (200--299)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endhead
+210 & accept & internal6-to-dmz-dns-udp53 & eth2 & eth1 & & 2001:1470:fffd:a9::105 & 53 & udp \\
+211 & accept & internal6-to-dmz-dns-tcp53 & eth2 & eth1 & & 2001:1470:fffd:a9::105 & 53 & tcp \\
+220 & accept & internal6-to-wg-portal-8888 & eth2 & eth1 & & 2001:1470:fffd:a9::106 & 8888 & tcp \\
+230 & accept & internal6-to-scriptum-8080 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 8080 & tcp \\
+231 & accept & internal6-to-scriptum-4443 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 4443 & tcp \\
+240 & accept & internal6-to-library-http-3000 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 3000 & tcp \\
+241 & accept & internal6-to-library-https-3443 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 3443 & tcp \\
+242 & accept & internal6-to-library-graphql-32484 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 32484 & tcp \\
+250 & accept & internal6-to-grafana-3000 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 3000 & tcp \\
+251 & accept & internal6-to-prometheus-9090 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 9090 & tcp \\
+252 & accept & internal6-to-snmp-exporter-9116 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 9116 & tcp \\
+260 & accept & internal6-to-ad-dns-udp53 & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 53 & udp \\
+261 & accept & internal6-to-ad-dns-tcp53 & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 53 & tcp \\
+262 & accept & internal6-to-ad-kerberos & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 88 & tcp\_udp \\
+263 & accept & internal6-to-ad-ldap & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 389 & tcp\_udp \\
+264 & accept & internal6-to-ad-global-catalog & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 3268, 3269 & tcp \\
+265 & accept & internal6-to-ad-smb-rpc-time & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 135, 123, 445, 464 & tcp\_udp \\
+266 & accept & internal6-to-ad-dynamic-rpc & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 49152-65535 & tcp \\
+\hline
+\end{longtable}
+
+\subsubsection{IPv6 -- Forward (300--399)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endhead
+310 & accept & wg-host6-to-dmz-mgmt & eth1 & eth1 & 2001:1470:fffd:a9::106 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp \\
+311 & accept & wg-host6-to-internal-mgmt & eth1 & eth2 & 2001:1470:fffd:a9::106 & 2001:1470:fffd:aa::/64 & 22, 3389 & tcp \\
+312 & accept & wg-host6-to-ipv6only-mgmt & eth1 & eth3 & 2001:1470:fffd:a9::106 & fd11:11:11::/64 & 22, 3389 & tcp \\
+313 & accept & internal6-to-dmz-mgmt & eth2 & eth1 & 2001:1470:fffd:aa::/64 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp \\
+314 & accept & ipv6only-to-dmz-mgmt & eth3 & eth1 & fd11:11:11::/64 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp \\
+315 & accept & dmz6-peers-to-scriptum-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::104 & 8080, 3000, 3443, 4443, 32484 & tcp \\
+316 & accept & dmz6-peers-to-dmz-dns & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::105 & 53 & tcp\_udp \\
+317 & accept & dmz6-peers-to-wg-portal & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::106 & 8888 & tcp \\
+318 & accept & dmz6-peers-to-monitoring & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::107 & 3000, 9090, 9116 & tcp \\
+319 & accept & dmz6-peers-to-ad-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::201 & 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 & tcp\_udp \\
+320 & accept & snmp-exporter6-to-vyos-snmp & eth1 & eth1 & 2001:1470:fffd:a9::107 & 2001:1470:fffd:a9::1 & 161 & udp \\
+321 & accept & internal6-to-ipv6only-mgmt & eth2 & eth3 & 2001:1470:fffd:aa::/64 & fd11:11:11::/64 & 22, 3389 & tcp \\
+322 & accept & dmz6-to-ipv6only-mgmt & eth1 & eth3 & 2001:1470:fffd:a9::/64 & fd11:11:11::/64 & 22, 3389 & tcp \\
+\hline
+\end{longtable}
+
+\subsubsection{IPv6 -- Forward (400--499)}
+\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endhead
+410 & accept & ipv6only-to-dmz-dns-udp53 & eth3 & eth1 & & 2001:1470:fffd:a9::105 & 53 & udp \\
+411 & accept & ipv6only-to-dmz-dns-tcp53 & eth3 & eth1 & & 2001:1470:fffd:a9::105 & 53 & tcp \\
+412 & accept & ipv6only-to-dmz-icmpv6 & eth3 & eth1 & & & & ICMPv6 \\
+420 & accept & ipv6only-to-wg-portal-8888 & eth3 & eth1 & & 2001:1470:fffd:a9::106 & 8888 & tcp \\
+430 & accept & ipv6only-to-scriptum-8080 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 8080 & tcp \\
+440 & accept & ipv6only-to-library-http-3000 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 3000 & tcp \\
+441 & accept & ipv6only-to-library-https-3443 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 3443 & tcp \\
+442 & accept & ipv6only-to-library-graphql-32484 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 32484 & tcp \\
+450 & accept & ipv6only-to-grafana-3000 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 3000 & tcp \\
+451 & accept & ipv6only-to-prometheus-9090 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 9090 & tcp \\
+452 & accept & ipv6only-to-snmp-exporter-9116 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 9116 & tcp \\
+460 & accept & ipv6only-to-ad-dns-udp53 & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 53 & udp \\
+461 & accept & ipv6only-to-ad-dns-tcp53 & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 53 & tcp \\
+462 & accept & ipv6only-to-ad-kerberos & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 88 & tcp\_udp \\
+463 & accept & ipv6only-to-ad-ldap & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 389 & tcp\_udp \\
+464 & accept & ipv6only-to-ad-global-catalog & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 3268, 3269 & tcp \\
+465 & accept & ipv6only-to-ad-smb-rpc-time & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 135, 123, 445, 464 & tcp\_udp \\
+466 & accept & ipv6only-to-ad-dynamic-rpc & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 49152-65535 & tcp \\
+\hline
+\end{longtable}
+
+\subsection{IPv6 -- Input}
+\begin{longtable}{|l|l|l|l|l|L{2.2cm}|l|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endhead
+1 & accept & & & & & state established,related \\
+10 & accept & eth0 & & & 22 & tcp \\
+11 & accept & eth0 & & & & icmpv6 \\
+12 & accept & eth2 & & 2001:1470:fffd:a8::2 & 22 & tcp \\
+13 & accept & eth1 & & 2001:1470:fffd:a8::2 & 22 & tcp \\
+14 & accept & eth3 & & 2001:1470:fffd:a8::2 & 22 & tcp \\
+20 & accept & eth1 & & & 53 & tcp\_udp \\
+21 & accept & eth2 & & & 53 & tcp\_udp \\
+22 & accept & eth3 & & & 53 & tcp\_udp \\
+30 & accept & eth1 & & & 547 & udp \\
+40 & accept & eth1 & & & & icmpv6 \\
+41 & accept & eth2 & & & & icmpv6 \\
+42 & accept & eth3 & & & & icmpv6 \\
+\hline
+\end{longtable}
+
+\end{landscape}
 
 \section{WireGuard}
 
@@ -895,7 +873,6 @@ chmod -R 750 /opt/wg-portal
   \item Če omogočite LDAP preko TLS (LDAPS), poskrbite za verodostojne certifikate in ustrezne revizijske postopke.
   \item Redno preverjajte dnevnike in omejite dostop do upravnega vmesnika z dodatnimi omejitvami (npr. firewall, reverse proxy z avtentikacijo).
 \end{itemize}
-
 
 
 \section{Monitoring in SNMP}
