@@ -1,5 +1,5 @@
 ---
-date: 2026-05-31
+date: 2026-06-01
 title: Dokumentacija poslovnega omrežja - startup11
 ---
 
@@ -21,39 +21,58 @@ V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Pod
 
 ## Opredelitev segmentov
 
-- **DMZ (eth1, 192.168.X.0/24)**: vsi strežniki (REST, wg-portal, WireGuard endpoint, AD/DNS, SNMP, ostali). Fizični lokaciji strežnikov sta v DMZ, vendar dostopi do nekaterih storitev omejeni z omrežnimi ACL.
+- **DMZ (eth1)**: vsi strežniki (REST, wg-portal, WireGuard endpoint, AD/DNS, SNMP, ostali). Fizični lokaciji strežnikov sta v DMZ, vendar dostopi do nekaterih storitev omejeni z omrežnimi ACL.
 
-- **INTERNAL (eth2, 10.X.0.0/24)**: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
+- **INTERNAL (eth2)**: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
 
-- **IPV6ONLY (eth3, ULA + NPTv6)**: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
+- **IPV6ONLY (eth3)**: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
 
 # Naprave
 
-## usmerjevalnik
+## Seznam virtualk
 
-sk11-vyos
+<figure data-latex-placement="ht">
+<img src="serverlist.png" style="width:90.0%" />
+<figcaption>Screenshot of VM names (serverlist.png)</figcaption>
+</figure>
 
-## internal
+## Konvencija poimenovanja virtualk
 
-sk11-internal-linux sk11-internal-windows
+Ime virtualke se vedno začne z `sk11` (naša skupina), nato sledi segment, operacijski sistem, zaporedna številka in kratek opis storitve. Oblika:
 
-## ipv6only
+<div class="center">
 
-sk11-ipv6only-linux sk11-ipv6only-windows
+`sk11-<segment>-<OS>-<NN>-<storitev>`  e.g. `sk11-dmz-linux-04-rest`
+
+</div>
+
+## Operacijski sistemi
+
+- DMZ Linux virtualke uporabljajo **Ubuntu Server 26.04**.
+
+- DMZ Active Directory virtualka uporablja **Windows Server 2022**.
+
+- Internal Linux virtualke uporabljajo **Ubuntu Server 26.04**.
+
+- Internal Windows virtualke uporabljajo **Windows 10**.
+
+- IPv6-only Linux virtualke uporabljajo **Ubuntu Server 26.04**.
+
+- IPv6-only Windows virtualke uporabljajo **Windows 10**.
 
 ## DMZ strežniki
 
-| **Ime strežnika** | **IP naslov** | **IPv6 naslov** | **Namen** |
+| **VM name** | **IPv4 naslov** | **IPv6 naslov** | **Namen** |
 |:---|:---|:---|:---|
-| raft1 | 192.168.11.101 | 2001:1470:fffd:a9::101 | Raft (cluster node) |
-| raft2 | 192.168.11.102 | 2001:1470:fffd:a9::102 | Raft (cluster node) |
-| raft3 | 192.168.11.103 | 2001:1470:fffd:a9::103 | Raft (cluster node) |
-| rest | 192.168.11.104 | 2001:1470:fffd:a9::104 | REST API / ostali servisi |
-| dns-srv | 192.168.11.105 | \- | DNS strežnik (lokalni) (ni v uporabi) |
-| wireguard | 192.168.11.106 | 2001:1470:fffd:a9::106 | WireGuard VPN končna točka |
-| snmp | 192.168.11.107 | 2001:1470:fffd:a9::107 | SNMP / monitoring cilj |
-| wg2 | 192.168.11.108 | 2001:1470:fffd:a9::108 | drugi wireguard strežnik (ni v uporabi) |
-| AD | 192.168.11.201 | 2001:1470:fffd:a9::201 | Active Directory (Domain Controller) |
+| sk11-dmz-linux-01-raft1 | 192.168.11.101 | 2001:1470:fffd:a9::101 | Raft |
+| sk11-dmz-linux-02-raft2 | 192.168.11.102 | 2001:1470:fffd:a9::102 | Raft |
+| sk11-dmz-linux-03-raft3 | 192.168.11.103 | 2001:1470:fffd:a9::103 | Raft |
+| sk11-dmz-linux-04-rest | 192.168.11.104 | 2001:1470:fffd:a9::104 | REST storitve |
+| sk11-dmz-linux-05-dns | 192.168.11.105 | \- | DNS, ni v uporabi |
+| sk11-dmz-linux-06-wg | 192.168.11.106 | 2001:1470:fffd:a9::106 | WireGuard VPN endpoint |
+| sk11-dmz-linux-07-snmp | 192.168.11.107 | 2001:1470:fffd:a9::107 | SNMP / monitoring target |
+| sk11-dmz-linux-08-wg2 | 192.168.11.108 | 2001:1470:fffd:a9::108 | neuporabljena |
+| sk11-dmz-windows-01-ad | 192.168.11.201 | 2001:1470:fffd:a9::201 | Active Directory, DNS |
 
 # Nastavitve na napravah
 
@@ -86,17 +105,17 @@ RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 338
 
 | **Service** | **Host** | **Port (proto)** | **Public?** | **Notes** |
 |:---|:---|:---|:---|:---|
-| RDP | all internal and ipv6only + AD server | 3389 (tcp) | No | RDP enabled all devices that have a GUI |
-| SSH | all devices | 22 (tcp) | only vyos | SSH service present on all devices; WAN SSH allowed only on vyos |
+| RDP | all GUI | 3389 (tcp) | No | all internal and ipv6only, AD server |
+| SSH | all dmz + vyos | 22 (tcp) | only vyos | SSH service present on all dmz servers; WAN SSH allowed only on vyos |
 | SNMP target (VyOS) | vyos | 161 (udp) | No | SNMP on VyOS; exporter scrapes this target |
 | REST service (scriptum) | rest | 8080 (tcp) | Yes | Public DNAT exists |
 | scriptum backend | rest | 4443 (tcp) | Yes | Public backend endpoint |
 | Library API (HTTP) | rest | 3000 (tcp) | No | Internal HTTP API |
 | Library API (HTTPS) | rest | 3443 (tcp) | Yes | Public HTTPS endpoint |
-| Library API (GraphQL) | rest | 32484 (tcp) | No | Internal GraphQL endpoint |
+| Library API (GraphQL) | rest | 30080, 30443 (tcp) | No | Internal GraphQL endpoint |
 | DMZ DNS | dns-srv | 53 (udp/tcp) | No | Internal DNS for DMZ clients |
-| WireGuard server | wireguard | 51820 (udp) | Yes | PiVPN, uses its own NAT/masquerade |
-| wg-portal UI | wireguard | 8888 (tcp) | No | Local portal UI (internal only) |
+| WireGuard server | wg | 51820 (udp) | Yes | PiVPN, uses its own NAT/masquerade |
+| wg-portal UI | wg | 8888 (tcp) | No | Local portal UI (internal only) |
 | Prometheus | snmp | 9090 (tcp) | No | Prometheus scrape UI/service |
 | `snmp_exporter` | snmp | 9116 (tcp) | No | Exporter endpoint for Prometheus |
 | Grafana | snmp | 3000 (tcp) | No | Grafana UI for dashboards |
@@ -112,7 +131,7 @@ RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 338
 
 - **Uporabnik:** vyos
 
-- **P**rijava možna izključno preko SSH ključa!!!
+- **Prijava možna izključno preko SSH ključa!!!**
 
 ## Omrežni vmesniki
 
@@ -132,15 +151,15 @@ RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 338
 
 ## Router Advertisements (RA)
 
-RA so omogočeni na:
+RA (Router Advertisements) per interface and SLAAC status:
 
-- `eth1`: prefix `2001:1470:fffd:a9::/64` (managed flag, no-autonomous)
+| **Interface** | **Announced prefix** | **RA flags** | **SLAAC enabled?** |
+|:---|:---|:---|:---|
+| eth1 (DMZ) | 2001:1470:fffd:a9::/64 | managed, no-autonomous | No (DHCPv6 preferred) |
+| eth2 (INTERNAL) | 2001:1470:fffd:aa::/64 | autonomous | Yes (SLAAC) |
+| eth3 (IPV6ONLY) | fd11:11:11::/64 | autonomous | Yes (SLAAC) |
 
-- `eth2`: prefix `2001:1470:fffd:aa::/64`
-
-- `eth3`: prefix `fd11:11:11::/64`, name-server `fd11:11:11::1`
-
-Opomba o SLAAC/DHCPv6: ker je za `eth1` nastavljen `managed-flag` in `no-autonomous-flag`, odjemalci na DMZ (`eth1`) uporabljajo DHCPv6 (ni SLAAC). Nasprotno pa sta na `eth2` in `eth3` oglašena avtonomna prefixa brez `no-autonomous-flag`, to pomeni, da so na teh vmesnikih privzeto dovoljene SLAAC samokonfiguracije naslovov (razen kjer je eksplicitno dodelan statični DHCPv6 mapping).
+Notes: - For IPv4 we use DHCP with static DHCPv4 maps for servers and important hosts (match by MAC address). - For IPv6 SLAAC is enabled on INTERNAL and IPV6ONLY so clients auto-configure addresses from the announced prefix. Use DHCPv6 static maps only for hosts that require a stable, administratively assigned address (servers, controllers). - If an interface advertises both `managed` and `no-autonomous`, SLAAC is effectively disabled and hosts must obtain an address via DHCPv6.
 
 ## NTP
 
@@ -219,47 +238,20 @@ Split DNS je nastavljen tako, da se poizvedbe za `startup11.local` ne pošiljajo
 
 ## AD DNS zapisi
 
-Spodnji tabeli povzemata trenutno dejansko stanje cone `startup11.local`. Prva tabela prikazuje A/AAAA zapise, druga pa ključne NS, SOA in SRV zapise za prijavo v domeno in AD storitve.
-
-#### A in AAAA zapisi
+AD privzeto generira DNS zapise potrebne za njegovo delovanje, spodnja tabela pa prikazuje ročno dodane lokalne DNS zapise:
 
 | **Hostname** | **A zapis** | **AAAA zapis** | **Opombe** |
 |:---|:---|:---|:---|
 | **Hostname** | **A zapis** | **AAAA zapis** | **Opombe** |
-| @ | 192.168.11.201 | 2001:1470:fffd:a9::201 | cono apex, AD DNS strežnik |
-| ad | 192.168.11.201 | 2001:1470:fffd:a9::201 | dodatno ime AD strežnika |
-| dns-srv | 192.168.11.105 | \- | legacy Linux DNS host record, trenutno ni v uporabi |
-| DomainDnsZones | 192.168.11.201 | 2001:1470:fffd:a9::201 | AD podcona |
-| ForestDnsZones | 192.168.11.201 | 2001:1470:fffd:a9::201 | AD podcona |
-| DESKTOP-V812KCI | 10.11.0.108 | 2001:1470:fffd:aa:bc05:4278:8907:6955 | notranji odjemalec |
-| IPV6ONLY-W1 | \- | fd11:11:11:0:2d54:15fc:c908:fad1 | IPv6-only odjemalec |
-| new-wg | 192.168.11.108 | 2001:1470:fffd:a9::108 | nov WireGuard gostitelj |
 | raft1 | 192.168.11.101 | 2001:1470:fffd:a9::101 | raft vozlišče |
 | raft2 | 192.168.11.102 | 2001:1470:fffd:a9::102 | raft vozlišče |
 | raft3 | 192.168.11.103 | 2001:1470:fffd:a9::103 | raft vozlišče |
 | rest | 192.168.11.104 | 2001:1470:fffd:a9::104 | REST / web storitev |
-| snmp | 192.168.11.107 | 2001:1470:fffd:a9::107 | monitoring gostitelj |
+| dns-srv | 192.168.11.105 | \- | legacy Linux DNS host record, trenutno ni v uporabi |
 | wg | 192.168.11.106 | 2001:1470:fffd:a9::106 | WireGuard gostitelj |
-| win-sgi52j8519e | 192.168.11.201 | 2001:1470:fffd:a9::201 | glavni AD strežnik / DC |
-
-#### NS, SOA in SRV zapisi
-
-| **Hostname** | **Type** | **Target / Port** | **Opombe** |
-|:---|:---|:---|:---|
-| **Hostname** | **Type** | **Target / Port** | **Opombe** |
-| @ | NS | win-sgi52j8519e.startup11.local. | cona apex name server |
-| @ | SOA | win-sgi52j8519e.startup11.local. | authority za cono |
-| \_msdcs | NS | win-sgi52j8519e.startup11.local. | AD podcona |
-| \_gc.\_tcp | SRV | 3268 -\> win-sgi52j8519e.startup11.local. | global catalog |
-| \_gc.\_tcp.Default-First-Site-Name | SRV | 3268 -\> win-sgi52j8519e.startup11.local. | site-specific AD zapis |
-| \_kerberos.\_tcp | SRV | 88 -\> win-sgi52j8519e.startup11.local. | Kerberos TCP |
-| \_kerberos.\_udp | SRV | 88 -\> win-sgi52j8519e.startup11.local. | Kerberos UDP |
-| \_ldap.\_tcp | SRV | 389 -\> win-sgi52j8519e.startup11.local. | LDAP |
-| \_ldap.\_tcp.Default-First-Site-Name | SRV | 389 -\> win-sgi52j8519e.startup11.local. | site-specific AD zapis |
-| \_ldap.\_tcp.DomainDnsZones | SRV | 389 -\> win-sgi52j8519e.startup11.local. | AD podcona |
-| \_ldap.\_tcp.ForestDnsZones | SRV | 389 -\> win-sgi52j8519e.startup11.local. | AD podcona |
-| \_kpasswd.\_tcp | SRV | 464 -\> win-sgi52j8519e.startup11.local. | Kerberos password change |
-| \_kpasswd.\_udp | SRV | 464 -\> win-sgi52j8519e.startup11.local. | Kerberos password change |
+| snmp | 192.168.11.107 | 2001:1470:fffd:a9::107 | monitoring gostitelj |
+| new-wg | 192.168.11.108 | 2001:1470:fffd:a9::108 | nov WireGuard gostitelj |
+| ad | 192.168.11.201 | 2001:1470:fffd:a9::201 | dodatno ime AD strežnika |
 
 ## Opomba o upravljanju DNS
 
@@ -291,10 +283,21 @@ Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP nas
 | snmp               | 00:0c:29:69:75:09 | 192.168.11.107 |
 | new_wg             | 00:0c:29:f9:2a:a8 | 192.168.11.108 |
 | AD (dmz windows 1) | 00:0c:29:07:cf:1c | 192.168.11.201 |
+| internal-linux-01  | 00:0c:29:aa:aa:01 | 10.11.0.101    |
+| internal-win-01    | 00:0c:29:bb:bb:01 | 10.11.0.201    |
+| internal-monitor   | 00:0c:29:cc:cc:01 | 10.11.0.107    |
 
 ## DHCPv6
 
-DHCPv6 podeljuje naslove v subnetu `2001:1470:fffd:a9::/64` z range `::100` - `::1ff`. Ime strežnika za DHCPv6 je `2001:1470:fffd:a9::1`.
+DHCPv6 in SLAAC usage:
+
+- DMZ: DHCPv6 is used for servers (range `2001:1470:fffd:a9::100`–`::1ff`) and static DHCPv6 maps are configured for important hosts.
+
+- INTERNAL: SLAAC is the default for clients on `2001:1470:fffd:aa::/64`; use DHCPv6 static maps only for servers that require a fixed IPv6 address.
+
+- IPV6ONLY: SLAAC is the default on `fd11:11:11::/64`; these hosts autoconfigure addresses and do not normally require DHCPv6 static mappings.
+
+The DHCPv6 server address for DMZ static allocations remains `2001:1470:fffd:a9::1`.
 
 #### Statične DHCPv6 mape
 
@@ -417,7 +420,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.10.conf‘. Tabel
 231 & accept & internal-to-scriptum-4443 & eth2 & eth1 & & 192.168.11.104 & 4443 & tcp\
 240 & accept & internal-to-library-http-3000 & eth2 & eth1 & & 192.168.11.104 & 3000 & tcp\
 241 & accept & internal-to-library-https-3443 & eth2 & eth1 & & 192.168.11.104 & 3443 & tcp\
-242 & accept & internal-to-library-graphql-32484 & eth2 & eth1 & & 192.168.11.104 & 32484 & tcp\
+242 & accept & internal-to-library-graphql & eth2 & eth1 & & 192.168.11.104 & 30080, 30443 & tcp\
 250 & accept & internal-to-grafana-3000 & eth2 & eth1 & & 192.168.11.107 & 3000 & tcp\
 251 & accept & internal-to-prometheus-9090 & eth2 & eth1 & & 192.168.11.107 & 9090 & tcp\
 252 & accept & internal-to-snmp-exporter-9116 & eth2 & eth1 & & 192.168.11.107 & 9116 & tcp\
@@ -440,7 +443,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.10.conf‘. Tabel
 & accept & wg-host-to-dmz-mgmt & eth1 & eth1 & 192.168.11.106 & 192.168.11.0/24 & 22, 3389 & tcp\
 311 & accept & wg-host-to-internal-mgmt & eth1 & eth2 & 192.168.11.106 & 10.11.0.0/24 & 22, 3389 & tcp\
 312 & accept & internal-to-dmz-mgmt & eth2 & eth1 & 10.11.0.0/24 & 192.168.11.0/24 & 22, 3389 & tcp\
-315 & accept & dmz-peers-to-scriptum-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.104 & 8080, 3000, 3443, 4443, 32484 & tcp\
+315 & accept & dmz-peers-to-scriptum-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.104 & 8080, 3000, 3443, 4443, 30080, 30443 & tcp\
 316 & accept & dmz-peers-to-dmz-dns & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.105 & 53 & tcp_udp\
 317 & accept & dmz-peers-to-wg-portal & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.106 & 8888 & tcp\
 318 & accept & dmz-peers-to-monitoring & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.107 & 3000, 9090, 9116 & tcp\
@@ -529,7 +532,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.10.conf‘. Tabel
 231 & accept & internal6-to-scriptum-4443 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 4443 & tcp\
 240 & accept & internal6-to-library-http-3000 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 3000 & tcp\
 241 & accept & internal6-to-library-https-3443 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 3443 & tcp\
-242 & accept & internal6-to-library-graphql-32484 & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 32484 & tcp\
+242 & accept & internal6-to-library-graphql & eth2 & eth1 & & 2001:1470:fffd:a9::104 & 30080, 30443 & tcp\
 250 & accept & internal6-to-grafana-3000 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 3000 & tcp\
 251 & accept & internal6-to-prometheus-9090 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 9090 & tcp\
 252 & accept & internal6-to-snmp-exporter-9116 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 9116 & tcp\
@@ -554,7 +557,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.10.conf‘. Tabel
 312 & accept & wg-host6-to-ipv6only-mgmt & eth1 & eth3 & 2001:1470:fffd:a9::106 & fd11:11:11::/64 & 22, 3389 & tcp\
 313 & accept & internal6-to-dmz-mgmt & eth2 & eth1 & 2001:1470:fffd:aa::/64 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp\
 314 & accept & ipv6only-to-dmz-mgmt & eth3 & eth1 & fd11:11:11::/64 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp\
-315 & accept & dmz6-peers-to-scriptum-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::104 & 8080, 3000, 3443, 4443, 32484 & tcp\
+315 & accept & dmz6-peers-to-scriptum-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::104 & 8080, 3000, 3443, 4443, 30080, 30443 & tcp\
 316 & accept & dmz6-peers-to-dmz-dns & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::105 & 53 & tcp_udp\
 317 & accept & dmz6-peers-to-wg-portal & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::106 & 8888 & tcp\
 318 & accept & dmz6-peers-to-monitoring & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::107 & 3000, 9090, 9116 & tcp\
@@ -578,7 +581,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.10.conf‘. Tabel
 430 & accept & ipv6only-to-scriptum-8080 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 8080 & tcp\
 440 & accept & ipv6only-to-library-http-3000 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 3000 & tcp\
 441 & accept & ipv6only-to-library-https-3443 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 3443 & tcp\
-442 & accept & ipv6only-to-library-graphql-32484 & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 32484 & tcp\
+442 & accept & ipv6only-to-library-graphql & eth3 & eth1 & & 2001:1470:fffd:a9::104 & 30080, 30443 & tcp\
 450 & accept & ipv6only-to-grafana-3000 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 3000 & tcp\
 451 & accept & ipv6only-to-prometheus-9090 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 9090 & tcp\
 452 & accept & ipv6only-to-snmp-exporter-9116 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 9116 & tcp\
@@ -608,6 +611,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.10.conf‘. Tabel
 21 & accept & eth2 & & & 53 & tcp_udp\
 22 & accept & eth3 & & & 53 & tcp_udp\
 30 & accept & eth1 & & & 547 & udp\
+31 & accept & eth3 & & & 547 & udp\
 40 & accept & eth1 & & & & icmpv6\
 41 & accept & eth2 & & & & icmpv6\
 42 & accept & eth3 & & & & icmpv6\
@@ -1120,7 +1124,7 @@ Certifikati so samopodpisani, zato jih je v testnem okolju treba ročno zaupati:
 
 GraphQL strežnik uporablja isto okolje in isto logiko sinhronizacije, vendar deluje na ločenih vratih:
 
-    curl -k -X POST "https://192.168.11.104:32484/graphql" \
+    curl -k -X POST "https://192.168.11.104:30443/graphql" \
       -H "Content-Type: application/json" \
       -d '{"query":"{ authors { id name } }"}'
 
@@ -1130,10 +1134,16 @@ Za zaščiteno mutacijo uporabimo Basic Auth:
     $body = @{ query = 'mutation { createAuthor(name: "GraphQL Test") { id name } }' } | ConvertTo-Json
 
     Invoke-RestMethod `
-      -Uri 'https://192.168.11.104:32484/graphql' `
+      -Uri 'https://192.168.11.104:30443/graphql' `
       -Method Post `
       -Headers @{ Authorization = "Basic $b64"; 'Content-Type'='application/json' } `
       -Body $body
+
+Za nešifrirani dostop uporabimo HTTP vrata 30080:
+
+    curl -X POST "http://192.168.11.104:30080/graphql" \
+      -H "Content-Type: application/json" \
+      -d '{"query":"{ authors { id name } }"}'
 
 ### Scriptum_kp
 
@@ -1235,6 +1245,14 @@ Pomen posameznih ukazov:
 4.  Preveri lokalno bazo z `node query-ha-db.js`.
 
 5.  Po potrebi preveri še `/health` endpoint in loge storitve.
+
+## Popravki kode
+
+Če rabiste kako spremeniti storitev popravite kodo, naložite jo na vse tri serverje in nato znova zaženite storitev:
+
+    sudo systemctl restart library-api
+
+Če ste vse pravilno naredili bi to moralo še vedno ohraniti bazo tako, da lahko to naredite brez izgub.
 
 # Pretvorba med Markdown in LaTeX
 
