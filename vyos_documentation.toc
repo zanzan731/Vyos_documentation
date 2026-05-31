@@ -16,7 +16,7 @@
 \contentsline {subsection}{\numberline {5.1}Osnovne informacije}{6}{subsection.5.1}%
 \contentsline {subsection}{\numberline {5.2}Omrežni vmesniki}{6}{subsection.5.2}%
 \contentsline {subsection}{\numberline {5.3}Privzete usmeritve (statične usmeritve)}{6}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Router Advertisements (RA)}{6}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.4}Router Advertisements (RA)}{7}{subsection.5.4}%
 \contentsline {subsection}{\numberline {5.5}NTP}{7}{subsection.5.5}%
 \contentsline {subsection}{\numberline {5.6}Upravljanje s konfiguracijami}{7}{subsection.5.6}%
 \contentsline {subsubsection}{\numberline {5.6.1}Shranjevanje celotne konfiguracije}{7}{subsubsection.5.6.1}%
@@ -32,7 +32,7 @@
 \contentsline {subsection}{\numberline {7.1}DHCPv4}{9}{subsection.7.1}%
 \contentsline {subsection}{\numberline {7.2}DHCPv4 - statične mape}{9}{subsection.7.2}%
 \contentsline {subsection}{\numberline {7.3}DHCPv6}{9}{subsection.7.3}%
-\contentsline {paragraph}{Statične DHCPv6 mape}{9}{section*.2}%
+\contentsline {paragraph}{Statične DHCPv6 mape}{10}{section*.2}%
 \contentsline {section}{\numberline {8}NAT in preusmeritve vrat}{11}{section.8}%
 \contentsline {paragraph}{Namen}{11}{section*.3}%
 \contentsline {subsection}{\numberline {8.1}Opombe in primeri}{11}{subsection.8.1}%
@@ -97,11 +97,11 @@
 \contentsline {subsubsection}{\numberline {13.4.5}TLS certifikat}{28}{subsubsection.13.4.5}%
 \contentsline {subsubsection}{\numberline {13.4.6}GraphQL}{28}{subsubsection.13.4.6}%
 \contentsline {subsubsection}{\numberline {13.4.7}Scriptum\_kp}{28}{subsubsection.13.4.7}%
-\contentsline {section}{\numberline {14}Raft sinhronizacija}{28}{section.14}%
+\contentsline {section}{\numberline {14}Raft sinhronizacija}{29}{section.14}%
 \contentsline {subsection}{\numberline {14.1}Ključne datoteke}{29}{subsection.14.1}%
 \contentsline {subsection}{\numberline {14.2}Kaj mora biti zagnano}{29}{subsection.14.2}%
 \contentsline {subsection}{\numberline {14.3}Pregled baze}{29}{subsection.14.3}%
-\contentsline {subsection}{\numberline {14.4}Preverjanje clustra}{29}{subsection.14.4}%
+\contentsline {subsection}{\numberline {14.4}Preverjanje clustra}{30}{subsection.14.4}%
 \contentsline {subsection}{\numberline {14.5}Testiranje sinhronizacije}{30}{subsection.14.5}%
 \contentsline {subsection}{\numberline {14.6}Priporočeni potek}{30}{subsection.14.6}%
 \contentsline {section}{\numberline {15}Pretvorba med Markdown in LaTeX}{30}{section.15}%
