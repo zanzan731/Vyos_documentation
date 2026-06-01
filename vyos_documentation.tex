@@ -21,11 +21,10 @@ breaklines=false,
  keepspaces=true,
 frame=single
 }
-\begin{center}
+
 \title{Dokumentacija poslovnega omrežja - startup11}
 \author{Žan Perat, Pavle Došen}
 \date{\today}
-\end{center}
 
 \begin{document}
 
@@ -52,6 +51,10 @@ V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Pod
   \item \textbf{INTERNAL (eth2)}: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
   \item \textbf{IPV6ONLY (eth3)}: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
 \end{itemize}
+
+\section{Repozitorij}
+Dokumentacija in vse dodatne datoteke so na repozitoriju: \\
+\href{https://github.com/zanzan731/Vyos\_documentation/}{https://github.com/zanzan731/Vyos\_documentation/}
 
 \section{Naprave}
 
@@ -136,15 +139,13 @@ SSH & vsi DMZ gostitelji + vyos & 22 (tcp) & samo vyos & Storitev SSH je prisotn
 \hline
 Cilj SNMP (VyOS) & vyos & 161 (udp) & Ne & SNMP na VyOS; exporter zajema ta cilj \\
 \hline
-REST storitev (scriptum) & rest & 8080 (tcp) & Da & Obstaja javni DNAT \\
-\hline
 scriptum zaledje & rest & 4443 (tcp) & Da & Javno zaledno vozlišče \\
 \hline
 scriptum frontend & rest & 8080 (tcp) & Da & Javno frontend vozlišče \\
 \hline
-Library API (HTTP) & rest & 3000 (tcp) & Ne & Notranji HTTP API \\
+Library API (HTTP) & rest & 3000 (tcp) & Ne & HTTP API \\
 \hline
-Library API (HTTPS) & rest & 3443 (tcp) & Ne & Notranje HTTPS vozlišče \\
+Library API (HTTPS) & rest & 3443 (tcp) & Da & HTTPS API \\
 \hline
 Library API (GraphQL) & rest & 30080, 30443 (tcp) & Ne & Notranji GraphQL vmesnik \\
 \hline
@@ -204,18 +205,20 @@ eth3 & IPv6-only & - & fd11:11:11::1/64 \\
 RA (oglasi usmerjevalnika) po vmesnikih in stanju SLAAC:
 \begin{longtable}{|l|l|l|l|}
 \hline
-\textbf{Vmesnik} & \textbf{Oglaševana predpona} & \textbf{RA zastavice} & \textbf{SLAAC omogočen?} \\
+\textbf{Vmesnik} & \textbf{Oglaševana predpona} & \textbf{RA zastavice} & \textbf{SLAAC} \\
 \hline
-eth1 (DMZ) & 2001:1470:fffd:a9::/64 & managed, no-autonomous & Ne (prednost ima DHCPv6) \\
-eth2 (INTERNAL) & 2001:1470:fffd:aa::/64 & autonomous & Da (SLAAC) \\
-eth3 (IPV6ONLY) & fd11:11:11::/64 & managed, no-autonomous & Ne (prednost ima DHCPv6) \\
+eth1 (DMZ) & 2001:1470:fffd:a9::/64 & managed, no-autonomous & Ne \\
+eth2 (INTERNAL) & 2001:1470:fffd:aa::/64 & autonomous & Da \\ 
+eth3 (IPV6ONLY) & fd11:11:11::/64 & managed, no-autonomous & Ne \\
 \hline
 \end{longtable}
 
 Opombe:
-- Za IPv4 uporabljamo DHCP s statičnimi DHCPv4 mape za strežnike in pomembne gostitelje (ujemanje po MAC naslovu).
-- Za IPv6 je na INTERNAL omogočen SLAAC; IPV6ONLY uporablja DHCPv6, odjemalci pa naslove pridobijo prek DHCPv6, razen če je oglašen avtonomen predpon. Statične DHCPv6 mape uporabljamo samo za gostitelje, ki potrebujejo stalni, administrativno dodeljen naslov (strežniki, krmilniki).
-- Če vmesnik oglašuje tako \texttt{managed} kot \texttt{no-autonomous}, je SLAAC dejansko onemogočen in gostitelji morajo naslov pridobiti prek DHCPv6.
+\begin{itemize}
+  \item Za IPv4 uporabljamo DHCP s statičnimi DHCPv4 mape za strežnike in pomembne gostitelje (ujemanje po MAC naslovu).
+  \item Za IPv6 je na INTERNAL omogočen SLAAC; IPV6ONLY in DMZ uporablja DHCPv6, odjemalci pa naslove pridobijo prek DHCPv6, razen če je oglašen avtonomen predpon.
+  \item Če vmesnik oglašuje tako \texttt{managed} kot \texttt{no-autonomous}, je SLAAC dejansko onemogočen in gostitelji morajo naslov pridobiti prek DHCPv6.
+\end{itemize}
 
 \subsection{NTP}
 NTP sinhronizacija uporablja naslednje strežnike:
@@ -322,30 +325,22 @@ raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & raft vozlišče \\
 raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & raft vozlišče \\
 raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & raft vozlišče \\
 rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST / web storitev \\
-dns & 192.168.11.105 & - & stari DNS zapis za Linux, trenutno ni v uporabi \\
+dns & 192.168.11.105 & - & stari Linux DNS strežnik, trenutno ni v uporabi \\
 wg & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard gostitelj \\
 snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & monitoring gostitelj \\
-wg2 & 192.168.11.108 & 2001:1470:fffd:a9::108 & nov WireGuard gostitelj \\
+wg2 & 192.168.11.108 & 2001:1470:fffd:a9::108 & 2. (neuporabljen) WireGuard gostitelj \\
 ad & 192.168.11.201 & 2001:1470:fffd:a9::201 & dodatno ime AD strežnika \\
 \hline
 \end{longtable}
 
 \subsection{Opomba o upravljanju DNS}
-Ukazi za administracijo AD DNS strežnika so zbrani v ločeni datoteki \texttt{ad-dns-upravljanje.md}.
+Ukazi za administracijo AD DNS strežnika so zbrani v repozitoriju v datoteki \texttt{ad-dns-upravljanje.md}.
 
 \section{DHCP}
 
 \subsection{DHCPv4}
-DHCP server ima dve skupini: \textbf{SERVERS} (192.168.11.0/24) z navedenimi statičnimi mapami in \textbf{USERS} (10.11.0.0/24) za uporabniške naprave z avtomatskim razponom.
-\begin{longtable}{|l|l|}
-\hline
-\textbf{Skupina} & \textbf{Subnet / opomba} \\
-\hline
-SERVERS & 192.168.11.0/24 (statične mape) \\
-\hline
-USERS & 10.11.0.0/24 (dinamični range 10.11.0.100-200) \\
-\hline
-\end{longtable}
+DHCP server ima dve skupini: \textbf{SERVERS} (192.168.11.0/24) in \textbf{USERS} (10.11.0.0/24).
+Obe skupini uporabljata statične DHCP mape, nedodeljeni uporabniki pa dobijo naslov avtomatsko.
 
 \subsection{DHCPv4 - statične mape}
 Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
@@ -381,9 +376,9 @@ internal-win-01 & 00:0c:29:bb:bb:01 & 10.11.0.201 \\
 \subsection{DHCPv6}
 Uporaba DHCPv6 in SLAAC:
 \begin{itemize}
-  \item DMZ: DHCPv6 uporabljamo za strežnike (razpon \texttt{2001:1470:fffd:a9::100}--\texttt{::1ff}), za pomembne gostitelje pa so nastavljene statične DHCPv6 mape.
-  \item INTERNAL: SLAAC je privzeta izbira za odjemalce na \texttt{2001:1470:fffd:aa::/64}; statične DHCPv6 mape uporabljamo le za strežnike, ki potrebujejo fiksni IPv6 naslov.
-  \item IPV6ONLY: za \texttt{fd11:11:11::/64} uporabljamo DHCPv6; gostitelji naslove pridobijo prek DHCPv6, statične mape pa dodamo le tam, kjer je to potrebno.
+  \item DMZ: DHCPv6 uporabljamo za strežnike (razpon \texttt{2001:1470:fffd:a9::100}--\texttt{::1ff})
+  \item INTERNAL: SLAAC je privzeta izbira za odjemalce na \texttt{2001:1470:fffd:aa::/64}
+  \item IPV6ONLY: za \texttt{fd11:11:11::/64} uporabljamo DHCPv6 statične mape da bi uporabniki lahko dostopali do oddaljenega omizja
 \end{itemize}
 
 \paragraph{Statične DHCPv6 mape}
@@ -422,7 +417,7 @@ ipv6only-windows & fd11:11:11::201 & 00:01:00:01:31:8e:75:9d:00:0c:29:05:57:f5 \
 \paragraph{Namen}
 NAT je uporabljen za tri stvari: DNAT za izbrane javne IPv4 storitve, SNAT/masquerade za odhodni promet in NAT66 (NPTv6) za IPv6-only segment. Za IPv6 javne storitve uporabljamo izključno firewall pravila, ne pa port forwarding. Hairpin pravila omogočajo dostop do javnih storitev tudi iz notranjega in DMZ omrežja.
 
-\subsection{Opombe in primeri}
+\subsection{Opombe}
 \begin{itemize}
   \item DNAT velja samo za izbrane porte in ciljne gostitelje.
   \item Hairpin DNAT/SNAT je omejen na storitve, ki jih je treba doseči prek javnega WAN naslova tudi iz notranjega omrežja.
@@ -430,13 +425,13 @@ NAT je uporabljen za tri stvari: DNAT za izbrane javne IPv4 storitve, SNAT/masqu
 \end{itemize}
 
 \subsection{IPv4 -- DNAT}
-\begin{longtable}{|l|l|l|l|p{2.2cm}|l|l|}
+\begin{longtable}{|l|l|l|l|p{2.4cm}|l|l|}
 \hline
-\textbf{Pravilo} & \textbf{Opis} & \textbf{In} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} & \textbf{Prevod / cilj} \\
+\textbf{Pravilo} & \textbf{Opis} & \textbf{In} & \textbf{Destination} & \textbf{Port} & \textbf{Prot} & \textbf{Prevod / cilj} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Pravilo} & \textbf{Opis} & \textbf{In} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} & \textbf{Prevod / cilj} \\
+\textbf{Pravilo} & \textbf{Opis} & \textbf{In} & \textbf{Destination} & \textbf{Port} & \textbf{Proto} & \textbf{Prevod / cilj} \\
 \hline
 \endhead
 110 & wan-to-wg0-51820-dnat & eth0 & & 51820 & udp & 192.168.11.106:51820 (WireGuard) \\
@@ -447,22 +442,21 @@ NAT je uporabljen za tri stvari: DNAT za izbrane javne IPv4 storitve, SNAT/masqu
 211 & hairpin-dmz-to-public-services-dnat & eth1 & 88.200.24.241 & 4443, 3443 & tcp & 192.168.11.104:4443,3443 \\
 \hline
 \end{longtable}
-Za IPv6 javne storitve ni predviden DNAT; dostop je urejen z vhodnimi in forward firewall pravili.
 
 \subsection{IPv4 -- SNAT}
-\begin{longtable}{|l|l|l|l|l|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|}
 \hline
-\textbf{Pravilo} & \textbf{Opis} & \textbf{Out} & \textbf{Source} & \textbf{Proto/Notes} & \textbf{Prevod / opomba} \\
+\textbf{Pravilo} & \textbf{Opis} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Proto/Notes} & \textbf{Prevod / opomba} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Pravilo} & \textbf{Opis} & \textbf{Out} & \textbf{Source} & \textbf{Proto/Notes} & \textbf{Prevod / opomba} \\
+\textbf{Pravilo} & \textbf{Opis} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Proto/Notes} & \textbf{Prevod / opomba} \\
 \hline
 \endhead
-100 & snat-internal-to-internet & eth0 & 10.11.0.0/24 & masquerade & internet egress \\
-110 & snat-dmz-to-internet & eth0 & 192.168.11.0/24 & masquerade & internet egress \\
-120 & hairpin-internal-to-public-snat & eth1 & 10.11.0.0/24, dst 192.168.11.104 & tcp & 192.168.11.1 (return path) \\
-121 & hairpin-dmz-to-public-snat & eth1 & 192.168.11.0/24, dst 192.168.11.104 & tcp & 192.168.11.1 (return path) \\
+100 & snat-internal-to-internet & eth0 & 10.11.0.0/24 & & masquerade & internet egress \\
+110 & snat-dmz-to-internet & eth0 & 192.168.11.0/24 & & masquerade & internet egress \\
+120 & hairpin-internal-to-public-snat & eth1 & 10.11.0.0/24 & 192.168.11.104 & tcp & 192.168.11.1 (return path) \\
+121 & hairpin-dmz-to-public-snat & eth1 & 192.168.11.0/24 & 192.168.11.104 & tcp & 192.168.11.1 (return path) \\
 \hline
 \end{longtable}
 
@@ -485,13 +479,12 @@ Za IPv6 javne storitve ni predviden DNAT; dostop je urejen z vhodnimi in forward
 \section{Firewall}
 \subsection{Kratek povzetek}
 \begin{itemize}
-  \item \textbf{Model:} privzeto-zavrni (default-deny) — vse povezave niso dovoljene, razen izrecno dovoljenih.
-  \item \textbf{Kaj je dovoljeno:} odjemalci v notranji mreži (INTERNAL) in DMZ lahko dostopajo do interneta; iz interne in DMZ mreže so izrecno dovoljeni dostopi do DMZ storitev (DNS, web, monitoring, AD), WireGuard gostom so dovoljeni upravljalni dostopi; ICMP/ICMPv6 za diagnostične potrebe je omejeno, a omogočeno tam, kjer je potrebno.
+  \item \textbf{Model:} privzeto-zavrni (default-deny) — vse povezave so privzeto prepovedane, razen če so izrecno dovoljene.
+  \item \textbf{Kaj je dovoljeno:} vse naprave lahko dostopajo do interneta in vseh DMZ storitev (DNS, web, monitoring, AD). ICMP/ICMPv6 za diagnostične potrebe je povsod dovoljen.
   \item \textbf{Kaj je blokirano:} naključni vhodni promet z interneta je privzeto zavrnjen, medsegmentni dostopi so blokirani, razen če obstaja specifično pravilo (npr. upravljanje, AD, monitoring).
-  \item \textbf{Hairpin NAT:} notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT za izbrane storitve.
-  \item \textbf{IPv6:} obstaja vzporedna zbirka pravil za IPv6; javne storitve na WAN so odprte z forward pravili do DMZ gostiteljev, za IPv6-only odjemalce pa so posebej omogočena pravila in NAT66 (NPTv6) za izhod v internet.
+  \item \textbf{Hairpin NAT:} notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT.
 \end{itemize}
-Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`. Tabela uporablja \texttt{longtable} za lep izpis večstranskih tabel.
+Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 
 \subsection{IPv4 -- Forward}
 \subsubsection{IPv4 -- Forward (1--99)}
@@ -593,17 +586,17 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`. Tabela up
 \textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-1 & accept & & & & & state established,related \\
-10 & accept & eth0 & & & 22 & tcp \\
-12 & accept & eth2 & & 88.200.24.241 & 22 & tcp \\
-13 & accept & eth1 & & 88.200.24.241 & 22 & tcp \\
-20 & accept & eth1 & & & 53 & tcp\_udp \\
-21 & accept & eth2 & & & 53 & tcp\_udp \\
-30 & accept & eth1 & & & 67 & udp \\
-31 & accept & eth2 & & & 67 & udp \\
-40 & accept & eth1 & 192.168.11.107 & & 161 & udp \\
-41 & accept & eth1 & & & & icmp \\
-42 & accept & eth2 & & & & icmp \\
+1 & accept & stateful-return & & & & & & state established,related \\
+10 & accept & wan-ssh-to-vyos & eth0 &  &  &  & 22 & tcp \\
+12 & accept & ssh-to-vyos-via-wan-ip-from-internal & eth2 &  &  & 88.200.24.241 & 22 & tcp \\
+13 & accept & ssh-to-vyos-via-wan-ip-from-dmz & eth1 &  &  & 88.200.24.241 & 22 & tcp \\
+20 & accept & dns-from-dmz & eth1 &  &  &  & 53 & tcp/udp \\
+21 & accept & dns-from-internal & eth2 &  &  &  & 53 & tcp/udp \\
+30 & accept & dhcpv4-from-dmz & eth1 &  &  &  & 67 & udp \\
+31 & accept & dhcpv4-from-internal & eth2 &  &  &  & 67 & udp \\
+40 & accept & snmp-to-vyos-from-monitoring & eth1 &  & 192.168.11.107 & & 161 & udp \\
+41 & accept & icmp-to-vyos-from-dmz & eth1 &  &  &  &  & icmp \\
+42 & accept & icmp-to-vyos-from-internal & eth2 &  &  &  &  & icmp \\
 \hline
 \end{longtable}
 
@@ -695,6 +688,8 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`. Tabela up
 \hline
 \end{longtable}
 
+\newpage
+
 \subsubsection{IPv6 -- Forward (300--399)}
 \begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
@@ -762,20 +757,34 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`. Tabela up
 \textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-1 & accept & & & & & state established,related \\
-10 & accept & eth0 & & & 22 & tcp \\
-11 & accept & eth0 & & & & icmpv6 \\
-12 & accept & eth2 & & 2001:1470:fffd:a8::2 & 22 & tcp \\
-13 & accept & eth1 & & 2001:1470:fffd:a8::2 & 22 & tcp \\
-14 & accept & eth3 & & 2001:1470:fffd:a8::2 & 22 & tcp \\
-20 & accept & eth1 & & & 53 & tcp\_udp \\
-21 & accept & eth2 & & & 53 & tcp\_udp \\
-22 & accept & eth3 & & & 53 & tcp\_udp \\
-30 & accept & eth1 & & & 547 & udp \\
-31 & accept & eth3 & & & 547 & udp \\
-40 & accept & eth1 & & & & icmpv6 \\
-41 & accept & eth2 & & & & icmpv6 \\
-42 & accept & eth3 & & & & icmpv6 \\
+1 & accept & wan6-ssh-to-vyos & eth0 &  &  &  & 22 & tcp \\
+11 & accept & icmpv6-from-wan & eth0 &  &  &  &  & icmpv6 \\
+12 & accept & ssh6-to-vyos-via-wan-ip-from-internal & eth2 &  &  & 2001:1470:fffd:a8::2 & 22 & tcp \\
+13 & accept & ssh6-to-vyos-via-wan-ip-from-dmz & eth1 &  &  & 2001:1470:fffd:a8::2 & 22 & tcp \\
+14 & accept & ssh6-to-vyos-via-wan-ip-from-ipv6only & eth3 &  &  & 2001:1470:fffd:a8::2 & 22 & tcp \\
+20 & accept & dns6-from-dmz & eth1 &  &  &  & 53 & tcp/udp \\
+21 & accept & dns6-from-internal & eth2 &  &  &  & 53 & tcp/udp \\
+22 & accept & dns6-from-ipv6only & eth3 &  &  &  & 53 & tcp/udp \\
+30 & accept & dhcpv6-server-on-dmz & eth1 &  &  &  & 547 & udp \\
+31 & accept & dhcpv6-server-on-ipv6only & eth2 &  &  &  & 547 & udp \\
+40 & accept & icmpv6-from-dmz & eth1 &  &  &  &  & icmp \\
+41 & accept & icmpv6-from-internal & eth2 &  &  &  &  & icmp \\
+42 & accept & icmpv6-from-ipv6only & eth3 &  &  &  &  & icmp \\
+\hline
+\end{longtable}
+
+\subsection{IPv6 -- Output}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Opis} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endfirsthead
+\hline
+\textbf{Rule} & \textbf{Action} & \textbf{Opis} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\hline
+\endhead
+10 & accept & allow-router-icmpv6-output & eth0 &  &  &  &  & icmpv6 \\
+20 & accept & dns-from-dmz & eth1 &  &  & 2001:1470:fffd:a9::201 & 53 & tcp/udp \\
 \hline
 \end{longtable}
 
@@ -791,7 +800,7 @@ Lahko z konfiguracijami upravljamo z PiVPN ali preko \texttt{wg-portal} vmesnika
 \begin{itemize}
   \item \textbf{Notranji naslov:} 192.168.11.106
   \item \textbf{Javni port:} UDP 51820
-  \item \textbf{Storitev:} aktivna in dostopna iz javnega interneta prek obstoječe NAT nastavitve
+  \item \textbf{Javni dostop:} 88.200.24.241 prek obstoječe DNAT nastavitve
 \end{itemize}
 
 \subsection{Upravljanje VPN uporabnikov}
@@ -850,7 +859,7 @@ in nastaviti tega uporabnika kot lastnika vseh datotek v \texttt{/opt/wg-portal}
 Spodaj so primeri ukazov, ki smo jih uporabili (izvedite kot \texttt{root} ali z \texttt{sudo}):
 \begin{lstlisting}
 # Ustvari sistemskega uporabnika brez prijave in z domaco mapo na /opt/wg-portal
-useradd --system --no-create-home --shell /usr/sbin/nologin --home-dir /opt/wg-portal wgportal
+useradd --system --no-create-home --shell /usr/sbin/nologin wgportal
 
 # Nastavi lastnistvo in varne pravice za podatkovno mapo
 chown -R wgportal:wgportal /opt/wg-portal
@@ -862,7 +871,6 @@ Za povezavo z AD je običajno potrebno konfigurirati bind uporabnika, base DN in
 \begin{itemize}
   \item \textbf{LDAP URL:} ldap://192.168.11.201:389 (ali ldaps://... z ustreznimi certifikati)
   \item \textbf{Bind DN:} CN=wgportal\_bind,OU=ServiceAccounts,DC=startup11,DC=local
-  \item \textbf{Bind password:} (varno shranjen v konfiguraciji ali vault)
   \item \textbf{User search base:} OU=Users,DC=startup11,DC=local
   \item \textbf{User filter:} \texttt{(|(sAMAccountName=\%s)(userPrincipalName=\%s))} --- poišče uporabnika po sAMAccountName ali UPN
   \item \textbf{Group(s) za admins:} merilo, npr. cn=Admin,OU=Groups,DC=startup11,DC=local
@@ -886,7 +894,9 @@ Add-ADGroupMember -Identity 'Admin' -Members 'wgportal_bind'
 
 
 \section{Monitoring in SNMP}
-Monitoring v tej zasnovi je namenjen predvsem nadzoru omrežnega stanja, ne operativnemu upravljanju storitev. Osrednji vir metrik je VyOS prek SNMP v2c, iz katerega se berejo osnovni podatki o vmesnikih, dosegljivosti, prometa in sistemskem stanju. Te metrike se nato pretvorijo v Prometheus format, zberejo v Prometheusu in vizualizirajo v Grafani. Monitoring stack je nameščen prek Dockerja (Docker Compose) na gostitelju za nadzor.
+Monitoring v tej zasnovi je namenjen predvsem nadzoru omrežnega stanja, ne operativnemu upravljanju storitev. Trenutno edini vir metrik je VyOS usmerjevalnik prek SNMP,
+iz katerega se berejo osnovni podatki o vmesnikih, dosegljivosti, prometa in sistemskem stanju. Te metrike se nato pretvorijo v Prometheus format, zberejo v Prometheusu in vizualizirajo v Grafani. 
+Monitoring stack je nameščen prek Dockerja (Docker Compose) na gostitelju za nadzor.
 
 \subsection{Arhitektura spremljanja}
 Monitoring gostitelj je 
@@ -903,11 +913,11 @@ Monitoring zajema metrike, ki jih bere \texttt{snmp\_exporter} iz VyOS preko SNM
 \begin{itemize}
   \item \textbf{Sistemske metrike (SNMPv2-MIB)}: \texttt{sysUpTime} — \texttt{1.3.6.1.2.1.1.3} (dosegljivost, reboot detection).
   \item \textbf{Vmesniki in identifikacija (IF-MIB)}: \texttt{ifNumber} (\texttt{1.3.6.1.2.1.2.1}), \texttt{ifIndex}, \texttt{ifDescr} (\texttt{1.3.6.1.2.1.2.2.1.2}) — seznam in poimenovanje vmesnikov.
-  \item \textbf{Konfiguracijski atributi (IF-MIB)}: \texttt{ifMtu} (\texttt{1.3.6.1.2.1.2.2.1.4}), \texttt{ifSpeed} (\texttt{1.3.6.1.2.1.2.2.1.5}), \texttt{ifPhysAddress}.
+  \item \textbf{Konfiguracijski atributi (IF-MIB)}: \texttt{ifMtu} (\texttt{1.3.6.1.2.1.2.2.1.4}), \\ \texttt{ifSpeed} (\texttt{1.3.6.1.2.1.2.2.1.5}), \texttt{ifPhysAddress}.
   \item \textbf{Stanje vmesnikov}: \texttt{ifAdminStatus} / \texttt{ifOperStatus} (operativna/administrativna stanja).
   \item \textbf{Prometni števci (IF-MIB / IFX)}: bajti in paketi — \texttt{ifInOctets} (\texttt{1.3.6.1.2.1.2.2.1.10}), \texttt{ifOutOctets} (\texttt{1.3.6.1.2.1.2.2.1.16}), ter 64-bit HC števcem \texttt{ifHCInOctets} / \texttt{ifHCOutOctets} (\texttt{1.3.6.1.2.1.31.1.1.1.6} / \texttt{1.3.6.1.2.1.31.1.1.1.10}) za visoke hitrosti.
   \item \textbf{Napake in odmetki (IF-MIB)}: \texttt{ifInErrors}, \texttt{ifInDiscards}, \texttt{ifOutErrors} — signalizacija degradacij linka.
-  \item \textbf{Dodatni prometni števci (IFX)}: multicast/broadcast števci in \texttt{ifHighSpeed} (\texttt{1.3.6.1.2.1.31.1.1.1.15}).
+  \item \textbf{Dodatni prometni števci (IFX)}: multicast/broadcast števci in \\ \texttt{ifHighSpeed} (\texttt{1.3.6.1.2.1.31.1.1.1.15}).
   \item \textbf{IP/TCP/UDP statistike (po potrebi)}: zbirne statistike iz IP/TCP/UDP-MIB-ov (retransmisije, portne agregacije ipd.) — vključimo le ob potrebi za specifične istrage.
   \item \textbf{Agregacije in alarmiranje}: v Prometheusu izpeljane metrike (\texttt{rate()}, \texttt{increase()}), percentili in pragovna opozorila za latence, packet-loss in throughput.
   \item \textbf{Zdravje zbiranja}: status \texttt{snmp\_exporter} ter Prometheus job (cilj UP/DOWN, scrape errors) in metrika za zadnji uspešen scrape.
