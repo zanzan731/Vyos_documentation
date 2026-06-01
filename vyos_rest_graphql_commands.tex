@@ -1,0 +1,101 @@
+% Standalone LaTeX document: REST and GraphQL commands for Library API
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{upquote}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+\title{Library API - REST and GraphQL Commands}
+\author{Žan Perat}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Library REST API}
+
+\subsection*{REST examples (use -k with self-signed cert)}
+\begin{verbatim}
+# List authors (public)
+curl -k https://192.168.11.104:3443/authors
+
+# Get author by id
+curl -k https://192.168.11.104:3443/authors/1
+
+# Get books for author
+curl -k https://192.168.11.104:3443/authors/1/books
+
+# Create author (requires librarian/admin)
+curl -i -X POST http://192.168.11.104:3000/authors \
+  -H "Content-Type: application/json" \
+  -u username \
+  -d '{"name":"New Author","birth_year":1970,"nationality":"Country"}'
+
+# Update author
+curl -i -X PUT http://192.168.11.104:3000/authors/2 \
+  -H "Content-Type: application/json" \
+  -u username \
+  -d '{"name":"Updated Name"}'
+
+# Delete author (admin only)
+curl -i -X DELETE http://192.168.11.104:3000/authors/5 -u username
+
+# List books (optional genre filter)
+curl -k "https://192.168.11.104:3443/books?genre=Fantasy"
+
+# Get book by id
+curl -k https://192.168.11.104:3443/books/1
+
+# Create book (requires librarian/admin)
+curl -k -u username -H "Content-Type: application/json" \
+  -d '{"title":"New Book","author_id":1,"year":2020, \
+  "genre":"Sci-Fi","isbn":"978-0-452-28423-4","available":true}' \
+  https://192.168.11.104:3443/books
+
+# Update book
+curl -k -u username -X PUT -H "Content-Type: application/json" \
+  -d '{"title":"Updated"}' https://192.168.11.104:3443/books/3
+
+# Toggle availability (PATCH)
+curl -k -i -X PATCH https://192.168.11.104:3443/books/3/availability  \
+ -H "Content-Type: application/json"  \
+-u username   -d '{"available":false}'
+
+# Delete book (admin only)
+curl -k -u username -X DELETE https://192.168.11.104:3443/books/3
+\end{verbatim}
+
+\section{Library GraphQL API}
+
+\subsection*{GraphQL examples}
+\begin{verbatim}
+# Public query (POST)
+curl -k -X POST -H "Content-Type: application/json" \
+  --data '{"query":"{ authors { id name birth_year } }"}' \
+  https://192.168.11.104:30443/graphql
+
+# Authenticated mutation (HTTP Basic)
+curl -k -u username -X POST -H "Content-Type: application/json" \
+  --data '{"query":"mutation { createAuthor(name:\"New\") { id name } }"}' \
+  https://192.168.11.104:30443/graphql
+
+# GraphiQL IDE (browser)
+Open a browser to: https://192.168.11.104:30443/graphql
+
+#En primer:
+{
+  authors {
+    id
+    name
+    birth_year
+    nationality
+  }
+}
+\end{verbatim}
+
+
+
+
+\end{document}

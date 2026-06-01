@@ -1,17 +1,133 @@
 ---
-date: 2026-05-22
-title: Dokumentacija VyOS usmerjevalnika - startup11
+date: 2026-06-01
+title: Dokumentacija poslovnega omrežja - startup11
 ---
 
-# Osnovne informacije
+# Naloga in zasnova omrežja
+
+V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture; cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
+
+## Cilji naloge
+
+- Postaviti omrežje z ločenimi segmenti za **uporabnike** in **strežnike** (strogo ločeno prometno okolje).
+
+- Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
+
+- Izpostaviti navzven le izbrane storitve: WireGuard, `wg-portal` (HTTPS) in REST frontend (HTTPS).
+
+- Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo znotraj omrežja in preko VPN (ni direktnega WAN dostopa).
+
+- Ohranjati poseben **ipv6only** segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
+
+## Opredelitev segmentov
+
+- **DMZ (eth1)**: vsi strežniki (REST, wg-portal, WireGuard endpoint, AD/DNS, SNMP, ostali). Fizični lokaciji strežnikov sta v DMZ, vendar dostopi do nekaterih storitev omejeni z omrežnimi ACL.
+
+- **INTERNAL (eth2)**: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
+
+- **IPV6ONLY (eth3)**: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
+
+# Naprave
+
+## Seznam virtualk
+
+<figure data-latex-placement="ht">
+<img src="serverlist.png" style="width:90.0%" />
+<figcaption>Posnetek imen virtualk</figcaption>
+</figure>
+
+## Konvencija poimenovanja virtualk
+
+Ime virtualke se vedno začne z `sk11` (naša skupina), nato sledi segment, operacijski sistem, zaporedna številka in kratek opis storitve. Oblika:
+
+<div class="center">
+
+`sk11-<segment>-<OS>-<NN>-<storitev>`  e.g. `sk11-dmz-linux-04-rest`
+
+</div>
+
+## Operacijski sistemi
+
+- DMZ Linux virtualke uporabljajo **Ubuntu Server 26.04**.
+
+- DMZ Active Directory virtualka uporablja **Windows Server 2022**.
+
+- Internal Linux virtualke uporabljajo **Ubuntu Server 26.04**.
+
+- Internal Windows virtualke uporabljajo **Windows 10**.
+
+- IPv6-only Linux virtualke uporabljajo **Ubuntu Server 26.04**.
+
+- IPv6-only Windows virtualke uporabljajo **Windows 10**.
+
+## DMZ strežniki
+
+| **VM name** | **IPv4 naslov** | **IPv6 naslov** | **Namen** |
+|:---|:---|:---|:---|
+| sk11-dmz-linux-01-raft1 | 192.168.11.101 | 2001:1470:fffd:a9::101 | Raft |
+| sk11-dmz-linux-02-raft2 | 192.168.11.102 | 2001:1470:fffd:a9::102 | Raft |
+| sk11-dmz-linux-03-raft3 | 192.168.11.103 | 2001:1470:fffd:a9::103 | Raft |
+| sk11-dmz-linux-04-rest | 192.168.11.104 | 2001:1470:fffd:a9::104 | REST storitve |
+| sk11-dmz-linux-05-dns | 192.168.11.105 | \- | DNS, ni v uporabi |
+| sk11-dmz-linux-06-wg | 192.168.11.106 | 2001:1470:fffd:a9::106 | WireGuard VPN endpoint |
+| sk11-dmz-linux-07-snmp | 192.168.11.107 | 2001:1470:fffd:a9::107 | SNMP / monitoring target |
+| sk11-dmz-linux-08-wg2 | 192.168.11.108 | 2001:1470:fffd:a9::108 | neuporabljena |
+| sk11-dmz-windows-01-ad | 192.168.11.201 | 2001:1470:fffd:a9::201 | Active Directory, DNS |
+
+# Nastavitve na napravah
+
+## Uporabniška imena
+
+Uporabniki na linux `dmz` virtualkah so vsi poimenovani `zanzan0X`, kjer je X številka virtualke (npr sk11-dmz-linux-04). Na `internal` in `ipv6only` odjemalcih je uporabnik vedno samo `zanzann`.
+
+## Splošno geslo
+
+<div class="center">
+
+</div>
+
+## SSH
+
+SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Ključe dodajte v ` /./ssh/authorized_keys`. Če želite začasno omogočiti prijavo z geslom, uredite datoteko\
+`/etc/ssh/sshd_config.d/50-cloud-init.conf` in nastavite `PasswordAuthentication yes`, nato ponovno zaženite `sshd`.
+
+## RDP
+
+RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 3389. Na Ubuntu ga omogočimo z Settings \> System \> Remote Desktop, in moramo potem nastaviti geslo, saj za RDP uporablja različno geslo ki je privzeto avtogenerirano.
+
+# Povzetek storitev
+
+| **Storitev** | **Gostitelj** | **Port (proto)** | **Javno?** | **Opombe** |
+|:---|:---|:---|:---|:---|
+| RDP | vsi GUI gostitelji | 3389 (tcp) | Ne | vsi notranji in ipv6only gostitelji ter AD strežnik |
+| SSH | vsi DMZ gostitelji + vyos | 22 (tcp) | samo vyos | Storitev SSH je prisotna na vseh DMZ strežnikih; WAN SSH je dovoljen samo na vyos |
+| Cilj SNMP (VyOS) | vyos | 161 (udp) | Ne | SNMP na VyOS; exporter zajema ta cilj |
+| REST storitev (scriptum) | rest | 8080 (tcp) | Da | Obstaja javni DNAT |
+| scriptum zaledje | rest | 4443 (tcp) | Da | Javno zaledno vozlišče |
+| Library API (HTTP) | rest | 3000 (tcp) | Ne | Notranji HTTP API |
+| Library API (HTTPS) | rest | 3443 (tcp) | Da | Javno HTTPS vozlišče |
+| Library API (GraphQL) | rest | 30080, 30443 (tcp) | Ne | Notranji GraphQL vmesnik |
+| DMZ DNS | dns-srv | 53 (udp/tcp) | Ne | Notranji DNS za odjemalce v DMZ |
+| WireGuard strežnik | wg | 51820 (udp) | Da | PiVPN, uporablja lasten NAT/masquerade |
+| wg-portal vmesnik | wg | 8888 (tcp) | Ne | Lokalni portalni vmesnik (samo interno) |
+| Prometheus | snmp | 9090 (tcp) | Ne | Uporabniški vmesnik/storitev Prometheusa |
+| `snmp_exporter` | snmp | 9116 (tcp) | Ne | Končna točka exporterja za Prometheus |
+| Grafana | snmp | 3000 (tcp) | Ne | Uporabniški vmesnik Grafane za nadzorne plošče |
+| AD storitve (DNS/Kerberos/LDAP/itd.) | AD | 53, 88, 389, 3268, 135, 123, 445, 464, 49152-65535 | Ne | Storitve Active Directory (samo interno) |
+
+# VyOS
+
+## Osnovne informacije
 
 - **Ime naprave:** startup11-vyos
 
 - **Domena:** startup11.local
 
-- **Uporabnik:** vyos (prijava prek SSH ključa)
+- **Uporabnik:** vyos
 
-# Omrežni vmesniki
+- **Prijava možna izključno preko SSH ključa!!!**
+
+## Omrežni vmesniki
 
 | **Vmesnik** | **Opis**       | **IPv4**         | **IPv6**                |
 |:------------|:---------------|:-----------------|:------------------------|
@@ -20,110 +136,126 @@ title: Dokumentacija VyOS usmerjevalnika - startup11
 | eth2        | interna LAN    | 10.11.0.1/24     | 2001:1470:fffd:aa::1/64 |
 | eth3        | IPv6-only      | \-               | fd11:11:11::1/64        |
 
-# Privzete usmeritve (statične usmeritve)
+## Privzete usmeritve (statične usmeritve)
 
 | **Destinacija** | **Naslednji hop**    |
 |:----------------|:---------------------|
 | 0.0.0.0/0       | 88.200.24.129        |
 | ::/0            | 2001:1470:fffd:a8::1 |
 
-# NAT (IPv4)
+## Oglasi usmerjevalnika (RA)
 
-| **Vrsta** | **Viri / kriterij** | **Prevod / opomba** |
-|:---|:---|:---|
-| Izvorni NAT (SNAT) | 10.11.0.0/24, izhodni vmesnik eth0 | maskiranje (masquerade) |
-| Izvorni NAT (SNAT) | 192.168.11.0/24, izhodni vmesnik eth0 | maskiranje (masquerade) |
+RA (oglasi usmerjevalnika) po vmesnikih in stanju SLAAC:
 
-# DMZ strežniki (vsi v omrežju 192.168.11.0/24)
-
-## Pregled strežnikov
-
-| **Ime strežnika** | **IP naslov** | **MAC naslov** | **Namen** |
+| **Vmesnik** | **Oglaševana predpona** | **RA zastavice** | **SLAAC omogočen?** |
 |:---|:---|:---|:---|
-| raft1 | 192.168.11.101 | 00:0c:29:15:42:6f | Raft (cluster node) |
-| raft2 | 192.168.11.102 | 00:0c:29:2b:64:27 | Raft (cluster node) |
-| raft3 | 192.168.11.103 | 00:0c:29:a2:5c:63 | Raft (cluster node) |
-| rest | 192.168.11.104 | 00:0c:29:17:1a:72 | REST API / ostali servisi |
-| dns-srv | 192.168.11.105 | 00:0c:29:4a:b1:99 | DNS strežnik (lokalni) |
-| wireguard | 192.168.11.106 | 00:0c:29:c4:d1:52 | WireGuard VPN končna točka |
-| snmp | 192.168.11.107 | 00:0c:29:69:75:09 | SNMP / monitoring cilj |
-| AD (dmz windows 1) | 192.168.11.201 | 00:0c:29:07:cf:1c | Active Directory (Domain Controller) |
+| eth1 (DMZ) | 2001:1470:fffd:a9::/64 | managed, no-autonomous | Ne (prednost ima DHCPv6) |
+| eth2 (INTERNAL) | 2001:1470:fffd:aa::/64 | autonomous | Da (SLAAC) |
+| eth3 (IPV6ONLY) | fd11:11:11::/64 | managed, no-autonomous | Ne (prednost ima DHCPv6) |
 
-## DHCP - statične mape
+Opombe: - Za IPv4 uporabljamo DHCP s statičnimi DHCPv4 mape za strežnike in pomembne gostitelje (ujemanje po MAC naslovu). - Za IPv6 je na INTERNAL omogočen SLAAC; IPV6ONLY uporablja DHCPv6, odjemalci pa naslove pridobijo prek DHCPv6, razen če je oglašen avtonomen predpon. Statične DHCPv6 mape uporabljamo samo za gostitelje, ki potrebujejo stalni, administrativno dodeljen naslov (strežniki, krmilniki). - Če vmesnik oglašuje tako `managed` kot `no-autonomous`, je SLAAC dejansko onemogočen in gostitelji morajo naslov pridobiti prek DHCPv6.
 
-Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj.
+## NTP
 
-| **Ime**            | **MAC naslov**    | **IP naslov**  |
-|:-------------------|:------------------|:---------------|
-| raft1              | 00:0c:29:15:42:6f | 192.168.11.101 |
-| raft2              | 00:0c:29:2b:64:27 | 192.168.11.102 |
-| raft3              | 00:0c:29:a2:5c:63 | 192.168.11.103 |
-| rest               | 00:0c:29:17:1a:72 | 192.168.11.104 |
-| dns-srv            | 00:0c:29:4a:b1:99 | 192.168.11.105 |
-| wireguard          | 00:0c:29:c4:d1:52 | 192.168.11.106 |
-| AD (dmz windows 1) | 00:0c:29:07:cf:1c | 192.168.11.201 |
-| snmp               | 00:0c:29:69:75:09 | 192.168.11.107 |
+NTP sinhronizacija uporablja naslednje strežnike:
 
-# NAT in preusmeritve vrat
+| **NTP strežnik** |
+|:-----------------|
+| ntp.arnes.si     |
+| time1.vyos.net   |
+| time2.vyos.net   |
+| time3.vyos.net   |
 
-## IPv4 DNAT (port forwarding)
+## Upravljanje s konfiguracijami
 
-- **Pravila:** zunanja vmesnik `eth0`, UDP port `51820` preusmerjen na `192.168.11.106` (WireGuard).
+### Shranjevanje celotne konfiguracije
 
-| **Tip** | **Kriterij** | **Cilj / opomba** |
-|:---|:---|:---|
-| DNAT (preusmeritev vrat) | vhod: eth0, proto UDP, dst port 51820 | 192.168.11.106 (WireGuard) |
-| SNAT / maskiranje | 10.11.0.0/24 -\> izhod eth0 | maskiranje (masquerade) |
-| SNAT / maskiranje | 192.168.11.0/24 -\> izhod eth0 | maskiranje (masquerade) |
-| NAT66 | fd11:11:11::/64 -\> izhod eth0 | 2001:1470:fffd:ab::/64 |
+Če želite shraniti celotno trenutno konfiguracijo uporabite:
 
-## IPv4 source NAT (masquerade)
+    configure
+    save v6.conf
+    exit
 
-Masquerade je nastavljen za notranji in DMZ promet, ki gre preko javnega vmesnika `eth0`.
+### Nalaganje celotne konfiguracije
 
-    # 10.11.0.0/24 -> eth0 (masquerade)
-    set nat source rule 100 outbound-interface name 'eth0'
-    set nat source rule 100 source address '10.11.0.0/24'
-    set nat source rule 100 translation address 'masquerade'
+Če želite naložiti celotno konfiguracijo iz datoteke (npr. `v6.conf`), uporabite:
 
-    # 192.168.11.0/24 -> eth0 (masquerade)
-    set nat source rule 110 outbound-interface name 'eth0'
-    set nat source rule 110 source address '192.168.11.0/24'
-    set nat source rule 110 translation address 'masquerade'
+    configure
+    load v6.conf
+    commit
+    save
+    exit
 
-## NAT66 (NPTv6, IPv6-to-IPv6 Network Prefix Translation - RFC 6296)
+### Shranjevanje seznama ukazov
 
-Prevod naslovov: `fd11:11:11::/64` se prevaja na `2001:1470:fffd:ab::/64` za promet, ki izhaja prek `eth0`.
+Če želite shraniti konfiguracijo v ukaznem formatu:
 
-# Varnost (firewall)
+    show configuration commands > v6.commands
 
-## IPv4 - vhodni promet (input)
+### Apliciranje seznama ukazov
 
-- Pravilo za ohranjanje stanj: dovoli `established` in `related` povezave.
+Če želite aplicirati seznam ukazov iz datoteke (npr. `v6.commands`), uporabite:
 
-- Pravilo za SSH: na javnem vmesniku `eth0` je dovoljeno TCP dst port `22` za novo povezavo.
+    configure
+    source v6.commands
+    commit
+    save
+    exit
 
-| **IP verzija** | **Veriga** | **Ključno pravilo / opis** |
-|:---|:---|:---|
-| IPv4 | INPUT | Dovoli vzpostavljene in sorodne povezave (established, related). |
-| IPv4 | INPUT | Dovoli nove TCP povezave na port 22 na vmesniku eth0 (SSH). |
-| IPv4 | FORWARD | Dovoli nove UDP povezave iz eth0 proti 192.168.11.106:51820 (WireGuard). |
-| IPv6 | INPUT | Dovoli vzpostavljene in sorodne povezave; dovoli nove TCP povezave na port 22 na eth0. |
-| IPv6 | FORWARD | Dovoli nove UDP povezave na port 51820 na vhodnem vmesniku eth0 (WireGuard). |
+**OPOMBA:** niso vsi ukazi idempotentni! Za nekatere ukaze set v resnici pomeni add... npr če bi na ta način aplicirali celoten config, boste gotovo dobili podvojene omrežne vmesnike ali kakšne napake. Zato je boljše to uporabljati kot način da aplicirate neki blok novih ukazov, ne spreminjati obstoječo konfiguracijo.
 
-## IPv4 - forward (posredovanje)
+# DNS
 
-- Pravilo za WireGuard: dovoli novo UDP povezavo iz `eth0` proti `192.168.11.106:51820` s prehodi na `eth1`.
+DNS resolver je nameščen neposredno na VyOS in se odjemalcem oglašuje prek DHCP kot privzeti notranji resolver. Notranji odjemalci zato najprej uporabljajo VyOS DNS, zunanje poizvedbe pa se iz VyOS posredujejo proti upstream resolverjem.
 
-- Pravila 210-241 eksplicitno dovolijo dostop iz `eth2` do AD DNS/DC na `192.168.11.201` (DNS, Kerberos, LDAP, Global Catalog, SMB/RPC, dynamic RPC).
+## Upstream DNS strežniki
 
-## IPv6 - vhodni promet in posredovanje
+VyOS za neskupne domene posreduje poizvedbe na javne upstream strežnike.
 
-IPv6 ima podobna vhodna pravila (dovoli `established/related` in SSH na `eth0`), forward pravilo za WireGuard (UDP port 51820 na vhodnem vmesniku `eth0`) in pravila 210-241 za dostop do AD strežnika na `2001:1470:fffd:a9::185`.
+| **Ponudnik** | **IPv4**   | **IPv6**             |
+|:-------------|:-----------|:---------------------|
+| **Ponudnik** | **IPv4**   | **IPv6**             |
+| ARNES        | 193.2.1.66 | 2001:1470:8000::66   |
+| Cloudflare   | 1.1.1.1    | 2606:4700:4700::1111 |
 
-# Storitve
+VyOS posluša DNS na naslovih `10.11.0.1`, `192.168.11.1`, `2001:1470:fffd:aa::1`, `2001:1470:fffd:a9::1` in `fd11:11:11::1`. Poizvedbe so sprejete le iz naslednjih omrežij: `10.11.0.0/24`, `192.168.11.0/24`, `2001:1470:fffd:aa::/64`, `2001:1470:fffd:a9::/64` in `fd11:11:11::/64`.
 
-## DHCP (IPv4)
+## Split DNS
+
+Split DNS je nastavljen tako, da se poizvedbe za `startup11.local` ne pošiljajo na javne resolverje, ampak na notranji AD DNS strežnik. To pomeni:
+
+- VyOS za domeno `startup11.local` uporablja conditional forward na AD DNS `192.168.11.201` oziroma `2001:1470:fffd:a9::201`;
+
+- AD DNS ostane avtoritativni vir za notranje zapise, predvsem za SRV zapise, ki so potrebni pri prijavi v domeno;
+
+- vse ostale poizvedbe grejo prek upstream strežnikov iz prejšnje tabele;
+
+- stari Linux DNS strežnik na `192.168.11.105` trenutno ni v uporabi; lokalne DNS zahteve zato gredo neposredno na notranji AD DNS server.
+
+## AD DNS zapisi
+
+AD privzeto generira DNS zapise potrebne za njegovo delovanje, spodnja tabela pa prikazuje ročno dodane lokalne DNS zapise:
+
+| **Hostname** | **A zapis** | **AAAA zapis** | **Opombe** |
+|:---|:---|:---|:---|
+| **Hostname** | **A zapis** | **AAAA zapis** | **Opombe** |
+| raft1 | 192.168.11.101 | 2001:1470:fffd:a9::101 | raft vozlišče |
+| raft2 | 192.168.11.102 | 2001:1470:fffd:a9::102 | raft vozlišče |
+| raft3 | 192.168.11.103 | 2001:1470:fffd:a9::103 | raft vozlišče |
+| rest | 192.168.11.104 | 2001:1470:fffd:a9::104 | REST / web storitev |
+| dns | 192.168.11.105 | \- | stari DNS zapis za Linux, trenutno ni v uporabi |
+| wg | 192.168.11.106 | 2001:1470:fffd:a9::106 | WireGuard gostitelj |
+| snmp | 192.168.11.107 | 2001:1470:fffd:a9::107 | monitoring gostitelj |
+| wg2 | 192.168.11.108 | 2001:1470:fffd:a9::108 | nov WireGuard gostitelj |
+| ad | 192.168.11.201 | 2001:1470:fffd:a9::201 | dodatno ime AD strežnika |
+
+## Opomba o upravljanju DNS
+
+Ukazi za administracijo AD DNS strežnika so zbrani v ločeni datoteki `ad-dns-upravljanje.md`.
+
+# DHCP
+
+## DHCPv4
 
 DHCP server ima dve skupini: **SERVERS** (192.168.11.0/24) z navedenimi statičnimi mapami in **USERS** (10.11.0.0/24) za uporabniške naprave z avtomatskim razponom.
 
@@ -132,345 +264,337 @@ DHCP server ima dve skupini: **SERVERS** (192.168.11.0/24) z navedenimi statičn
 | SERVERS     | 192.168.11.0/24 (statične mape)                |
 | USERS       | 10.11.0.0/24 (dinamični range 10.11.0.100-200) |
 
+## DHCPv4 - statične mape
+
+Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP naslove s MAC naslovi, kot je prikazano spodaj. Konvencija je da je zadnja številka v naslovu 1XX za linux in 2XX za windows strežnike.
+
+| **Ime**           | **MAC naslov**    | **IP naslov**  |
+|:------------------|:------------------|:---------------|
+| raft1             | 00:0c:29:15:42:6f | 192.168.11.101 |
+| raft2             | 00:0c:29:2b:64:27 | 192.168.11.102 |
+| raft3             | 00:0c:29:a2:5c:63 | 192.168.11.103 |
+| rest              | 00:0c:29:17:1a:72 | 192.168.11.104 |
+| dns               | 00:0c:29:4a:b1:99 | 192.168.11.105 |
+| wg                | 00:0c:29:c4:d1:52 | 192.168.11.106 |
+| snmp              | 00:0c:29:69:75:09 | 192.168.11.107 |
+| wg2               | 00:0c:29:f9:2a:a8 | 192.168.11.108 |
+| ad                | 00:0c:29:07:cf:1c | 192.168.11.201 |
+| internal-linux-01 | 00:0c:29:aa:aa:01 | 10.11.0.101    |
+| internal-win-01   | 00:0c:29:bb:bb:01 | 10.11.0.201    |
+
 ## DHCPv6
 
-DHCPv6 podeljuje naslove v subnetu `2001:1470:fffd:a9::/64` z range `::100` - `::1ff`. Ime strežnika za DHCPv6 je `2001:1470:fffd:a9::1`.
+Uporaba DHCPv6 in SLAAC:
 
-## DNS (posredovanje in split DNS)
+- DMZ: DHCPv6 uporabljamo za strežnike (razpon `2001:1470:fffd:a9::100`–`::1ff`), za pomembne gostitelje pa so nastavljene statične DHCPv6 mape.
 
-DNS posredovanje na VyOS sprejema poizvedbe iz notranjih omrežij in uporablja conditional forward za AD domeno.
+- INTERNAL: SLAAC je privzeta izbira za odjemalce na `2001:1470:fffd:aa::/64`; statične DHCPv6 mape uporabljamo le za strežnike, ki potrebujejo fiksni IPv6 naslov.
 
-**Ključna split-DNS logika:**
+- IPV6ONLY: za `fd11:11:11::/64` uporabljamo DHCPv6; gostitelji naslove pridobijo prek DHCPv6, statične mape pa dodamo le tam, kjer je to potrebno.
 
-- poizvedbe za `startup11.local` se na VyOS preusmerijo na AD DNS `192.168.11.201`;
+#### Statične DHCPv6 mape
 
-- vse ostale poizvedbe gredo na javne upstream DNS strežnike (ARNES + Cloudflare).
+Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporabljajo v konfiguraciji VyOS. Spet je konvencija da je zadnja številka v naslovu 1XX za linux in 2XX za windows naprave.
 
-**AD DNS server (authoritative):** `192.168.11.201` / `2001:1470:fffd:a9::185`
+| **Gostitelj** | **DHCPv6 naslov** | **DUID / identifikator** |
+|:---|:---|:---|
+| dmz-windows-AD | 2001:1470:fffd:a9::201 | 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 |
+| raft1 | 2001:1470:fffd:a9::101 | 00:02:00:00:ab:11:2b:e2:d4:90:70:f3:b3:37 |
+| raft2 | 2001:1470:fffd:a9::102 | 00:02:00:00:ab:11:e1:94:d4:8a:18:52:ad:98 |
+| raft3 | 2001:1470:fffd:a9::103 | 00:02:00:00:ab:11:92:37:c8:9a:00:b8:67:77 |
+| rest | 2001:1470:fffd:a9::104 | 00:02:00:00:ab:11:5a:9d:49:65:ce:4a:b2:48 |
+| snmp | 2001:1470:fffd:a9::107 | 00:02:00:00:ab:11:b8:b7:97:e3:eb:3c:a5:52 |
+| wg | 2001:1470:fffd:a9::106 | 00:02:00:00:ab:11:80:f9:48:e8:e6:e2:12:59 |
+| wg2 | 2001:1470:fffd:a9::108 | 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 |
+| ipv6only-linux | fd11:11:11::101 | 00:04:db:bb:16:07:aa:ea:2b:a4:bb:02:58:b1:00:55:16:8b |
+| ipv6only-windows | fd11:11:11::201 | 00:01:00:01:31:8e:75:9d:00:0c:29:05:57:f5 |
 
-### Trenutno stanje AD DNS
+<div class="landscape">
 
-Trenutna AD zona `startup11.local` vsebuje ključne notranje zapise za domeno, DC in DMZ strežnike:
+# NAT in preusmeritve vrat
 
-- korenski zapis `@` vsebuje A zapis `192.168.11.201` in AAAA zapis `2001:1470:fffd:a9::185`;
+#### Namen
 
-- NS in SOA na vrhu cone kažeta na `win-sgi52j8519e.startup11.local.`;
+NAT je uporabljen za tri stvari: DNAT za izbrane javne IPv4 storitve, SNAT/masquerade za odhodni promet in NAT66 (NPTv6) za IPv6-only segment. Za IPv6 javne storitve uporabljamo izključno firewall pravila, ne pa port forwarding. Hairpin pravila omogočajo dostop do javnih storitev tudi iz notranjega in DMZ omrežja.
 
-- standardni AD SRV zapisi so prisotni za `_gc._tcp`, `_kerberos._tcp`, `_kerberos._udp`, `_ldap._tcp` in `_kpasswd._tcp` ter ustrezne `Default-First-Site-Name` in `ForestDnsZones` / `DomainDnsZones` podcone;
+## Opombe in primeri
 
-- glavni DC gostitelj `win-sgi52j8519e` ima A zapis `192.168.11.201` in AAAA zapis `2001:1470:fffd:a9::185`;
+- DNAT velja samo za izbrane porte in ciljne gostitelje.
 
-- dodatna notranja zapisa sta `rest.startup11.local` `192.168.11.104` in `snmp.startup11.local` `192.168.11.107`.
+- Hairpin DNAT/SNAT je omejen na storitve, ki jih je treba doseči prek javnega WAN naslova tudi iz notranjega omrežja.
 
-**Forwarderji na AD DNS:**
+- SNAT/masquerade se uporablja samo za odhodni promet prek `eth0`.
 
-- IPv4: `193.2.1.66`, `1.1.1.1`
+## IPv4 – DNAT
 
-- IPv6: `2001:1470:8000::66`, `2606:4700:4700::1111`
+| **Pravilo** | **Opis** | **In** | **Destination** | **Port** | **Proto/Notes** | **Prevod / cilj** |
+|:---|:---|:---|:---|:---|:---|:---|
+| **Pravilo** | **Opis** | **In** | **Destination** | **Port** | **Proto/Notes** | **Prevod / cilj** |
+| 110 | wan-to-wg0-51820-dnat | eth0 |  | 51820 | udp | 192.168.11.106:51820 (WireGuard) |
+| 130 | wan-to-scriptum-8080-dnat | eth0 |  | 8080 | tcp | 192.168.11.104:8080 (scriptum) |
+| 135 | wan-to-scriptum-4443-dnat | eth0 |  | 4443 | tcp | 192.168.11.104:4443 (scriptum TLS) |
+| 140 | wan-to-library-https-3443-dnat | eth0 |  | 3443 | tcp | 192.168.11.104:3443 (library HTTPS) |
+| 210 | hairpin-internal-to-public-services-dnat | eth2 | 88.200.24.241 | 8080 | tcp | 192.168.11.104:8080 |
+| 211 | hairpin-dmz-to-public-services-dnat | eth1 | 88.200.24.241 | 4443, 3443 | tcp | 192.168.11.104:4443,3443 |
 
-**Dovoljena omrežja za VyOS DNS forwarding:** 10.11.0.0/24, 192.168.11.0/24, 2001:1470:fffd:aa::/64, 2001:1470:fffd:a9::/64, fd11:11:11::/64.
+Za IPv6 javne storitve ni predviden DNAT; dostop je urejen z vhodnimi in forward firewall pravili.
 
-**Upstream DNS strežniki:**
+## IPv4 – SNAT
 
-| **Ponudnik** | **IPv4**   | **IPv6**             |
-|:-------------|:-----------|:---------------------|
-| ARNES        | 193.2.1.66 | 2001:1470:8000::66   |
-| Cloudflare   | 1.1.1.1    | 2606:4700:4700::1111 |
-
-### Split DNS (dnsmasq)
-
-Strežnik `dns-srv` (192.168.11.105) z **dnsmasq** je opcijski notranji resolver. Trenutna pravilna konfiguracija uporablja `server=/.../` in ne `address=/.../` za AD domeno, da se ohranijo SRV zapisi za AD prijavo.
-
-**Trenutna konfiguracija:**
-
-- dnsmasq posluša na: `192.168.11.105:53` (DMZ naslov)
-
-- `startup11.local` se posreduje na AD DNS: `192.168.11.201` in `2001:1470:fffd:a9::185`
-
-- Konfiguracija: `/etc/dnsmasq.d/startup11.conf`
-
-**Pomembno za AD prijavo:** notranji odjemalci morajo za `startup11.local` dobiti SRV zapise iz AD DNS, ne samo A/AAAA zapisov. Zato je v VyOS nastavljen:
-
-    set service dns forwarding domain startup11.local name-server 192.168.11.201
-    set service dns forwarding domain startup11.local recursion-desired
-
-**Sprememba konfiguracije:**
-
-    # Edit configuration file
-    sudo nano /etc/dnsmasq.d/startup11.conf
-
-    # Test configuration
-    sudo dnsmasq --test
-
-    # Restart service
-    sudo systemctl restart dnsmasq
-
-    # Check service status
-    sudo systemctl status dnsmasq
-
-    # Check listening on port 53
-    ss -ltnup '( sport = :53 )'
-
-    # Test DNS response
-    dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
-    dig +short example.com @192.168.11.105
-
-### dnsmasq - aktivna konfiguracija in ponovna postavitev
-
-Spodaj je preverjena konfiguracija, ki trenutno teče na `192.168.11.105:53`.
-
-    # /etc/dnsmasq.d/startup11.conf
-    # Bind only to the DMZ address to avoid conflicts with systemd-resolved on localhost
-    listen-address=192.168.11.105
-    bind-interfaces
-
-    # Forward AD domain to AD DNS (preserves SRV records)
-    server=/startup11.local/192.168.11.201
-    server=/startup11.local/2001:1470:fffd:a9::185
-
-    # Upstream resolvers for non-local domains
-    server=1.1.1.1
-    server=193.2.1.66
-    server=2001:1470:8000::66
-    server=2606:4700:4700::1111
-
-Koraki za ponovno postavitev:
-
-1.  Namesti pakete.
-
-        sudo apt update
-        sudo apt install -y dnsmasq dnsutils
-
-2.  Ustvari konfiguracijsko datoteko.
-
-        sudo tee /etc/dnsmasq.d/startup11.conf > /dev/null << 'EOF'
-        # (vsebina kot zgoraj)
-        EOF
-
-3.  Preveri sintakso in ponovno zaženi storitev.
-
-        sudo dnsmasq --test
-        sudo systemctl restart dnsmasq
-        sudo systemctl enable dnsmasq
-
-4.  Preveri delovanje.
-
-        ss -ltnup '( sport = :53 )'
-        dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.105 SRV
-        dig +short example.com @192.168.11.105
-
-### mDNS in systemd-resolved: rešitev za .local
-
-Na nekaterih Ubuntu gostiteljih storitev `systemd-resolved` obravnava domeno `.local` kot mDNS (Avahi). Posledično lahko DNS poizvedbe za `startup11.local` prejmejo odgovor `REFUSED` ali pa jih sistem poskuša obdelati z mDNS namesto prek omrežnega DNS resolverja.
-
-Na gostitelju, kjer teče `wg-portal`, smo uporabili preprost popravek: za vmesnik smo nastavili routing domain in onemogočili mDNS, tako da se poizvedbe za `startup11.local` pošljejo na DHCP-provided resolver (192.168.11.1) in dosežejo AD DNS.
-
-    # Nastavi routing domain (tilde pomeni routing domain)
-    sudo resolvectl domain ens160 ~startup11.local
-
-    # Onemogoci mdns na vmesniku
-    sudo resolvectl mdns ens160 no
-
-    # Pocisti predpomnilnik, ce je potrebno
-    sudo resolvectl flush-caches
-
-    # Preizkus
-    resolvectl query startup11.local
-    dig +short _ldap._tcp.dc._msdcs.startup11.local @192.168.11.1 SRV
-
-Ta rešitev ohranja mDNS obnašanje za druge gostitelje, hkrati pa zagotavlja, da poizvedbe za `startup11.local` dosežejo avtoritativni AD DNS.
-
-## wg-portal (WireGuard portal) in integracija z Active Directory
-
-**Kaj je wg-portal:** `wg-portal` je spletna aplikacija za upravljanje WireGuard konfiguracij, dovoljenj in omogočanje samopostrežnega ustvarjanja peer konfiguracij za uporabnike.
-
-**Kje teče:** Aplikacija je dosegljiva na `http://192.168.11.106:8888`. Lokacije ostalih storitev so navedene v razdelku "DMZ strežniki" zgoraj.
-
-**Kako se poveže z AD:**
-
-- Aplikacija uporablja LDAP bind račun za poizvedbe uporabnikov in preverjanje članstev v skupinah.
-
-- Avtentikacija poteka z bindanjem (bind) in iskanjem vnosa, ki ustreza `sAMAccountName` ali `userPrincipalName`.
-
-- Atribute AD lahko preslikamo, npr. uporabimo `userPrincipalName` kot `email`, kadar je `mail` prazen.
-
-- Administratorske pravice se določijo preko članstva v AD skupini (npr. `Domain Admins`).
-
-Pri namestitvi smo se v veliki meri držali vodnika: https://medium.com/@seeneeru/complete-guide-installing-and-configuring-wireguard-portal-on-linux-d23261027520 z nekaj lokalnimi modifikacijami prilagoditvami za naš okolje. Konfiguracija, ki smo jo uporabili v tem repozitoriju, je na voljo v datoteki `wgportal.yaml`.
-
-**Opombe:**
-
-- Privzeta podatkovna shramba aplikacije je SQLite (`data/sqlite.db`). Če aplikacija poroča o napaki `unable to open database file`, preverite, da mapa `data` obstaja in ima pravilne pravice/lastništvo (npr. `/opt/wg-portal/data`).
-
-- Primer ukazov za ustvarjanje bind uporabnika v AD (PowerShell):
-
-<!-- -->
-
-    # Ustvari servisnega uporabnika (prilagodi geslo varno)
-    New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) -Enabled $true
-
-    # Po potrebi dodaj uporabnike v administratorsko skupino
-    Add-ADGroupMember -Identity "Domain Admins" -Members "zanadmin","pavlogal"
-
-**Preizkusi in dnevniški pregledi:**
-
-- Testirajte LDAP poizvedbe z orodjem `ldapsearch` kjer je na voljo.
-
-- Preverjajte dnevniške datoteke aplikacije za napake pri bindanju ali iskanju uporabnika.
-
-- Če uporabniki ne vidijo konfiguracij, preverite, da so vklopljene nastavitve `create_default_peer_on_login` in `self_provisioning_allowed`.
-
-**Opomba:** Po vsaki spremembi preveri sintakso in ponovno zaženi storitev, da se spremembe uveljavijo.
-
-## NTP
-
-## SNMP in monitoring
-
-SNMP je omogočen na VyOS in služi kot vir metrike za orodja za monitoring (Prometheus + Grafana).
-
-**VyOS konfiguracija (primer iz v4.commands):**
-
-    set service snmp community startup11 authorization 'ro'
-    set service snmp contact 'pd43760@student.uni-lj.si'
-    set service snmp listen-address 192.168.11.1
-    set service snmp location 'FRI'
-
-**Kako pobrati metrike (pregledno):**
-
-- Preveri dostop z: `snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0`
-
-- Pri uspehu bo vrnil `sysUpTime` in podobne OID vrednosti.
-
-**Monitoring stack (kratka navodila)**
-
-- Uporabi `snmp_exporter` (port 9116), `prometheus` in `grafana` (npr. Docker Compose stack).
-
-- Priporočen potek: pripravite `generator.yml` s modulom `vyos` (walk: ifTable, ifXTable, sysUpTime), zaženite generator in pridobite `snmp.yml`.
-
-- Preizkus exporterja (primer):
-
-      curl "http://<snmp_exporter>:9116/snmp?module=vyos&target=192.168.11.1"
-
-- Primer Prometheus scrape job (poenostavljeno):
-
-      scrape_configs:
-        - job_name: 'snmp'
-          static_configs:
-            - targets: ['192.168.11.1']
-          metrics_path: /snmp
-          params:
-            module: [vyos]
-            auth: [vyos_auth]
-          relabel_configs: ...
-
-**Hitri nasveti:**
-
-- Namestite MIB datoteke, če generator potrebuje lokalne MIB‑e (paket `snmp-mibs-downloader`).
-
-- Če exporter vrne napako `Unknown auth`, preverite, da so v `snmp.yml` in Prometheus parametri usklajeni (auth ime in modul).
-
-Konfigurirani NTP strežniki so:
-
-- ntp.arnes.si
-
-- time1.vyos.net
-
-- time2.vyos.net
-
-- time3.vyos.net
-
-## Router Advertisements (RA)
-
-RA so omogočeni na:
-
-- `eth1`: prefix `2001:1470:fffd:a9::/64` (managed flag, no-autonomous)
-
-- `eth2`: prefix `2001:1470:fffd:aa::/64`
-
-- `eth3`: prefix `fd11:11:11::/64`, name-server `fd11:11:11::1`
-
-## SSH
-
-SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Če želite začasno omogočiti prijavo z geslom, uredite datoteko `/etc/ssh/sshd_config.d/50-cloud-init.conf` in nastavite `PasswordAuthentication yes`, nato ponovno zaženite `sshd`.
-
-# Sistem
-
-## Uporabniki in ključi
-
-Glavni lokalni uporabnik na napravi je `vyos`. V konfiguraciji so vpisani javni ključi za uporabnika `vyos`:
-
-- **pavle**: `AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h`
-
-- **zanzan**: `AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL`
-
-Za začasno ponovno omogočanje SSH gesel: uredite `/etc/ssh/sshd_config.d/50-cloud-init.conf` in nastavite `PasswordAuthentication yes`.
-
-## Uporabniška imena
-
-Uporabniki na dmz virtualkag so vsi poimenovani `zanzan0X`, kjer je X številka virtualke. Na klientih TODO.
-
-## Splošno geslo
-
-<div class="center">
+| **Pravilo** | **Opis** | **Out** | **Source** | **Proto/Notes** | **Prevod / opomba** |
+|:---|:---|:---|:---|:---|:---|
+| **Pravilo** | **Opis** | **Out** | **Source** | **Proto/Notes** | **Prevod / opomba** |
+| 100 | snat-internal-to-internet | eth0 | 10.11.0.0/24 | masquerade | internet egress |
+| 110 | snat-dmz-to-internet | eth0 | 192.168.11.0/24 | masquerade | internet egress |
+| 120 | hairpin-internal-to-public-snat | eth1 | 10.11.0.0/24, dst 192.168.11.104 | tcp | 192.168.11.1 (return path) |
+| 121 | hairpin-dmz-to-public-snat | eth1 | 192.168.11.0/24, dst 192.168.11.104 | tcp | 192.168.11.1 (return path) |
+
+## IPv6 – NAT66
+
+| **Pravilo** | **Out** | **Source** | **Proto/Notes** | **Prevod / cilj** |
+|:---|:---|:---|:---|:---|
+| **Pravilo** | **Out** | **Source** | **Proto/Notes** | **Prevod / cilj** |
+| 10 | eth0 | fd11:11:11::/64 | ipv6 | translation prefix 2001:1470:fffd:ab::/64 (NPTv6) |
+
+# Firewall
+
+## Kratek povzetek
+
+- **Model:** privzeto-zavrni (default-deny) — vse povezave niso dovoljene, razen izrecno dovoljenih.
+
+- **Kaj je dovoljeno:** odjemalci v notranji mreži (INTERNAL) in DMZ lahko dostopajo do interneta; iz interne in DMZ mreže so izrecno dovoljeni dostopi do DMZ storitev (DNS, web, monitoring, AD), WireGuard gostom so dovoljeni upravljalni dostopi; ICMP/ICMPv6 za diagnostične potrebe je omejeno, a omogočeno tam, kjer je potrebno.
+
+- **Kaj je blokirano:** naključni vhodni promet z interneta je privzeto zavrnjen, medsegmentni dostopi so blokirani, razen če obstaja specifično pravilo (npr. upravljanje, AD, monitoring).
+
+- **Hairpin NAT:** notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT za izbrane storitve.
+
+- **IPv6:** obstaja vzporedna zbirka pravil za IPv6; javne storitve na WAN so odprte z forward pravili do DMZ gostiteljev, za IPv6-only odjemalce pa so posebej omogočena pravila in NAT66 (NPTv6) za izhod v internet.
+
+Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘. Tabela uporablja `longtable` za lep izpis večstranskih tabel.
+
+## IPv4 – Forward
+
+### IPv4 – Forward (1–99)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 1 | accept | stateful-return |  |  |  |  |  | state established,related |
+| 50 | accept | internal-to-internet | eth2 | eth0 | 10.11.0.0/24 |  |  | all protocols |
+| 51 | accept | dmz-to-internet | eth1 | eth0 | 192.168.11.0/24 |  |  | all protocols |
+| 52 | accept | internal-to-dmz-icmp | eth2 | eth1 |  |  |  | ICMP |
+| 53 | accept | dmz-to-internal-icmp | eth1 | eth2 |  |  |  | ICMP |
+
+### IPv4 – Forward (100–199)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 110 | accept | wan-to-wg0-51820 | eth0 | eth1 |  | 192.168.11.106 | 51820 | udp |
+| 130 | accept | wan-to-scriptum-8080 | eth0 | eth1 |  | 192.168.11.104 | 8080 | tcp |
+| 135 | accept | wan-to-scriptum-4443 | eth0 | eth1 |  | 192.168.11.104 | 4443 | tcp |
+| 140 | accept | wan-to-library-https-3443 | eth0 | eth1 |  | 192.168.11.104 | 3443 | tcp |
+
+### IPv4 – Forward (200–299)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 210 | accept | internal-to-dmz-dns-udp53 | eth2 | eth1 |  | 192.168.11.105 | 53 | udp |
+| 211 | accept | internal-to-dmz-dns-tcp53 | eth2 | eth1 |  | 192.168.11.105 | 53 | tcp |
+| 220 | accept | internal-to-wg-portal-8888 | eth2 | eth1 |  | 192.168.11.106 | 8888 | tcp |
+| 230 | accept | internal-to-scriptum-8080 | eth2 | eth1 |  | 192.168.11.104 | 8080 | tcp |
+| 231 | accept | internal-to-scriptum-4443 | eth2 | eth1 |  | 192.168.11.104 | 4443 | tcp |
+| 240 | accept | internal-to-library-http-3000 | eth2 | eth1 |  | 192.168.11.104 | 3000 | tcp |
+| 241 | accept | internal-to-library-https-3443 | eth2 | eth1 |  | 192.168.11.104 | 3443 | tcp |
+| 242 | accept | internal-to-library-graphql | eth2 | eth1 |  | 192.168.11.104 | 30080, 30443 | tcp |
+| 250 | accept | internal-to-grafana-3000 | eth2 | eth1 |  | 192.168.11.107 | 3000 | tcp |
+| 251 | accept | internal-to-prometheus-9090 | eth2 | eth1 |  | 192.168.11.107 | 9090 | tcp |
+| 252 | accept | internal-to-snmp-exporter-9116 | eth2 | eth1 |  | 192.168.11.107 | 9116 | tcp |
+| 260 | accept | internal-to-ad-dns-udp53 | eth2 | eth1 |  | 192.168.11.201 | 53 | udp |
+| 261 | accept | internal-to-ad-dns-tcp53 | eth2 | eth1 |  | 192.168.11.201 | 53 | tcp |
+| 262 | accept | internal-to-ad-kerberos | eth2 | eth1 |  | 192.168.11.201 | 88 | tcp_udp |
+| 263 | accept | internal-to-ad-ldap | eth2 | eth1 |  | 192.168.11.201 | 389 | tcp_udp |
+| 264 | accept | internal-to-ad-global-catalog | eth2 | eth1 |  | 192.168.11.201 | 3268, 3269 | tcp |
+| 265 | accept | internal-to-ad-smb-rpc-time | eth2 | eth1 |  | 192.168.11.201 | 135, 123, 445, 464 | tcp_udp |
+| 266 | accept | internal-to-ad-dynamic-rpc | eth2 | eth1 |  | 192.168.11.201 | 49152-65535 | tcp |
+
+### IPv4 – Forward (300–399)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 310 | accept | wg-host-to-dmz-mgmt | eth1 | eth1 | 192.168.11.106 | 192.168.11.0/24 | 22, 3389 | tcp |
+| 311 | accept | wg-host-to-internal-mgmt | eth1 | eth2 | 192.168.11.106 | 10.11.0.0/24 | 22, 3389 | tcp |
+| 312 | accept | internal-to-dmz-mgmt | eth2 | eth1 | 10.11.0.0/24 | 192.168.11.0/24 | 22, 3389 | tcp |
+| 315 | accept | dmz-peers-to-scriptum-services | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.104 | 8080, 3000, 3443, 4443, 30080, 30443 | tcp |
+| 316 | accept | dmz-peers-to-dmz-dns | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.105 | 53 | tcp_udp |
+| 317 | accept | dmz-peers-to-wg-portal | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.106 | 8888 | tcp |
+| 318 | accept | dmz-peers-to-monitoring | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.107 | 3000, 9090, 9116 | tcp |
+| 319 | accept | dmz-peers-to-ad-services | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.201 | 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 | tcp_udp |
+| 320 | accept | snmp-exporter-to-vyos-snmp | eth1 | eth1 | 192.168.11.107 | 192.168.11.1 | 161 | udp |
+| 330 | accept | wg-host-to-internal-ssh | eth1 | eth2 | 192.168.11.106 | 10.11.0.0/24 | 22 | tcp |
+
+## IPv4 – Input
+
+| **Rule** | **Action** | **In** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **In** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 1 | accept |  |  |  |  | state established,related |
+| 10 | accept | eth0 |  |  | 22 | tcp |
+| 12 | accept | eth2 |  | 88.200.24.241 | 22 | tcp |
+| 13 | accept | eth1 |  | 88.200.24.241 | 22 | tcp |
+| 20 | accept | eth1 |  |  | 53 | tcp_udp |
+| 21 | accept | eth2 |  |  | 53 | tcp_udp |
+| 30 | accept | eth1 |  |  | 67 | udp |
+| 31 | accept | eth2 |  |  | 67 | udp |
+| 40 | accept | eth1 | 192.168.11.107 |  | 161 | udp |
+| 41 | accept | eth1 |  |  |  | icmp |
+| 42 | accept | eth2 |  |  |  | icmp |
+
+## IPv4 – Output
+
+| **Rule** | **Action** | **Destination** | **Port** | **Proto/Notes**            |
+|:---------|:-----------|:----------------|:---------|:---------------------------|
+| **Rule** | **Action** | **Destination** | **Port** | **Proto/Notes**            |
+| 1        | accept     |                 |          | state established,related  |
+| 10       | accept     |                 |          | state established,related  |
+| 20       | accept     | 192.168.11.201  | 53       | tcp_udp / DNS to AD server |
+
+## IPv6 – Forward
+
+### IPv6 – Forward (1–99)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 1 | accept | stateful-return |  |  |  |  |  | state established,related |
+| 50 | accept | internal6-to-internet | eth2 | eth0 | 2001:1470:fffd:aa::/64 |  |  | all protocols |
+| 51 | accept | dmz6-to-internet | eth1 | eth0 | 2001:1470:fffd:a9::/64 |  |  | all protocols |
+| 52 | accept | ipv6only-to-internet | eth3 | eth0 | fd11:11:11::/64 |  |  | all protocols |
+| 53 | accept | internal6-to-dmz-icmpv6 | eth2 | eth1 |  |  |  | ICMPv6 |
+| 54 | accept | dmz6-to-internal-icmpv6 | eth1 | eth2 |  |  |  | ICMPv6 |
+| 55 | accept | internal6-to-ipv6only-icmpv6 | eth2 | eth3 |  |  |  | ICMPv6 |
+| 56 | accept | ipv6only-to-internal6-icmpv6 | eth3 | eth2 |  |  |  | ICMPv6 |
+| 57 | accept | dmz6-to-ipv6only-icmpv6 | eth1 | eth3 |  |  |  | ICMPv6 |
+| 58 | accept | ipv6only-to-dmz-icmpv6 | eth3 | eth1 |  |  |  | ICMPv6 |
+
+### IPv6 – Forward (100–199)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 110 | accept | wan6-to-wg0-51820 | eth0 | eth1 |  | 2001:1470:fffd:a9::106 | 51820 | udp |
+| 130 | accept | wan6-to-scriptum-8080 | eth0 | eth1 |  | 2001:1470:fffd:a9::104 | 8080 | tcp |
+| 135 | accept | wan6-to-scriptum-4443 | eth0 | eth1 |  | 2001:1470:fffd:a9::104 | 4443 | tcp |
+| 140 | accept | wan6-to-library-https-3443 | eth0 | eth1 |  | 2001:1470:fffd:a9::104 | 3443 | tcp |
+
+### IPv6 – Forward (200–299)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 210 | accept | internal6-to-dmz-dns-udp53 | eth2 | eth1 |  | 2001:1470:fffd:a9::105 | 53 | udp |
+| 211 | accept | internal6-to-dmz-dns-tcp53 | eth2 | eth1 |  | 2001:1470:fffd:a9::105 | 53 | tcp |
+| 220 | accept | internal6-to-wg-portal-8888 | eth2 | eth1 |  | 2001:1470:fffd:a9::106 | 8888 | tcp |
+| 230 | accept | internal6-to-scriptum-8080 | eth2 | eth1 |  | 2001:1470:fffd:a9::104 | 8080 | tcp |
+| 231 | accept | internal6-to-scriptum-4443 | eth2 | eth1 |  | 2001:1470:fffd:a9::104 | 4443 | tcp |
+| 240 | accept | internal6-to-library-http-3000 | eth2 | eth1 |  | 2001:1470:fffd:a9::104 | 3000 | tcp |
+| 241 | accept | internal6-to-library-https-3443 | eth2 | eth1 |  | 2001:1470:fffd:a9::104 | 3443 | tcp |
+| 242 | accept | internal6-to-library-graphql | eth2 | eth1 |  | 2001:1470:fffd:a9::104 | 30080, 30443 | tcp |
+| 250 | accept | internal6-to-grafana-3000 | eth2 | eth1 |  | 2001:1470:fffd:a9::107 | 3000 | tcp |
+| 251 | accept | internal6-to-prometheus-9090 | eth2 | eth1 |  | 2001:1470:fffd:a9::107 | 9090 | tcp |
+| 252 | accept | internal6-to-snmp-exporter-9116 | eth2 | eth1 |  | 2001:1470:fffd:a9::107 | 9116 | tcp |
+| 260 | accept | internal6-to-ad-dns-udp53 | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 53 | udp |
+| 261 | accept | internal6-to-ad-dns-tcp53 | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 53 | tcp |
+| 262 | accept | internal6-to-ad-kerberos | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 88 | tcp_udp |
+| 263 | accept | internal6-to-ad-ldap | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 389 | tcp_udp |
+| 264 | accept | internal6-to-ad-global-catalog | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 3268, 3269 | tcp |
+| 265 | accept | internal6-to-ad-smb-rpc-time | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 135, 123, 445, 464 | tcp_udp |
+| 266 | accept | internal6-to-ad-dynamic-rpc | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 49152-65535 | tcp |
+
+### IPv6 – Forward (300–399)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 310 | accept | wg-host6-to-dmz-mgmt | eth1 | eth1 | 2001:1470:fffd:a9::106 | 2001:1470:fffd:a9::/64 | 22, 3389 | tcp |
+| 311 | accept | wg-host6-to-internal-mgmt | eth1 | eth2 | 2001:1470:fffd:a9::106 | 2001:1470:fffd:aa::/64 | 22, 3389 | tcp |
+| 312 | accept | wg-host6-to-ipv6only-mgmt | eth1 | eth3 | 2001:1470:fffd:a9::106 | fd11:11:11::/64 | 22, 3389 | tcp |
+| 313 | accept | internal6-to-dmz-mgmt | eth2 | eth1 | 2001:1470:fffd:aa::/64 | 2001:1470:fffd:a9::/64 | 22, 3389 | tcp |
+| 314 | accept | ipv6only-to-dmz-mgmt | eth3 | eth1 | fd11:11:11::/64 | 2001:1470:fffd:a9::/64 | 22, 3389 | tcp |
+| 315 | accept | dmz6-peers-to-scriptum-services | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::104 | 8080, 3000, 3443, 4443, 30080, 30443 | tcp |
+| 316 | accept | dmz6-peers-to-dmz-dns | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::105 | 53 | tcp_udp |
+| 317 | accept | dmz6-peers-to-wg-portal | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::106 | 8888 | tcp |
+| 318 | accept | dmz6-peers-to-monitoring | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::107 | 3000, 9090, 9116 | tcp |
+| 319 | accept | dmz6-peers-to-ad-services | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::201 | 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 | tcp_udp |
+| 320 | accept | snmp-exporter6-to-vyos-snmp | eth1 | eth1 | 2001:1470:fffd:a9::107 | 2001:1470:fffd:a9::1 | 161 | udp |
+| 321 | accept | internal6-to-ipv6only-mgmt | eth2 | eth3 | 2001:1470:fffd:aa::/64 | fd11:11:11::/64 | 22, 3389 | tcp |
+| 322 | accept | dmz6-to-ipv6only-mgmt | eth1 | eth3 | 2001:1470:fffd:a9::/64 | fd11:11:11::/64 | 22, 3389 | tcp |
+
+### IPv6 – Forward (400–499)
+
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 410 | accept | ipv6only-to-dmz-dns-udp53 | eth3 | eth1 |  | 2001:1470:fffd:a9::105 | 53 | udp |
+| 411 | accept | ipv6only-to-dmz-dns-tcp53 | eth3 | eth1 |  | 2001:1470:fffd:a9::105 | 53 | tcp |
+| 412 | accept | ipv6only-to-dmz-icmpv6 | eth3 | eth1 |  |  |  | ICMPv6 |
+| 420 | accept | ipv6only-to-wg-portal-8888 | eth3 | eth1 |  | 2001:1470:fffd:a9::106 | 8888 | tcp |
+| 430 | accept | ipv6only-to-scriptum-8080 | eth3 | eth1 |  | 2001:1470:fffd:a9::104 | 8080 | tcp |
+| 440 | accept | ipv6only-to-library-http-3000 | eth3 | eth1 |  | 2001:1470:fffd:a9::104 | 3000 | tcp |
+| 441 | accept | ipv6only-to-library-https-3443 | eth3 | eth1 |  | 2001:1470:fffd:a9::104 | 3443 | tcp |
+| 442 | accept | ipv6only-to-library-graphql | eth3 | eth1 |  | 2001:1470:fffd:a9::104 | 30080, 30443 | tcp |
+| 450 | accept | ipv6only-to-grafana-3000 | eth3 | eth1 |  | 2001:1470:fffd:a9::107 | 3000 | tcp |
+| 451 | accept | ipv6only-to-prometheus-9090 | eth3 | eth1 |  | 2001:1470:fffd:a9::107 | 9090 | tcp |
+| 452 | accept | ipv6only-to-snmp-exporter-9116 | eth3 | eth1 |  | 2001:1470:fffd:a9::107 | 9116 | tcp |
+| 460 | accept | ipv6only-to-ad-dns-udp53 | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 53 | udp |
+| 461 | accept | ipv6only-to-ad-dns-tcp53 | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 53 | tcp |
+| 462 | accept | ipv6only-to-ad-kerberos | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 88 | tcp_udp |
+| 463 | accept | ipv6only-to-ad-ldap | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 389 | tcp_udp |
+| 464 | accept | ipv6only-to-ad-global-catalog | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 3268, 3269 | tcp |
+| 465 | accept | ipv6only-to-ad-smb-rpc-time | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 135, 123, 445, 464 | tcp_udp |
+| 466 | accept | ipv6only-to-ad-dynamic-rpc | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 49152-65535 | tcp |
+
+## IPv6 – Input
+
+| **Rule** | **Action** | **In** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **In** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 1 | accept |  |  |  |  | state established,related |
+| 10 | accept | eth0 |  |  | 22 | tcp |
+| 11 | accept | eth0 |  |  |  | icmpv6 |
+| 12 | accept | eth2 |  | 2001:1470:fffd:a8::2 | 22 | tcp |
+| 13 | accept | eth1 |  | 2001:1470:fffd:a8::2 | 22 | tcp |
+| 14 | accept | eth3 |  | 2001:1470:fffd:a8::2 | 22 | tcp |
+| 20 | accept | eth1 |  |  | 53 | tcp_udp |
+| 21 | accept | eth2 |  |  | 53 | tcp_udp |
+| 22 | accept | eth3 |  |  | 53 | tcp_udp |
+| 30 | accept | eth1 |  |  | 547 | udp |
+| 31 | accept | eth3 |  |  | 547 | udp |
+| 40 | accept | eth1 |  |  |  | icmpv6 |
+| 41 | accept | eth2 |  |  |  | icmpv6 |
+| 42 | accept | eth3 |  |  |  | icmpv6 |
 
 </div>
-
-# Upravljanje s konfiguracijami
-
-## Nalaganje celotne konfiguracije
-
-Če želite naložiti celotno konfiguracijo iz datoteke (npr. `v4.conf`), uporabite:
-
-    configure
-    load v4.conf
-    commit
-    save
-
-## Apliciranje seznama ukazov
-
-Če želite aplicirati seznam ukazov iz datoteke (npr. `v4.commands`), uporabite:
-
-    configure
-    source v4.commands
-    commit
-    save
-
-## Opozorilo pri uporabi
-
-Pri apliciranju ukazov je potrebna pazljivost — nekateri ukazi ne delujejo kot pričakovano:
-
-- Ukaz `set` pri vmesnikih (`interface`) ne nastavlja vrednosti, ampak jo dodaja (deluje kot `add`). To lahko vodi do podvajanja nastavitev.\
-  item Originalne konfiguracije\
-  verb\|v1.commands\| in\
-  verb\|v3.commands\| so zgodovinski osnutki; za trenutno stanje uporabljaj\
-  verb\|v4.conf\| in\
-  verb\|v4.commands\|.
-
-- Najnovejšo in pravilno konfiguracijo (`v4.commands`) generirajte avtomatsko z ukazom (zunaj `configure` moda):
-
-<!-- -->
-
-    show configuration commands > v4.commands
-
-Uporabite to avtomatsko generirano datoteko za zanesljivo apliciranje vseh trenutnih nastavitev.
 
 # WireGuard
 
 ## Splošne informacije
 
-WireGuard VPN je nastavljeno na napravi na IP naslovu `192.168.11.106` v DMZ omrežju. Konfiguracija je bila avtomatsko generirana s **pivpn** skripto, ki poenostavi upravljanje in vzpostavitev WireGuard VPN strežnika.
+WireGuard VPN teče na napravi z notranjim naslovom `192.168.11.106` v DMZ omrežju. Strežnik je bil postavljen z **pivpn** skripto. Lahko z konfiguracijami upravljamo z PiVPN ali preko `wg-portal` vmesnika.
 
 ## Dostop in port
 
 - **Notranji naslov:** 192.168.11.106
 
-- **Javni port:** UDP 51820 (preusmeran prek NAT/DNAT na eth0)
+- **Javni port:** UDP 51820
 
-- **Storitev:** Aktivna in dostopna iz javnega interneta
+- **Storitev:** aktivna in dostopna iz javnega interneta prek obstoječe NAT nastavitve
 
 ## Upravljanje VPN uporabnikov
 
-WireGuard uporabnike upravljate s pivpn ukazom. Osnovni koraki:
+Upravljanje ostaja preko `pivpn` skripte. Najpogostejši ukazi:
 
     # Dodaj novega VPN uporabnika
     pivpn add
@@ -478,45 +602,189 @@ WireGuard uporabnike upravljate s pivpn ukazom. Osnovni koraki:
     # Ogled aktivnih povezav
     pivpn -c
 
-    # Ogled konfiguracije in QR koda
+    # Generiranje/izpis QR kode za peer
     pivpn -qr
 
     # Brisanje uporabnika
     pivpn remove
 
-## Poskus z wg-portal
-
-Poskusil sem postaviti tudi `wg-portal`, ker podpira LDAP avtentikacijo, vendar se je zagon ustavil pri odpiranju SQLite baze z napako `out of memory (14)`. Zaradi tega je ostalo upravljanje WireGuard uporabnikov na `pivpn`.
-
-    2026/05/21 23:16:51 INFO Starting WireGuard Portal V2... version=v2.2.3-1c3eacb
-    time=2026-05-21T23:16:51.752Z level=INFO msg="Configuration loaded!" logLevel=info
-    panic: failed to open sqlite database: unable to open database file: out of memory (14)
-
 ## Konfiguracija in nastavitve
 
-Privzete pivpn nastavitve:
+Privzete lokacije in nastavitve (trenutna postavitev):
 
 - Podatkovna mapa: `/etc/wireguard/`
 
 - Datoteka strežnika: `/etc/wireguard/wg0.conf`
 
-- Konfiguracije VPN uporabnikov (QR kode, ključi): `~/configs/` (domača mapa pivpn skripty)
+- Konfiguracije VPN uporabnikov (QR kode, ključi): `~/configs/`
 
 - VPN subnet v našem sistemu: `10.4.103.0/24`
 
 ## Odpravljanje težav
 
-Če WireGuard ni dostopen ali se ne povezuje:
+Če se pojavijo težave pri povezovanju ali dostopnosti, preverite:
 
     # Preverka stanja vmesnika
     ip link show wg0
 
-    # Preverka aktivnih povezav
+    # Preverka aktivnih povezav in statistik
     wg show
 
-    # Resetiranje WireGuard vmesnika
-    sudo ip link delete wg0
+    # Ponovni zagon vmesnika (ko je potrebno)
     sudo systemctl restart wg-quick@wg0
+
+## wg-portal (WireGuard portal) in integracija z Active Directory
+
+`wg-portal` je spletna aplikacija za upravljanje WireGuard peer konfiguracij, vključno z upravljanjem dovoljenj in samopostrežnim generiranjem konfiguracij za uporabnike. V našem okolju `wg-portal` teče kot upravni vmesnik nad obstoječo PiVPN postavitvijo in je dostopen na `http://192.168.11.106:8888` (če je nameščen na istem DMZ gostitelju).
+
+### Kaj počne
+
+- Omogoča ustvarjanje in upravljanje peer konfiguracij ter izdajanje QR kod za uporabnike.
+
+- Povezuje se na Active Directory za preverjanje uporabnikov in določanje administratorskih pravic preko članstev v AD skupinah.
+
+- Upravni vmesnik ne nadomešča same PiVPN postavitve; deluje kot nadgradnja/upravljanje nad obstoječim strežnikom.
+
+### Podatkovna baza in pravice
+
+`wg-portal` je nameščen na lokaciji `/opt/wg-portal/`. Privzeta shrmba je SQLite podatkovna baza na `data/sqlite.db`. Moramo dobro poskrbiti da proces ki poganja wg-portal ima adekvatne pravice. V praksi smo morali ustvariti sistemskega uporabnika `wgportal` in nastaviti tega uporabnika kot lastnika vseh datotek v `/opt/wg-portal`, saj so sicer nastajale napake s pravicami ob zagonu aplikacije. Spodaj so primeri ukazov, ki smo jih uporabili (izvedite kot `root` ali z `sudo`):
+
+    # Ustvari sistemskega uporabnika brez prijave in z domaco mapo na /opt/wg-portal
+    useradd --system --no-create-home --shell /usr/sbin/nologin --home-dir /opt/wg-portal wgportal
+
+    # Nastavi lastnistvo in varne pravice za podatkovno mapo
+    chown -R wgportal:wgportal /opt/wg-portal
+    chmod -R 750 /opt/wg-portal
+
+### LDAP / AD nastavitve (osnutek)
+
+Za povezavo z AD je običajno potrebno konfigurirati bind uporabnika, base DN in filtre. Primerne nastavitve v `wgportal.yaml`:
+
+- **LDAP URL:** ldap://192.168.11.201:389 (ali ldaps://... z ustreznimi certifikati)
+
+- **Bind DN:** CN=wgportal_bind,OU=ServiceAccounts,DC=startup11,DC=local
+
+- **Bind password:** (varno shranjen v konfiguraciji ali vault)
+
+- **User search base:** OU=Users,DC=startup11,DC=local
+
+- **User filter:** `(|(sAMAccountName=%s)(userPrincipalName=%s))` — poišče uporabnika po sAMAccountName ali UPN
+
+- **Group(s) za admins:** merilo, npr. cn=Admin,OU=Groups,DC=startup11,DC=local
+
+### Praktični PowerShell primeri
+
+Spodaj so osnovni primeri za ustvarjanje bind uporabnika in dodajanje v administratorsko skupino v AD:
+
+    # Ustvari servisnega uporabnika (prilagodi geslo varno)
+    New-ADUser -Name "wgportal_bind" -SamAccountName wgportal_bind \
+      -AccountPassword (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force) \
+      -Enabled $true -Path 'OU=ServiceAccounts,DC=startup11,DC=local'
+
+    # Dodeli geslo/izmena obvezna glede na politiko
+    Set-ADAccountPassword -Identity wgportal_bind -Reset -NewPassword \
+      (ConvertTo-SecureString 'StrongP@ssw0rd' -AsPlainText -Force)
+
+    # Dodaj bind account v administratorsko skupino za aplikacijo (po potrebi)
+    Add-ADGroupMember -Identity 'Admin' -Members 'wgportal_bind'
+
+# Monitoring in SNMP
+
+Monitoring v tej zasnovi je namenjen predvsem nadzoru omrežnega stanja, ne operativnemu upravljanju storitev. Osrednji vir metrik je VyOS prek SNMP v2c, iz katerega se berejo osnovni podatki o vmesnikih, dosegljivosti, prometa in sistemskem stanju. Te metrike se nato pretvorijo v Prometheus format, zberejo v Prometheusu in vizualizirajo v Grafani. Monitoring stack je nameščen prek Dockerja (Docker Compose) na gostitelju za nadzor.
+
+## Arhitektura spremljanja
+
+Monitoring gostitelj je `192.168.11.107`, kjer tečejo tri komponente:
+
+- **VyOS SNMP**: `192.168.11.1:161/udp` kot vir podatkov;
+
+- **snmp_exporter**: `192.168.11.107:9116/tcp` kot pretvornik SNMP podatkov v Prometheus metrike;
+
+- **Prometheus**: `192.168.11.107:9090/tcp` kot zbiralnik in časovna baza metrik;
+
+- **Grafana**: `192.168.11.107:3000/tcp` kot vizualizacijski sloj za nadzorne plošče.
+
+## Kaj spremljamo (metrike in uporabljeni MIB-i)
+
+Monitoring zajema metrike, ki jih bere `snmp_exporter` iz VyOS preko SNMP in jih Prometheus zbira ter agregira za vizualizacijo in alarmiranje. Spodaj je skrbno izbran nabor pomembnih metrik z označenimi MIB-i in osnovnimi OID-i (izvleček iz `snmp_stack/snmp.yml`):
+
+- **Sistemske metrike (SNMPv2-MIB)**: `sysUpTime` — `1.3.6.1.2.1.1.3` (dosegljivost, reboot detection).
+
+- **Vmesniki in identifikacija (IF-MIB)**: `ifNumber` (`1.3.6.1.2.1.2.1`), `ifIndex`, `ifDescr` (`1.3.6.1.2.1.2.2.1.2`) — seznam in poimenovanje vmesnikov.
+
+- **Konfiguracijski atributi (IF-MIB)**: `ifMtu` (`1.3.6.1.2.1.2.2.1.4`), `ifSpeed` (`1.3.6.1.2.1.2.2.1.5`), `ifPhysAddress`.
+
+- **Stanje vmesnikov**: `ifAdminStatus` / `ifOperStatus` (operativna/administrativna stanja).
+
+- **Prometni števci (IF-MIB / IFX)**: bajti in paketi — `ifInOctets` (`1.3.6.1.2.1.2.2.1.10`), `ifOutOctets` (`1.3.6.1.2.1.2.2.1.16`), ter 64-bit HC števcem `ifHCInOctets` / `ifHCOutOctets` (`1.3.6.1.2.1.31.1.1.1.6` / `1.3.6.1.2.1.31.1.1.1.10`) za visoke hitrosti.
+
+- **Napake in odmetki (IF-MIB)**: `ifInErrors`, `ifInDiscards`, `ifOutErrors` — signalizacija degradacij linka.
+
+- **Dodatni prometni števci (IFX)**: multicast/broadcast števci in `ifHighSpeed` (`1.3.6.1.2.1.31.1.1.1.15`).
+
+- **IP/TCP/UDP statistike (po potrebi)**: zbirne statistike iz IP/TCP/UDP-MIB-ov (retransmisije, portne agregacije ipd.) — vključimo le ob potrebi za specifične istrage.
+
+- **Agregacije in alarmiranje**: v Prometheusu izpeljane metrike (`rate()`, `increase()`), percentili in pragovna opozorila za latence, packet-loss in throughput.
+
+- **Zdravje zbiranja**: status `snmp_exporter` ter Prometheus job (cilj UP/DOWN, scrape errors) in metrika za zadnji uspešen scrape.
+
+Opomba: celoten, natančen seznam metrik in podrobne preslikave so v `snmp_stack/snmp.yml`. Za spremembe urejajte `snmp_stack/generator.yml` in ponovno zaženite generator (navodila v `snmp progress.md`).
+
+## Docker Compose konfiguraicja
+
+    version: '3'
+    services:
+      snmp\_exporter:
+        image: prom/snmp-exporter:latest
+        ports:
+          - "9116:9116"
+        volumes:
+          - ./snmp.yml:/etc/snmp\_exporter/snmp.yml
+
+      prometheus:
+        image: prom/prometheus:latest
+        ports:
+          - "9090:9090"
+        volumes:
+          - ./prometheus.yml:/etc/prometheus/prometheus.yml
+        depends_on:
+          - snmp\_exporter
+
+      grafana:
+        image: grafana/grafana:latest
+        ports:
+          - "3000:3000"
+        depends_on:
+          - prometheus
+
+## Konfiguracija Prometheus-a
+
+    scrape_configs:
+      - job_name: 'snmp'
+        static_configs:
+          - targets: ['192.168.11.1']
+        metrics_path: /snmp
+        params:
+          module: [vyos]
+          auth: [vyos_auth]
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target']
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.11.107:9116
+
+## Generator in snmp.yml
+
+Če želite spremeniti snmp.yml konfiguracijo, uporabite [uradni generator za ‘snmp_exporter‘](https://github.com/prometheus/snmp_exporter/tree/main/generator), da ustvarite prilagojen ‘snmp.yml‘.
+
+## Testiranje
+
+    curl "http://192.168.11.107:9116/snmp?module=vyos&target=192.168.11.1"
+    snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0
+
+Še bolj podrobna namestitev, konfiguracijski primeri in preizkusni koraki so opisani ločeno v datoteki `snmp progress.md`.
 
 # Active Directory (Windows Server)
 
@@ -577,6 +845,58 @@ Disable-ADAccount -Identity "ime"
 Remove-ADUser -Identity "ime" -Confirm:$false
 ```
 
+## Priključitev računalnikov v domeno
+
+Vsi računalniki, ki bodo uporabljali storitve domene `startup11.local`, morajo biti ustrezno pridruženi domeni Active Directory. Postopek se nekoliko razlikuje glede na operacijski sistem.
+
+### Linux
+
+Pri novejših različicah Ubuntu Linuxa je med grafično namestitvijo sistema na voljo možnost *Use Active Directory*. Ta se nahaja v koraku *Create your account*. V tem primeru:
+
+1.  Označite možnost *Use Active Directory*.
+
+2.  Vnesite ime domene: `startup11.local`.
+
+3.  Za pridružitev uporabite uporabniški račun z ustreznimi pravicami v domeni.
+
+Če sistem med namestitvijo ni bil priključen v domeno, je to mogoče storiti naknadno z uporabo naslednjih orodij.
+
+Najprej namestimo vse potrebne pakete:
+
+    sudo apt install sssd sssd-ad realmd adcli krb5-user
+
+Preverimo, ali je domena dosegljiva:
+
+    sudo realm discover startup11.local
+
+Nato računalnik priključimo v domeno:
+
+    sudo realm join startup11.local
+
+Po uspešni prijavi je priporočljiv ponovni zagon sistema.
+
+### Windows
+
+V operacijskem sistemu Windows lahko računalnik pridružimo domeni prek grafičnega vmesnika:
+
+1.  Odprite **Nastavitve** (*Settings*).
+
+2.  Izberite **Sistem** (*System*).
+
+3.  Odprite **Informacije o sistemu** (*About*).
+
+4.  Kliknite **Preimenuj ta računalnik (napredno)** (*Rename this PC (advanced)*).
+
+5.  Izberite možnost **ID omrežja** (*Network ID*).
+
+6.  Sledite čarovniku za pridružitev domeni.
+
+7.  Kot ime domene vnesite `startup11.local`.
+
+8.  Ob pozivu vnesite poverilnice uporabniškega računa, ki ima pravico dodajati računalnike v domeno.
+
+Po uspešni pridružitvi bo sistem zahteval ponovni zagon. Po ponovnem zagonu se lahko uporabniki prijavijo z domenimi računi.
+
 ## Prijava v domeno
 
 Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko priklopimo v domeno `startup11.local`. Po uspešnem priklopu se uporabniki prijavljajo z:
@@ -591,179 +911,137 @@ Računalnike (Windows Pro/Enterprise ali Linux s konfiguriranim SSSD) lahko prik
 
 ## Upravljanje AD DNS streznika
 
-AD DNS je avtoritativen za `startup11.local` in vraca AD SRV zapise (npr. `_ldap._tcp.dc._msdcs.startup11.local`).
-
-**Preverjanje forwarderjev:**
-
-``` bash
-Get-DnsServerForwarder
-```
-
-**Preverjanje, da je DNS na AD strezniku lokalen:**
-
-``` bash
-Get-DnsClientServerAddress
-Get-DnsServerZone
-```
-
-**Izpis DNS zapisov v AD zoni:**
-
-``` bash
-Get-DnsServerResourceRecord -ZoneName "startup11.local" |
-  Select-Object HostName, RecordType, RecordData
-```
-
-**Preverjanje SRV zapisov na AD DNS:**
-
-``` bash
-Resolve-DnsName _ldap._tcp.dc._msdcs.startup11.local -Type SRV -Server 127.0.0.1
-nslookup -type=SRV _ldap._tcp.dc._msdcs.startup11.local 192.168.11.201
-```
-
-**Dodajanje notranjih zapisov za DMZ streznike (primer):**
-
-``` bash
-Add-DnsServerResourceRecordA -ZoneName "startup11.local" -Name "rest" -IPv4Address "192.168.11.104"
-Add-DnsServerResourceRecordA -ZoneName "startup11.local" -Name "snmp" -IPv4Address "192.168.11.107"
-```
-
-**Test novih zapisov po dodajanju:**
-
-``` bash
-Resolve-DnsName rest.startup11.local -Type A -Server 127.0.0.1
-Resolve-DnsName snmp.startup11.local -Type A -Server 127.0.0.1
-```
-
-**Opomba o split DNS:** VyOS izvaja DNS posredovanje in conditional forward na AD DNS za `startup11.local`, AD DNS pa ostane avtoritativni vir notranjih zapisov.
+Ukazi za upravljanje AD DNS strežnika so premaknjeni v ločeno datoteko `ad-dns-upravljanje.md`. V tej dokumentaciji ostaja samo kratek povzetek: AD DNS je avtoritativen za `startup11.local` in vrača notranje A/AAAA/SRV zapise za prijavo v domeno in povezane storitve.
 
 # REST
 
-Vse datoteke se nahajajo na sk11-dmz-linux-04 v home directoriju od zanzan04. Imamo dve rest storitvi in sicer Scriptum_kp in library-api. V tem delu bom govoril o library-api za probleme s Scriptum_kp pa se obrnite na github dokumentacijo projekta <https://github.com/zanzan731/Scriptum_kp>.
+V tej točki je opisana storitev `library-api`, ki teče na gostitelju `sk11-dmz-linux-04` pod uporabnikom `zanzan04`. V istem okolju obstaja še projekt `Scriptum_kp`, vendar ta dokument obravnava samo `library-api`. Za `Scriptum_kp` velja ločena dokumentacija projekta na <https://github.com/zanzan731/Scriptum_kp>.
 
-## Arhitektura
+## Arhitektura storitve
 
-Komponente:
+`library-api` je Node.js aplikacija z naslednjimi glavnimi komponentami:
 
-- Node.js Express aplikacija (`server.js`)
+- `server.js` kot glavni REST strežnik,
 
-- SQLite baza (`library.db`)
+- SQLite baza `library-ha.db`,
 
-- TLS certifikati
+- samopodpisani TLS certifikati v direktoriju `certs/`,
 
-- Docker in Docker Compose
+- Docker slika in `docker-compose.yml` za zagon s ponovnim zagonom,
 
-- LDAP povezava proti Active Directory
+- povezava na Active Directory prek LDAP za avtentikacijo in avtorizacijo.
+
+Storitev posluša na dveh vratih:
+
+- `3000` za HTTP,
+
+- `3443` za HTTPS in HTTP/2.
 
 ## Konfiguracija
 
-Pomembne okoljske spremenljivke (`server.js`):
+Glavne okoljske spremenljivke v `server.js` so:
 
+    DATABASE_FILE=./library-ha.db
+    SERVER_HTTP_PORT=3000
+    SERVER_HTTPS_PORT=3443
+    SERVER_HOST=0.0.0.0
+    ETCD_ENDPOINTS=192.168.11.101:2379,192.168.11.102:2379,192.168.11.103:2379
     LDAP_URL=ldap://192.168.11.201:389
     AD_DOMAIN=startup11.local
     AD_BASE_DN=DC=startup11,DC=local
     AD_LIBRARIAN_GROUP_DN=CN=LIBRARIAN,CN=Users,DC=startup11,DC=local
-    AD_ADMIN_USERS=zan_admin,other.user
+    AD_ADMIN_GROUP_DN=CN=Admin,CN=Users,DC=startup11,DC=local
 
-Opis:
+- `DATABASE_FILE` določa pot do lokalne SQLite baze;
 
-- `LDAP_URL` določa LDAP strežnik
+- `SERVER_HTTP_PORT` in `SERVER_HTTPS_PORT` določata poslušanje HTTP/HTTPS vrat;
 
-- `AD_BASE_DN` določa osnovni DN
+- `SERVER_HOST` mora biti `0.0.0.0`, da se storitev pravilno veže znotraj Dockerja;
 
-- `AD_LIBRARIAN_GROUP_DN` določa skupino z dovoljenji
+- `ETCD_ENDPOINTS` poveže aplikacijo z Raft klastrom;
 
-## Docker zagon
+- `AD_LIBRARIAN_GROUP_DN` določa vlogo za pisanje;
 
-Kljub temu da je možen lokalni zagon z `npm` (`npm install`, `npm run dev`), kar vam omogoča lokalno testiranje na <https://localhost:3443/> in <http://localhost:3000/> na serverju vedno buildamo to z dockerjem.
+- `AD_ADMIN_GROUP_DN` določa administratorsko vlogo iz Active Directory;
 
-Build slike:
+- ostale spremenljivke določajo LDAP prijavo in povezavo do AD.
 
-    docker build -t library-api-ad:latest .
+## Zagon in persistenca
 
-Zagon kontejnerja:
+Za lokalni razvoj je možen tudi klasičen zagon z `npm`, vendar je za strežnik priporočljiv Docker z možnostjo samodejnega ponovnega zagona:
+
+    docker build -t library-api-rest:latest .
 
     docker run -d \
-      --name library-api-ad-test \
+      --name library-api-rest \
+      --restart unless-stopped \
       -p 3000:3000 \
       -p 3443:3443 \
-      -e LDAP_URL=ldap://192.168.11.201:389 \
-      -e AD_DOMAIN=startup11.local \
-      -e AD_BASE_DN=DC=startup11,DC=local \
-      -e AD_LIBRARIAN_GROUP_DN=CN=LIBRARIAN,CN=Users,DC=startup11,DC=local \
-      library-api-ad:latest
+      -e SERVER_HOST=0.0.0.0 \
+      -e DATABASE_FILE=/app/data/library-ha.db \
+      -e ETCD_ENDPOINTS=192.168.11.101:2379,192.168.11.102:2379,192.168.11.103:2379 \
+      -v /home/zanzan04/library-api/data:/app/data \
+      -v /home/zanzan04/library-api/certs:/app/certs \
+      library-api-rest:latest
+
+Pri tej postavitvi Docker ohrani:
+
+- `restart unless-stopped` za samodejni zagon po rebootu gostitelja,
+
+- podatkovni direktorij `/app/data` za SQLite bazo,
+
+- direktorij `/app/certs` za TLS certifikate.
 
 ## Preverjanje delovanja
 
-Ko imate enkrat zagnano bi morala biti spletna stran dostopna preko vseh računalnikov znotraj omrežja na <https://192.168.11.104:3443/> in <http://192.168.11.104:3000/>.
+Po zagonu mora biti storitev dostopna prek lokalnega omrežja na <https://192.168.11.104:3443/> in <http://192.168.11.104:3000/>.
 
-### Javni GET zahtevek
+### Osnovni testi
 
+    curl -i http://192.168.11.104:3000/authors
     curl -k -i https://192.168.11.104:3443/authors
     curl --http2 -k -i https://192.168.11.104:3443/authors
-    curl -i http://192.168.11.104:3000/authors
 
-### Vsebinsko pogajanje in podprti formati
+### Vsebinsko pogajanje
 
-JSON:
+Podprti formati so JSON, XML in HTML:
 
-    curl -k -H "Accept: application/json" \
-    https://192.168.11.104:3443/authors
+    curl -k -H "Accept: application/json" https://192.168.11.104:3443/authors
+    curl -k -H "Accept: application/xml" https://192.168.11.104:3443/authors
+    curl -k "https://192.168.11.104:3443/authors?format=html"
 
-XML:
+### Glavne poti
 
-    curl -k -H "Accept: application/xml" \
-    https://192.168.11.104:3443/authors
+    GET    /authors
+    GET    /authors/:id
+    GET    /authors/:id/books
+    POST   /authors
+    PUT    /authors/:id
+    DELETE /authors/:id
 
-HTML:
-
-    curl -k \
-    "https://192.168.11.104:3443/authors?format=html"
-
-To je samo za authors imas pa tudi veliko drugih poti:
-
-    GET /authors  - list all (public)
-    GET /authors/:id  - single author (public)
-    GET /authors/:id/books  - books by author (public)
-    POST /authors  - create (requires librarian or admin)
-    PUT /authors/:id  - update (requires librarian or admin)
-    DELETE /authors/:id  - delete (requires admin only)
-    GET /books  - list all, optional ?genre= filter (public)
-    GET /books/:id  - single book (public)
-    POST /books  - create (requires librarian or admin)
-    PUT /books/:id  - update (requires librarian or admin)
-    PATCH /books/:id/availability  - toggle availability (requires librarian or admin)
-    DELETE /books/:id  - delete (requires admin only)
+    GET    /books
+    GET    /books/:id
+    POST   /books
+    PUT    /books/:id
+    PATCH  /books/:id/availability
+    DELETE /books/:id
 
 ### LDAP avtorizacija
 
-Rabis userja pod librarian ali admin za dodaten dostop.
+Branje je javno, pisanje pa zahteva ustrezno vlogo v Active Directory:
 
-- branje (GET) avtorjev in knjig — javno dostopno brez prijave
+- **GET** je dostopen brez prijave,
 
-- ustvarjanje (POST) avtorjev in knjig
+- **POST** in **PUT** zahtevata vlogo `librarian` ali `admin`,
 
-- posodabljanje (PUT) avtorjev in knjig
+- **DELETE** je dovoljen samo uporabnikom, ki so člani administratorske skupine `Admin`, konfigurirane prek `AD_ADMIN_GROUP_DN`.
 
-- brisanje (DELETE) je rezervirano za admin uporabnike
-
-Za windows PowerShell:
+Primer preverjanja s PowerShellom:
 
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
-
-    $b64 = [Convert]::ToBase64String(
-      [Text.Encoding]::ASCII.GetBytes(
-        'username:password'
-      )
-    )
-
-    $headers = @{
-      Authorization = "Basic $b64"
-      'Content-Type'='application/json'
-    }
-
-    $body = @{
-      name = 'Test Author'
-    } | ConvertTo-Json
+    $b64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('username:password'))
+    $headers = @{ Authorization = "Basic $b64"; 'Content-Type'='application/json' }
+    $body = @{ name = 'Test Author' } | ConvertTo-Json
 
     Invoke-RestMethod `
       -Uri 'https://192.168.11.104:3443/authors' `
@@ -771,8 +1049,7 @@ Za windows PowerShell:
       -Headers $headers `
       -Body $body
 
-Za linux:
-
+Primer preverjanja z Linux odjemalcem:
 
     curl -i -X POST http://192.168.11.104:3000/authors \
       -H "Content-Type: application/json" \
@@ -782,14 +1059,12 @@ Za linux:
     curl -i -X DELETE http://192.168.11.104:3000/authors/5 \
       -u username:password
 
-### Potrditev TLS certifikata
+### TLS certifikat
 
-Za certifikat:
+Certifikati so samopodpisani, zato jih je v testnem okolju treba ročno zaupati:
 
     openssl s_client -connect 192.168.11.104:3443 -servername 192.168.11.104 -showcerts
     curl -vkI https://192.168.11.104:3443/
-
-Certifikati so self-signed zato če jim želiš zaupat jih rabiš naložiti v napravi:
 
     openssl s_client -connect 192.168.11.104:3443 -showcerts </dev/null \
       | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /tmp/library-192-168-11-104.crt
@@ -799,69 +1074,144 @@ Certifikati so self-signed zato če jim želiš zaupat jih rabiš naložiti v na
 
 ### GraphQL
 
-Primer javnega GraphQL poizvedovanja:
+GraphQL strežnik uporablja isto okolje in isto logiko sinhronizacije, vendar deluje na ločenih vratih:
 
-    curl -k -X POST "https://192.168.11.104:32484/graphql" \
+    curl -k -X POST "https://192.168.11.104:30443/graphql" \
       -H "Content-Type: application/json" \
       -d '{"query":"{ authors { id name } }"}'
 
-Primer zaščitene GraphQL mutacije z LDAP uporabnikom:
+Za zaščiteno mutacijo uporabimo Basic Auth:
 
-    $b64 = [Convert]::ToBase64String(
-      [Text.Encoding]::ASCII.GetBytes('username:password')
-    )
-
+    $b64 = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('username:password'))
     $body = @{ query = 'mutation { createAuthor(name: "GraphQL Test") { id name } }' } | ConvertTo-Json
 
     Invoke-RestMethod `
-      -Uri 'https://192.168.11.104:32484/graphql' `
+      -Uri 'https://192.168.11.104:30443/graphql' `
       -Method Post `
       -Headers @{ Authorization = "Basic $b64"; 'Content-Type'='application/json' } `
       -Body $body
 
+Za nešifrirani dostop uporabimo HTTP vrata 30080:
+
+    curl -X POST "http://192.168.11.104:30080/graphql" \
+      -H "Content-Type: application/json" \
+      -d '{"query":"{ authors { id name } }"}'
+
 ### Scriptum_kp
 
-Scriptum je dostopen na spletnem mestu <a href="192.168.11.104:8080" class="uri">192.168.11.104:8080</a> ne uporablja LDAP uporabnikov ampak uporabnike na MongoDB bazi. Frontend je Angular,, backend je REST API, Node.js, Express. MongoDB baza ni na tem serverju ampak je na zunanjih mongo DB strežnikih.
+Projekt `Scriptum_kp` teče ločeno na naslovih <a href="192.168.11.104:8080" class="uri">192.168.11.104:8080</a> in <a href="88.200.24.241:8080" class="uri">88.200.24.241:8080</a>. Uporablja MongoDB uporabnike in ne LDAP uporabnikov.
 
-# Raft
+# Raft sinhronizacija
 
-Raft storitev poteka na treh serverjih 192.168.11.101, 192.168.11.102, 192.168.11.103. Vse spremembe so sihronizirane preko etcd kljucov, vsaka ima svojo lokalno bazo ki se sinhronizira. To je update Rest storitve saj ta sedaj pošilja svojo bazo RAFT podatkovni bazi. Na serverju boste imeli veliko datotek:
+V tej postavitvi Raft ne izvaja aplikacija sama, temveč `etcd` na treh vozliščih `192.168.11.101`, `192.168.11.102` in `192.168.11.103`. Aplikacija uporablja `etcd` za distribuirane ključavnice, osnovni izbor vodje in sinhronizacijo zapisov med lokalnimi SQLite bazami.
 
-- `raft-api-integration.js` - ta datoteka pomaga pri replikaciji in temu da se domenijo o vodji
+Vsaka instanca ima svojo lokalno datoteko `library-ha.db`. Ko se zapis spremeni, se najprej shrani lokalno, nato pa se v `etcd` objavi pod ključem `sync:<tip>:<id>`. Ostale instance te ključe preberejo prek watcherja in posodobijo svoje lokalne podatke.
 
-- `sync-watcher.js` - gleda etcd sync ključe in jih doda v localno library-ha.db za nek razlog etcd se ni znal sam zmenit za ključe
+## Ključne datoteke
 
-- `query-ha-db.js` - node.js script da bere library-ha.db in sprinta autorje, uporabno za testiranje
+- `raft-api-integration.js` — glavna REST implementacija z integracijo v `etcd`.
 
-- `test-graphql.js` - test samo za lokalno da preveri če je možno POST request narediti na qraphql
+- `sync-watcher.js` — watcher za `sync:` ključe in aplikacijo sprememb v lokalno bazo.
 
-- `create-author.js`, `manual-replicate.js` - pomožne skripte za pomoč pri testiranju pisanja in repliciranja
+- `query-ha-db.js` — hiter pregled vsebine `library-ha.db`.
 
-## Branje baze
+- `create-author.js` — lokalni testni zapis prek REST.
 
-Če želite manualno prebrati bazo predvsem za testiranje in če se vam zdi da niso sinhornizirane.
+- `manual-replicate.js` — ročna objava testa replike v `etcd`.
+
+- `test-graphql.js` — lokalni testni POST na GraphQL endpoint.
+
+## Kaj mora biti zagnano
+
+Pred preizkušanjem morajo delovati:
+
+- `etcd` cluster na vseh treh strežnikih,
+
+- API storitev na vseh vozliščih,
+
+- omrežni dostop do vrat `2379` in `2380`,
+
+- lokalna baza `library-ha.db` na vsaki instanci.
+
+## Pregled baze
+
+Za hiter pregled lokalne baze na posameznem vozlišču uporabimo:
 
     cd ~/library-api
     node query-ha-db.js
 
-To vam bo izpisalo vsebino baze.
+Privzeti SQL ukaz je:
 
----
-
-## Pretvorba med Markdown in LaTeX
-
-Ukazi za pretvorbo (zahteva: `pandoc`):
-
-- LaTeX -> Markdown (GitHub-flavored):
-
-```bash
-pandoc -s vyos_documentation.tex -t gfm -o vyos_documentation.md --wrap=none
+``` sql
+SELECT id, name FROM authors;
 ```
 
-- Markdown -> LaTeX:
+Stanje storitev na vozliščih preverimo z:
 
-```bash
-pandoc -s vyos_documentation.md -o vyos_documentation.tex
-```
+    ssh zanzan01@192.168.11.101 "systemctl status library-api"
+    ssh zanzan02@192.168.11.102 "systemctl status library-api"
+    ssh zanzan03@192.168.11.103 "systemctl status library-api"
 
-Opomba: pri pretvorbi iz Markdowna v LaTeX lahko pride do manjših razlik v oblikovanju; preverite končni `.tex` in po potrebi prilagodite preambulo (pakete, nastavitve `listings`/`minted`).
+## Preverjanje clustra
+
+Za pregled članov in stanja clustra uporabimo `etcdctl`:
+
+    etcdctl member list --endpoints=http://localhost:2379
+    etcdctl endpoint status --cluster -w table
+
+Oddaljen pregled na node1:
+
+    ssh zanzan01@192.168.11.101 "etcdctl member list --endpoints=http://localhost:2379"
+    ssh zanzan01@192.168.11.101 "etcdctl endpoint status --cluster -w table"
+
+## Testiranje sinhronizacije
+
+Pomembni testi so naslednji:
+
+    cd ~/library-api
+    node create-author.js
+    node manual-replicate.js
+    node sync-watcher.js
+    node test-graphql.js
+
+Pomen posameznih ukazov:
+
+- `create-author.js` doda testnega avtorja prek REST,
+
+- `manual-replicate.js` ročno objavi `sync:` zapis v `etcd`,
+
+- `sync-watcher.js` pobere nove `sync:` ključe in jih uporabi v lokalni bazi,
+
+- `test-graphql.js` preveri, ali je lokalni GraphQL endpoint dosegljiv.
+
+Če je sinhronizacija uspela, mora biti rezultat `node query-ha-db.js` enak na vseh vozliščih.
+
+## Priporočeni potek
+
+1.  Preveri, da je `etcd` cluster aktiven.
+
+2.  Preveri, da je REST storitev zagnana na vseh treh strežnikih.
+
+3.  Dodaj ali posodobi zapis prek REST ali GraphQL.
+
+4.  Preveri lokalno bazo z `node query-ha-db.js`.
+
+5.  Po potrebi preveri še `/health` endpoint in loge storitve.
+
+## Popravki kode
+
+Če rabiste kako spremeniti storitev popravite kodo, naložite jo na vse tri serverje in nato znova zaženite storitev:
+
+    sudo systemctl restart library-api
+
+Če ste vse pravilno naredili bi to moralo še vedno ohraniti bazo tako, da lahko to naredite brez izgub.
+
+# Pretvorba med Markdown in LaTeX
+
+- LaTeX Markdown (GitHub-flavored):
+
+      pandoc -s vyos_documentation.tex -t gfm -o vyos_documentation.md --wrap=none
+
+- Markdown LaTeX:
+
+      pandoc -s vyos_documentation.md -o vyos_documentation.tex
