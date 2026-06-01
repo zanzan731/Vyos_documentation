@@ -88,13 +88,7 @@ Uporabniki na linux `dmz` virtualkah so vsi poimenovani `zanzan0X`, kjer je X š
 
 ## SSH
 
-SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22.
-
-- **pavle**: `AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h`
-
-- **zanzan**: `AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL`
-
-Če želite začasno omogočiti prijavo z geslom, uredite datoteko\
+SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Ključe dodajte v ` /./ssh/authorized_keys`. Če želite začasno omogočiti prijavo z geslom, uredite datoteko\
 `/etc/ssh/sshd_config.d/50-cloud-init.conf` in nastavite `PasswordAuthentication yes`, nato ponovno zaženite `sshd`.
 
 ## RDP

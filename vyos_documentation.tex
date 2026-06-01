@@ -114,11 +114,7 @@ Na \texttt{internal} in \texttt{ipv6only} odjemalcih je uporabnik vedno samo \te
 \end{center}
 
 \subsection{SSH}
-SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. 
-\begin{itemize}
-    \item \textbf{pavle}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIClsTiUna0lG4FgaZOZ8cpxWvlWM7h9B2dbL53+QXr3h}
-    \item \textbf{zanzan}: \texttt{AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL}
-\end{itemize}
+SSH je konfiguriran za prijavo prek ključev (avtentikacija z geslom je onemogočena) na privzetem portu 22. Ključe dodajte v \texttt{~/./ssh/authorized\_keys}.
 Če želite začasno omogočiti prijavo z geslom, uredite datoteko \newline  \verb|/etc/ssh/sshd_config.d/50-cloud-init.conf| in nastavite \texttt{PasswordAuthentication yes}, nato ponovno zaženite \texttt{sshd}.
 
 \subsection{RDP}
