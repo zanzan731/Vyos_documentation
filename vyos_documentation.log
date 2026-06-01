@@ -1,15 +1,14 @@
 This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  1 JUN 2026 10:45
 entering extended mode
  restricted \write18 enabled.
- file:line:error style messages enabled.
  %&-line parsing enabled.
-**c:/Users/pavle/Desktop/KP/Vyos_documentation/vyos_documentation.tex
-(c:/Users/pavle/Desktop/KP/Vyos_documentation/vyos_documentation.tex
+**./vyos_documentation.tex
+(vyos_documentation.tex
 LaTeX2e <2025-06-01> patch level 1
-L3 programming layer <2025-09-02>
-(c:/texlive/2025/texmf-dist/tex/latex/base/article.cls
+L3 programming layer <2025-07-19>
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
 Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
-(c:/texlive/2025/texmf-dist/tex/latex/base/size11.clo
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/base\size11.clo
 File: size11.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 )
 \c@part=\count275
@@ -23,20 +22,26 @@ File: size11.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 \abovecaptionskip=\skip49
 \belowcaptionskip=\skip50
 \bibindent=\dimen148
-) (c:/texlive/2025/texmf-dist/tex/latex/base/inputenc.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty
 Package: inputenc 2024/02/08 v1.3d Input encoding file
 \inpenc@prehook=\toks17
 \inpenc@posthook=\toks18
-) (c:/texlive/2025/texmf-dist/tex/latex/base/fontenc.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
 Package: fontenc 2024/12/21 v2.1c Standard LaTeX package
-) (c:/texlive/2025/texmf-dist/tex/latex/geometry/geometry.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
 Package: geometry 2020/01/02 v5.9 Page Geometry
- (c:/texlive/2025/texmf-dist/tex/latex/graphics/keyval.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
 \KV@toks@=\toks19
-) (c:/texlive/2025/texmf-dist/tex/generic/iftex/ifvtex.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
- (c:/texlive/2025/texmf-dist/tex/generic/iftex/iftex.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
 Package: iftex 2024/12/12 v1.0g TeX engine tests
 ))
 \Gm@cnth=\count283
@@ -51,7 +56,9 @@ Package: iftex 2024/12/12 v1.0g TeX engine tests
 \Gm@layouthoffset=\dimen155
 \Gm@layoutvoffset=\dimen156
 \Gm@dimlist=\toks20
-) (c:/texlive/2025/texmf-dist/tex/latex/tools/array.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty
 Package: array 2025/06/08 v2.6j Tabular extension package (FMi)
 \col@sep=\dimen157
 \ar@mcellbox=\box53
@@ -60,7 +67,8 @@ Package: array 2025/06/08 v2.6j Tabular extension package (FMi)
 \extratabsurround=\skip51
 \backup@length=\skip52
 \ar@cellbox=\box54
-) (c:/texlive/2025/texmf-dist/tex/latex/listings/listings.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.sty
 \lst@mode=\count286
 \lst@gtempboxa=\box55
 \lst@token=\toks22
@@ -73,26 +81,33 @@ Package: array 2025/06/08 v2.6j Tabular extension package (FMi)
 \lst@newlines=\count290
 \lst@lineno=\count291
 \lst@maxwidth=\dimen162
- (c:/texlive/2025/texmf-dist/tex/latex/listings/lstpatch.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstpatch.sty
 File: lstpatch.sty 2024/09/23 1.10c (Carsten Heinz)
-) (c:/texlive/2025/texmf-dist/tex/latex/listings/lstmisc.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
 File: lstmisc.sty 2024/09/23 1.10c (Carsten Heinz)
 \c@lstnumber=\count292
 \lst@skipnumbers=\count293
 \lst@framebox=\box56
-) (c:/texlive/2025/texmf-dist/tex/latex/listings/listings.cfg
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg
 File: listings.cfg 2024/09/23 1.10c listings configuration
 ))
 Package: listings 2024/09/23 1.10c (Carsten Heinz)
- (c:/texlive/2025/texmf-dist/tex/latex/xcolor/xcolor.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
 Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
- (c:/texlive/2025/texmf-dist/tex/latex/graphics-cfg/color.cfg
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package xcolor Info: Driver file: pdftex.def on input line 274.
- (c:/texlive/2025/texmf-dist/tex/latex/graphics-def/pdftex.def
-File: pdftex.def 2025/09/29 v1.2d Graphics/color driver for pdftex
-) (c:/texlive/2025/texmf-dist/tex/latex/graphics/mathcolor.ltx)
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
+File: pdftex.def 2024/04/13 v1.2c Graphics/color driver for pdftex
+) (C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx
+)
 Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
 Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
 Package xcolor Info: Model `RGB' extended on input line 1365.
@@ -102,20 +117,24 @@ Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
 Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
-) (c:/texlive/2025/texmf-dist/tex/latex/graphics/graphicx.sty
+) (C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
 Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
- (c:/texlive/2025/texmf-dist/tex/latex/graphics/graphics.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
 Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
- (c:/texlive/2025/texmf-dist/tex/latex/graphics/trig.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty
 Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
-) (c:/texlive/2025/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.cf
+g
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
 Package graphics Info: Driver file: pdftex.def on input line 106.
 )
 \Gin@req@height=\dimen163
 \Gin@req@width=\dimen164
-) (c:/texlive/2025/texmf-dist/tex/latex/tools/longtable.sty
+) (C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/tools\longtable.sty
 Package: longtable 2024-12-18 v4.23 Multi-page Table package (DPC)
 \LTleft=\skip53
 \LTright=\skip54
@@ -133,29 +152,38 @@ Package: longtable 2024-12-18 v4.23 Multi-page Table package (DPC)
 \c@LT@tables=\count297
 \c@LT@chunks=\count298
 \LT@p@ftn=\toks23
-) (c:/texlive/2025/texmf-dist/tex/latex/pdflscape/pdflscape.sty
-Package: pdflscape 2025-06-23 v0.14 Display of landscape pages in PDF
- (c:/texlive/2025/texmf-dist/tex/latex/pdflscape/pdflscape-nometadata.sty
-Package: pdflscape-nometadata 2025-06-23 v0.14 Display of landscape pages in PDF (HO)
- (c:/texlive/2025/texmf-dist/tex/latex/graphics/lscape.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/pdflscape\pdflscape.sty
+Package: pdflscape 2022-10-27 v0.13 Display of landscape pages in PDF
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/pdflscape\pdflscape-nome
+tadata.sty
+Package: pdflscape-nometadata 2022-10-28 v0.13 Display of landscape pages in PD
+F (HO)
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/graphics\lscape.sty
 Package: lscape 2020/05/28 v3.02 Landscape Pages (DPC)
 )
 Package pdflscape Info: Auto-detected driver: pdftex on input line 81.
-)) (c:/texlive/2025/texmf-dist/tex/latex/amsmath/amsmath.sty
+))
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
 Package: amsmath 2025/06/16 v2.17y AMS math features
 \@mathmargin=\skip57
 
 For additional information on amsmath, use the `?' option.
-(c:/texlive/2025/texmf-dist/tex/latex/amsmath/amstext.sty
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
 Package: amstext 2024/11/17 v2.01 AMS text
- (c:/texlive/2025/texmf-dist/tex/latex/amsmath/amsgen.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
 \@emptytoks=\toks24
 \ex@=\dimen166
-)) (c:/texlive/2025/texmf-dist/tex/latex/amsmath/amsbsy.sty
+))
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d Bold Symbols
 \pmbraise@=\dimen167
-) (c:/texlive/2025/texmf-dist/tex/latex/amsmath/amsopn.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty
 Package: amsopn 2022/04/08 v2.04 operator names
 )
 \inf@bad=\count299
@@ -205,54 +233,74 @@ LaTeX Info: Redefining \Relbar on input line 970.
 \mathdisplay@stack=\toks28
 LaTeX Info: Redefining \[ on input line 2949.
 LaTeX Info: Redefining \] on input line 2950.
-) (c:/texlive/2025/texmf-dist/tex/latex/hyperref/hyperref.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
 Package: hyperref 2025-07-12 v7.01o Hypertext links for LaTeX
- (c:/texlive/2025/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
 Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
-) (c:/texlive/2025/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefinek
+eys.sty
 Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
-) (c:/texlive/2025/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.st
+y
 Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
- (c:/texlive/2025/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+ (C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty
 Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
-) (c:/texlive/2025/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
-Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO)
- (c:/texlive/2025/texmf-dist/tex/generic/infwarerr/infwarerr.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds.
+sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.st
+y
 Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
 )
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
 Package pdftexcmds Info: \pdfdraftmode found.
-)) (c:/texlive/2025/texmf-dist/tex/latex/hycolor/hycolor.sty
+)) (C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty
 Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
-) (c:/texlive/2025/texmf-dist/tex/latex/hyperref/nameref.sty
+) (C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
 Package: nameref 2025-06-21 v2.57 Cross-referencing by name of section
- (c:/texlive/2025/texmf-dist/tex/latex/refcount/refcount.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
 Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
-) (c:/texlive/2025/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettitl
+estring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
- (c:/texlive/2025/texmf-dist/tex/latex/kvoptions/kvoptions.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
 \c@section@level=\count311
-) (c:/texlive/2025/texmf-dist/tex/latex/etoolbox/etoolbox.sty
-Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
+) (C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
+Package: etoolbox 2025/02/11 v2.5l e-TeX tools for LaTeX (JAW)
 \etb@tempcnta=\count312
-) (c:/texlive/2025/texmf-dist/tex/generic/stringenc/stringenc.sty
-Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO)
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.st
+y
+Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
+)
 )
 \@linkdim=\dimen175
 \Hy@linkcounter=\count313
 \Hy@pagecounter=\count314
- (c:/texlive/2025/texmf-dist/tex/latex/hyperref/pd1enc.def
+ (C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
 File: pd1enc.def 2025-07-12 v7.01o Hyperref: PDFDocEncoding definition (HO)
 Now handling font encoding PD1 ...
 ... no UTF-8 mapping file for font encoding PD1
-) (c:/texlive/2025/texmf-dist/tex/generic/intcalc/intcalc.sty
+)
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
 \Hy@SavedSpaceFactor=\count315
- (c:/texlive/2025/texmf-dist/tex/latex/hyperref/puenc.def
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
 File: puenc.def 2025-07-12 v7.01o Hyperref: PDF Unicode definition (HO)
 Now handling font encoding PU ...
 ... no UTF-8 mapping file for font encoding PU
@@ -265,7 +313,8 @@ Package hyperref Info: Backreferencing OFF on input line 4215.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4462.
 \c@Hy@tempcnt=\count316
- (c:/texlive/2025/texmf-dist/tex/latex/url/url.sty
+
+(C:\Users\žan\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
@@ -399,7 +448,7 @@ Package hyperref Info: Link coloring OFF on input line 29.
 
 
 Overfull \hbox (3.50854pt too wide) in paragraph at lines 40--41
-[]\T1/cmr/m/n/10.95 Postaviti om-re�je z lo�en-imi seg-menti za \T1/cmr/bx/n/10.95 uporab-nike \T1/cmr/m/n/10.95 in \T1/cmr/bx/n/10.95 stre�nike \T1/cmr/m/n/10.95 (strogo lo�eno prometno
+[]\T1/cmr/m/n/10.95 Postaviti om-re�je z lo�en-imi seg-menti za \T1/cmr/bx/n/10.95 uporab-nike \T1/cmr/m/n/10.95 in \T1/cmr/bx/n/10.95 stre�nike \T1/cmr/m/n/10.95 (strogo lo�eno prometno
  []
 
 
@@ -493,12 +542,12 @@ Overfull \hbox (60.24014pt too wide) in alignment at lines 201--209
 
 [7]
 Overfull \hbox (73.5775pt too wide) in paragraph at lines 294--296
-[]\T1/cmr/m/n/10.95 VyOS poslu�a DNS na naslovih \T1/cmtt/m/n/10.95 10.11.0.1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 192.168.11.1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 2001:1470:fffd:aa::1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 2001:1470:fffd:a9::1
+[]\T1/cmr/m/n/10.95 VyOS poslu�a DNS na naslovih \T1/cmtt/m/n/10.95 10.11.0.1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 192.168.11.1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 2001:1470:fffd:aa::1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 2001:1470:fffd:a9::1
  []
 
 
 Overfull \hbox (15.83528pt too wide) in paragraph at lines 294--296
-\T1/cmr/m/n/10.95 in \T1/cmtt/m/n/10.95 fd11:11:11::1\T1/cmr/m/n/10.95 . Poizvedbe so spre-jete le iz nasled-njih om-re�ij: \T1/cmtt/m/n/10.95 10.11.0.0/24\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 192.168.11.0/24\T1/cmr/m/n/10.95 ,
+\T1/cmr/m/n/10.95 in \T1/cmtt/m/n/10.95 fd11:11:11::1\T1/cmr/m/n/10.95 . Poizvedbe so spre-jete le iz nasled-njih om-re�ij: \T1/cmtt/m/n/10.95 10.11.0.0/24\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 192.168.11.0/24\T1/cmr/m/n/10.95 ,
  []
 
 
@@ -515,7 +564,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 325--326
 
 [8]
 Overfull \hbox (1.48886pt too wide) in paragraph at lines 381--382
-[]\T1/cmr/m/n/10.95 INTERNAL: SLAAC je privzeta izbira za odje-malce na \T1/cmtt/m/n/10.95 2001:1470:fffd:aa::/64\T1/cmr/m/n/10.95 ; stati�ne
+[]\T1/cmr/m/n/10.95 INTERNAL: SLAAC je privzeta izbira za odje-malce na \T1/cmtt/m/n/10.95 2001:1470:fffd:aa::/64\T1/cmr/m/n/10.95 ; stati�ne
  []
 
 
@@ -680,7 +729,7 @@ Overfull \hbox (40.41162pt too wide) in paragraph at lines 863--865
 
 
 Overfull \hbox (1.6853pt too wide) in paragraph at lines 871--872
-\T1/cmr/m/n/10.95 Za povezavo z AD je obi�a-jno potrebno kon-fig-uri-rati bind uporab-nika, base DN in fil-tre. Primerne
+\T1/cmr/m/n/10.95 Za povezavo z AD je obi�a-jno potrebno kon-fig-uri-rati bind uporab-nika, base DN in fil-tre. Primerne
  []
 
 
@@ -707,24 +756,24 @@ Overfull \hbox (4.38962pt too wide) in paragraph at lines 917--918
 
 
 Overfull \hbox (18.57771pt too wide) in paragraph at lines 918--919
-[]\T1/cmr/bx/n/10.95 Prometni �tevci (IF-MIB / IFX)\T1/cmr/m/n/10.95 : ba-jti in paketi ^^V \T1/cmtt/m/n/10.95 ifInOctets \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.10\T1/cmr/m/n/10.95 ),
+[]\T1/cmr/bx/n/10.95 Prometni �tevci (IF-MIB / IFX)\T1/cmr/m/n/10.95 : ba-jti in paketi ^^V \T1/cmtt/m/n/10.95 ifInOctets \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.10\T1/cmr/m/n/10.95 ),
  []
 
 
 Overfull \hbox (22.55331pt too wide) in paragraph at lines 918--919
-\T1/cmtt/m/n/10.95 ifOutOctets \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.16\T1/cmr/m/n/10.95 ), ter 64-bit HC �tevcem \T1/cmtt/m/n/10.95 ifHCInOctets \T1/cmr/m/n/10.95 / \T1/cmtt/m/n/10.95 ifHCOutOctets
+\T1/cmtt/m/n/10.95 ifOutOctets \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.16\T1/cmr/m/n/10.95 ), ter 64-bit HC �tevcem \T1/cmtt/m/n/10.95 ifHCInOctets \T1/cmr/m/n/10.95 / \T1/cmtt/m/n/10.95 ifHCOutOctets
  []
 
 
 Overfull \hbox (89.70181pt too wide) in paragraph at lines 920--921
-[]\T1/cmr/bx/n/10.95 Dodatni prometni �tevci (IFX)\T1/cmr/m/n/10.95 : mul-ti-cas-t/broad-cast �tevci in \T1/cmtt/m/n/10.95 ifHighSpeed \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.31.1.1.1.15\T1/cmr/m/n/10.95 ). 
+[]\T1/cmr/bx/n/10.95 Dodatni prometni �tevci (IFX)\T1/cmr/m/n/10.95 : mul-ti-cas-t/broad-cast �tevci in \T1/cmtt/m/n/10.95 ifHighSpeed \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.31.1.1.1.15\T1/cmr/m/n/10.95 ). 
  []
 
 
 
 [22]
 Overfull \hbox (4.83002pt too wide) in paragraph at lines 926--927
-[]\T1/cmr/m/n/10.95 Opomba: celoten, natan�en sez-nam metrik in po-drobne pres-likave so v \T1/cmtt/m/n/10.95 snmp_stack/snmp.yml\T1/cmr/m/n/10.95 .
+[]\T1/cmr/m/n/10.95 Opomba: celoten, natan�en sez-nam metrik in po-drobne pres-likave so v \T1/cmtt/m/n/10.95 snmp_stack/snmp.yml\T1/cmr/m/n/10.95 .
  []
 
 
@@ -742,7 +791,7 @@ LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
 
 [25]
 Overfull \hbox (11.98859pt too wide) in paragraph at lines 1103--1104
-\T1/cmr/m/n/10.95 Ukazi za up-ravl-janje AD DNS stre�nika so pre-makn-jeni v lo�eno da-toteko \T1/cmtt/m/n/10.95 ad-dns-upravljanje.md\T1/cmr/m/n/10.95 .
+\T1/cmr/m/n/10.95 Ukazi za up-ravl-janje AD DNS stre�nika so pre-makn-jeni v lo�eno da-toteko \T1/cmtt/m/n/10.95 ad-dns-upravljanje.md\T1/cmr/m/n/10.95 .
  []
 
 

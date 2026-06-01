@@ -50,12 +50,11 @@
 \contentsline {subsection}{\numberline {9.4}IPv4 -- Output}{15}{subsection.9.4}%
 \contentsline {subsection}{\numberline {9.5}IPv6 -- Forward}{15}{subsection.9.5}%
 \contentsline {subsubsection}{\numberline {9.5.1}IPv6 -- Forward (1--99)}{15}{subsubsection.9.5.1}%
-\contentsline {subsubsection}{\numberline {9.5.2}IPv6 -- Forward (100--199)}{15}{subsubsection.9.5.2}%
+\contentsline {subsubsection}{\numberline {9.5.2}IPv6 -- Forward (100--199)}{16}{subsubsection.9.5.2}%
 \contentsline {subsubsection}{\numberline {9.5.3}IPv6 -- Forward (200--299)}{16}{subsubsection.9.5.3}%
-\contentsline {subsubsection}{\numberline {9.5.4}IPv6 -- Forward (300--399)}{16}{subsubsection.9.5.4}%
+\contentsline {subsubsection}{\numberline {9.5.4}IPv6 -- Forward (300--399)}{17}{subsubsection.9.5.4}%
 \contentsline {subsubsection}{\numberline {9.5.5}IPv6 -- Forward (400--499)}{17}{subsubsection.9.5.5}%
 \contentsline {subsection}{\numberline {9.6}IPv6 -- Input}{18}{subsection.9.6}%
-\contentsline {subsection}{\numberline {9.7}IPv6 -- Output}{19}{subsection.9.7}%
 \contentsline {section}{\numberline {10}WireGuard}{20}{section.10}%
 \contentsline {subsection}{\numberline {10.1}Splošne informacije}{20}{subsection.10.1}%
 \contentsline {subsection}{\numberline {10.2}Dostop in port}{20}{subsection.10.2}%
