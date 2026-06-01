@@ -438,8 +438,8 @@ NAT je uporabljen za tri stvari: DNAT za izbrane javne IPv4 storitve, SNAT/masqu
 130 & wan-to-scriptum-8080-dnat & eth0 & & 8080 & tcp & 192.168.11.104:8080 (scriptum) \\
 135 & wan-to-scriptum-4443-dnat & eth0 & & 4443 & tcp & 192.168.11.104:4443 (scriptum TLS) \\
 140 & wan-to-library-https-3443-dnat & eth0 & & 3443 & tcp & 192.168.11.104:3443 (library HTTPS) \\
-210 & hairpin-internal-to-public-services-dnat & eth2 & 88.200.24.241 & 8080 & tcp & 192.168.11.104:8080 \\
-211 & hairpin-dmz-to-public-services-dnat & eth1 & 88.200.24.241 & 4443, 3443 & tcp & 192.168.11.104:4443,3443 \\
+210 & hairpin-internal-to-public-services-dnat & eth2 & 88.200.24.241 & 8080,4443,3443 & tcp & 192.168.11.104:8080,4443,3443 \\
+211 & hairpin-dmz-to-public-services-dnat & eth1 & 88.200.24.241 & 8080,4443,3443 & tcp & 192.168.11.104:8080,4443,3443 \\
 \hline
 \end{longtable}
 
@@ -545,10 +545,10 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 252 & accept & internal-to-snmp-exporter-9116 & eth2 & eth1 & & 192.168.11.107 & 9116 & tcp \\
 260 & accept & internal-to-ad-dns-udp53 & eth2 & eth1 & & 192.168.11.201 & 53 & udp \\
 261 & accept & internal-to-ad-dns-tcp53 & eth2 & eth1 & & 192.168.11.201 & 53 & tcp \\
-262 & accept & internal-to-ad-kerberos & eth2 & eth1 & & 192.168.11.201 & 88 & tcp\_udp \\
-263 & accept & internal-to-ad-ldap & eth2 & eth1 & & 192.168.11.201 & 389 & tcp\_udp \\
+262 & accept & internal-to-ad-kerberos & eth2 & eth1 & & 192.168.11.201 & 88 & tcp/udp \\
+263 & accept & internal-to-ad-ldap & eth2 & eth1 & & 192.168.11.201 & 389 & tcp/udp \\
 264 & accept & internal-to-ad-global-catalog & eth2 & eth1 & & 192.168.11.201 & 3268, 3269 & tcp \\
-265 & accept & internal-to-ad-smb-rpc-time & eth2 & eth1 & & 192.168.11.201 & 135, 123, 445, 464 & tcp\_udp \\
+265 & accept & internal-to-ad-smb-rpc-time & eth2 & eth1 & & 192.168.11.201 & 135, 123, 445, 464 & tcp/udp \\
 266 & accept & internal-to-ad-dynamic-rpc & eth2 & eth1 & & 192.168.11.201 & 49152-65535 & tcp \\
 \hline
 \end{longtable}
@@ -567,23 +567,25 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 311 & accept & wg-host-to-internal-mgmt & eth1 & eth2 & 192.168.11.106 & 10.11.0.0/24 & 22, 3389 & tcp \\
 312 & accept & internal-to-dmz-mgmt & eth2 & eth1 & 10.11.0.0/24 & 192.168.11.0/24 & 22, 3389 & tcp \\
 315 & accept & dmz-peers-to-scriptum-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.104 & 8080, 3000, 3443, 4443, 30080, 30443 & tcp \\
-316 & accept & dmz-peers-to-dmz-dns & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.105 & 53 & tcp\_udp \\
+316 & accept & dmz-peers-to-dmz-dns & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.105 & 53 & tcp/udp \\
 317 & accept & dmz-peers-to-wg-portal & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.106 & 8888 & tcp \\
 318 & accept & dmz-peers-to-monitoring & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.107 & 3000, 9090, 9116 & tcp \\
-319 & accept & dmz-peers-to-ad-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.201 & 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 & tcp\_udp \\
+319 & accept & dmz-peers-to-ad-services & eth1 & eth1 & 192.168.11.0/24 & 192.168.11.201 & 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 & tcp/udp \\
 320 & accept & snmp-exporter-to-vyos-snmp & eth1 & eth1 & 192.168.11.107 & 192.168.11.1 & 161 & udp \\
 330 & accept & wg-host-to-internal-ssh & eth1 & eth2 & 192.168.11.106 & 10.11.0.0/24 & 22 & tcp \\
 \hline
 \end{longtable}
 
 \subsection{IPv4 -- Input}
-\begin{longtable}{|l|l|l|l|l|p{2.2cm}|l|}
+% IPv4 input rules
+
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
 1 & accept & stateful-return & & & & & & state established,related \\
@@ -594,25 +596,23 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 21 & accept & dns-from-internal & eth2 &  &  &  & 53 & tcp/udp \\
 30 & accept & dhcpv4-from-dmz & eth1 &  &  &  & 67 & udp \\
 31 & accept & dhcpv4-from-internal & eth2 &  &  &  & 67 & udp \\
-40 & accept & snmp-to-vyos-from-monitoring & eth1 &  & 192.168.11.107 & & 161 & udp \\
+40 & accept & snmp-to-vyos-from-monitoring & eth1 &  & 192.168.11.107 & 192.168.11.107 & 161 & udp \\
 41 & accept & icmp-to-vyos-from-dmz & eth1 &  &  &  &  & icmp \\
 42 & accept & icmp-to-vyos-from-internal & eth2 &  &  &  &  & icmp \\
 \hline
 \end{longtable}
 
 \subsection{IPv4 -- Output}
-\begin{longtable}{|l|l|l|p{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Opis} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Opis} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-1 & accept & & & state established,related \\
-10 & accept & & & state established,related \\
-20 & accept & 192.168.11.201 & 53 & tcp\_udp / DNS to AD server \\
+10 & accept & dns-from-dmz & eth0 &  &  & 192.168.11.201 & 53 & tcp/udp \\
 \hline
 \end{longtable}
 
@@ -680,10 +680,10 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 252 & accept & internal6-to-snmp-exporter-9116 & eth2 & eth1 & & 2001:1470:fffd:a9::107 & 9116 & tcp \\
 260 & accept & internal6-to-ad-dns-udp53 & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 53 & udp \\
 261 & accept & internal6-to-ad-dns-tcp53 & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 53 & tcp \\
-262 & accept & internal6-to-ad-kerberos & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 88 & tcp\_udp \\
-263 & accept & internal6-to-ad-ldap & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 389 & tcp\_udp \\
+262 & accept & internal6-to-ad-kerberos & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 88 & tcp/udp \\
+263 & accept & internal6-to-ad-ldap & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 389 & tcp/udp \\
 264 & accept & internal6-to-ad-global-catalog & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 3268, 3269 & tcp \\
-265 & accept & internal6-to-ad-smb-rpc-time & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 135, 123, 445, 464 & tcp\_udp \\
+265 & accept & internal6-to-ad-smb-rpc-time & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 135, 123, 445, 464 & tcp/udp \\
 266 & accept & internal6-to-ad-dynamic-rpc & eth2 & eth1 & & 2001:1470:fffd:a9::201 & 49152-65535 & tcp \\
 \hline
 \end{longtable}
@@ -706,10 +706,10 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 313 & accept & internal6-to-dmz-mgmt & eth2 & eth1 & 2001:1470:fffd:aa::/64 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp \\
 314 & accept & ipv6only-to-dmz-mgmt & eth3 & eth1 & fd11:11:11::/64 & 2001:1470:fffd:a9::/64 & 22, 3389 & tcp \\
 315 & accept & dmz6-peers-to-scriptum-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::104 & 8080, 3000, 3443, 4443, 30080, 30443 & tcp \\
-316 & accept & dmz6-peers-to-dmz-dns & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::105 & 53 & tcp\_udp \\
+316 & accept & dmz6-peers-to-dmz-dns & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::105 & 53 & tcp/udp \\
 317 & accept & dmz6-peers-to-wg-portal & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::106 & 8888 & tcp \\
 318 & accept & dmz6-peers-to-monitoring & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::107 & 3000, 9090, 9116 & tcp \\
-319 & accept & dmz6-peers-to-ad-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::201 & 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 & tcp\_udp \\
+319 & accept & dmz6-peers-to-ad-services & eth1 & eth1 & 2001:1470:fffd:a9::/64 & 2001:1470:fffd:a9::201 & 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 & tcp/udp \\
 320 & accept & snmp-exporter6-to-vyos-snmp & eth1 & eth1 & 2001:1470:fffd:a9::107 & 2001:1470:fffd:a9::1 & 161 & udp \\
 321 & accept & internal6-to-ipv6only-mgmt & eth2 & eth3 & 2001:1470:fffd:aa::/64 & fd11:11:11::/64 & 22, 3389 & tcp \\
 322 & accept & dmz6-to-ipv6only-mgmt & eth1 & eth3 & 2001:1470:fffd:a9::/64 & fd11:11:11::/64 & 22, 3389 & tcp \\
@@ -739,22 +739,22 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 452 & accept & ipv6only-to-snmp-exporter-9116 & eth3 & eth1 & & 2001:1470:fffd:a9::107 & 9116 & tcp \\
 460 & accept & ipv6only-to-ad-dns-udp53 & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 53 & udp \\
 461 & accept & ipv6only-to-ad-dns-tcp53 & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 53 & tcp \\
-462 & accept & ipv6only-to-ad-kerberos & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 88 & tcp\_udp \\
-463 & accept & ipv6only-to-ad-ldap & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 389 & tcp\_udp \\
+462 & accept & ipv6only-to-ad-kerberos & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 88 & tcp/udp \\
+463 & accept & ipv6only-to-ad-ldap & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 389 & tcp/udp \\
 464 & accept & ipv6only-to-ad-global-catalog & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 3268, 3269 & tcp \\
-465 & accept & ipv6only-to-ad-smb-rpc-time & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 135, 123, 445, 464 & tcp\_udp \\
+465 & accept & ipv6only-to-ad-smb-rpc-time & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 135, 123, 445, 464 & tcp/udp \\
 466 & accept & ipv6only-to-ad-dynamic-rpc & eth3 & eth1 & & 2001:1470:fffd:a9::201 & 49152-65535 & tcp \\
 \hline
 \end{longtable}
 
 \subsection{IPv6 -- Input}
-\begin{longtable}{|l|l|l|l|l|p{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endfirsthead
 \hline
-\textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
+\textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
 1 & accept & wan6-ssh-to-vyos & eth0 &  &  &  & 22 & tcp \\
@@ -767,7 +767,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 22 & accept & dns6-from-ipv6only & eth3 &  &  &  & 53 & tcp/udp \\
 30 & accept & dhcpv6-server-on-dmz & eth1 &  &  &  & 547 & udp \\
 31 & accept & dhcpv6-server-on-ipv6only & eth2 &  &  &  & 547 & udp \\
-40 & accept & icmpv6-from-dmz & eth1 &  &  &  &  & icmp \\
+40 & accept & icmpv6-from-dmz & eth1 &  & 192.168.11.107 & & 161 & udp \\
 41 & accept & icmpv6-from-internal & eth2 &  &  &  &  & icmp \\
 42 & accept & icmpv6-from-ipv6only & eth3 &  &  &  &  & icmp \\
 \hline
@@ -783,7 +783,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 \textbf{Rule} & \textbf{Action} & \textbf{Opis} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
 \endhead
-10 & accept & allow-router-icmpv6-output & eth0 &  &  &  &  & icmpv6 \\
+10 & accept & allow-router-icmpv6-output & eth0 &  &  &  & 22 & icmpv6 \\
 20 & accept & dns-from-dmz & eth1 &  &  & 2001:1470:fffd:a9::201 & 53 & tcp/udp \\
 \hline
 \end{longtable}
