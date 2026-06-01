@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2026.2.28)  31 MAY 2026 22:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2026.2.28)  1 JUN 2026 10:02
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -354,14 +354,21 @@ ta/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}]
 LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-07-19>
  ***********
-Package rerunfilecheck Info: File `vyos_rest_graphql_commands.out' has not chan
-ged.
-(rerunfilecheck)             Checksum: 9C15CA8105EE62634BEE6C277414444F;273.
+
+
+Package rerunfilecheck Warning: File `vyos_rest_graphql_commands.out' has chang
+ed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `vyos_rest_graphql_commands.out':
+(rerunfilecheck)             Before: 37855A99A7CD52411A5B76EAA7B78BD8;275
+(rerunfilecheck)             After:  9C15CA8105EE62634BEE6C277414444F;273.
  ) 
 Here is how much of TeX's memory you used:
  8560 strings out of 468149
  135295 string characters out of 5431566
- 545716 words of memory out of 5000000
+ 545719 words of memory out of 5000000
  37070 multiletter control sequences out of 15000+600000
  657542 words of font info for 60 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -371,7 +378,7 @@ Here is how much of TeX's memory you used:
 C:/Users/žan/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:
 /Users/žan/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr17.pfb><C:/U
 sers/žan/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb>
-Output written on vyos_rest_graphql_commands.pdf (2 pages, 133355 bytes).
+Output written on vyos_rest_graphql_commands.pdf (2 pages, 133741 bytes).
 PDF statistics:
  58 PDF objects out of 1000 (max. 8388607)
  7 named destinations out of 1000 (max. 500000)

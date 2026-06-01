@@ -21,16 +21,18 @@ breaklines=false,
  keepspaces=true,
 frame=single
 }
-
+\begin{center}
 \title{Dokumentacija poslovnega omrežja - startup11}
-\author{}
+\author{Žan Perat, Pavle Došen}
 \date{\today}
+\end{center}
 
 \begin{document}
 
 \maketitle
+\newpage
 \tableofcontents
-\vspace{1em}
+\newpage
 
 \section{Naloga in zasnova omrežja}
 V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Podjetje je start-up brez obstoječe IT infrastrukture; cilj je postaviti ločena omrežna segmenta za uporabnike in za strežnike, zagotoviti varen dostop do interneta in izpostaviti le izbrane javne storitve.
@@ -39,7 +41,7 @@ V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Pod
 \begin{itemize}
   \item Postaviti omrežje z ločenimi segmenti za \textbf{uporabnike} in \textbf{strežnike} (strogo ločeno prometno okolje).
   \item Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
-  \item Izpostaviti navzven le izbrane storitve: WireGuard, \texttt{wg-portal} (HTTPS) in REST frontend (HTTPS).
+  \item Izpostaviti navzven le izbrane storitve: WireGuard in REST frontend (HTTPS).
   \item Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo znotraj omrežja in preko VPN (ni direktnega WAN dostopa).
   \item Ohranjati poseben \textbf{ipv6only} segment za eksperimentalne/izobraževalne potrebe z NPTv6 preslikavo za odhodni promet.
 \end{itemize}
@@ -71,9 +73,9 @@ Ime virtualke se vedno začne z \texttt{sk11} (naša skupina), nato sledi segmen
 \begin{itemize}
   \item DMZ Linux virtualke uporabljajo \textbf{Ubuntu Server 26.04}.
   \item DMZ Active Directory virtualka uporablja \textbf{Windows Server 2022}.
-  \item Internal Linux virtualke uporabljajo \textbf{Ubuntu Server 26.04}.
+  \item Internal Linux virtualke uporabljajo \textbf{Ubuntu Desktop 26.04}.
   \item Internal Windows virtualke uporabljajo \textbf{Windows 10}.
-  \item IPv6-only Linux virtualke uporabljajo \textbf{Ubuntu Server 26.04}.
+  \item IPv6-only Linux virtualke uporabljajo \textbf{Ubuntu Desktop 26.04}.
   \item IPv6-only Windows virtualke uporabljajo \textbf{Windows 10}.
 \end{itemize}
 
@@ -106,7 +108,7 @@ sk11-dmz-windows-01-ad & 192.168.11.201 & 2001:1470:fffd:a9::201 & Active Direct
 
 \subsection{Uporabniška imena}
 Uporabniki na linux \texttt{dmz} virtualkah so vsi poimenovani \texttt{zanzan0X}, kjer je X številka virtualke (npr sk11-dmz-linux-04).
-Na \texttt{internal} in \texttt{ipv6only} odjemalcih je uporabnik vedno samo \texttt{zanzann}.
+Na \texttt{internal} in \texttt{ipv6only} odjemalcih je lokalni uporabnik vedno samo \texttt{zanzan}, drugi uporabniki so pridobljeni od AD.
 
 \subsection{Splošno geslo}
 \begin{center}
@@ -138,9 +140,11 @@ REST storitev (scriptum) & rest & 8080 (tcp) & Da & Obstaja javni DNAT \\
 \hline
 scriptum zaledje & rest & 4443 (tcp) & Da & Javno zaledno vozlišče \\
 \hline
+scriptum frontend & rest & 8080 (tcp) & Da & Javno frontend vozlišče \\
+\hline
 Library API (HTTP) & rest & 3000 (tcp) & Ne & Notranji HTTP API \\
 \hline
-Library API (HTTPS) & rest & 3443 (tcp) & Da & Javno HTTPS vozlišče \\
+Library API (HTTPS) & rest & 3443 (tcp) & Ne & Notranje HTTPS vozlišče \\
 \hline
 Library API (GraphQL) & rest & 30080, 30443 (tcp) & Ne & Notranji GraphQL vmesnik \\
 \hline
@@ -973,10 +977,10 @@ snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0
 
 \section{Active Directory (Windows Server)}
 \subsection{Osnovne informacije}
-Active Directory domena je nastavljena na strežniku \textbf{sk11-dmz-windows}. Strežnik deluje kot primarni Domain Controller (PDC) za domeno \texttt{startup11.local}.
+Active Directory domena je nastavljena na strežniku \textbf{sk11-dmz-windows-ad}. Strežnik deluje kot primarni Domain Controller (PDC) za domeno \texttt{startup11.local}.
 
 \begin{itemize}
-    \item \textbf{Ime strežnika:} sk11-dmz-windows
+    \item \textbf{Ime strežnika:} sk11-dmz-windows-ad
     \item \textbf{Domena:} startup11.local
     \item \textbf{NetBIOS ime:} startup11
     \item \textbf{OS:} Windows Server (Core)
