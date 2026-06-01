@@ -596,7 +596,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`.
 21 & accept & dns-from-internal & eth2 &  &  &  & 53 & tcp/udp \\
 30 & accept & dhcpv4-from-dmz & eth1 &  &  &  & 67 & udp \\
 31 & accept & dhcpv4-from-internal & eth2 &  &  &  & 67 & udp \\
-40 & accept & snmp-to-vyos-from-monitoring & eth1 &  & 192.168.11.107 & 192.168.11.107 & 161 & udp \\
+40 & accept & snmp-to-vyos-from-monitoring & eth1 &  & 192.168.11.107 & & 161 & udp \\
 41 & accept & icmp-to-vyos-from-dmz & eth1 &  &  &  &  & icmp \\
 42 & accept & icmp-to-vyos-from-internal & eth2 &  &  &  &  & icmp \\
 \hline

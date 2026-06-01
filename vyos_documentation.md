@@ -1,4 +1,6 @@
 ---
+author:
+- Žan Perat, Pavle Došen
 date: 2026-06-01
 title: Dokumentacija poslovnega omrežja - startup11
 ---
@@ -13,7 +15,7 @@ V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Pod
 
 - Vsi strežniki so gostovani v DMZ (po zahtevah naloge) — javne in interne storitve bodo fizično v DMZ, vendar z omejitvami dostopa.
 
-- Izpostaviti navzven le izbrane storitve: WireGuard, `wg-portal` (HTTPS) in REST frontend (HTTPS).
+- Izpostaviti navzven le izbrane storitve: WireGuard in REST frontend (HTTPS).
 
 - Kritične administrativne in imenik storitve (AD, DNS, SNMP) dostopne samo znotraj omrežja in preko VPN (ni direktnega WAN dostopa).
 
@@ -26,6 +28,11 @@ V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Pod
 - **INTERNAL (eth2)**: uporabniške delovne postaje, administrativne postaje in monitoring hosti. Od tu je dovoljen nadzorovan dostop do AD/DNS/SNMP v DMZ.
 
 - **IPV6ONLY (eth3)**: eksperimentalni IPv6-only segment; omogoča učenje in testiranje IPv6 funkcionalnosti. Izhodni promet je preko NPTv6 preslikave na javni IPv6.
+
+# Repozitorij
+
+Dokumentacija in vse dodatne datoteke so na repozitoriju:\
+<https://github.com/zanzan731/Vyos_documentation/>
 
 # Naprave
 
@@ -52,11 +59,11 @@ Ime virtualke se vedno začne z `sk11` (naša skupina), nato sledi segment, oper
 
 - DMZ Active Directory virtualka uporablja **Windows Server 2022**.
 
-- Internal Linux virtualke uporabljajo **Ubuntu Server 26.04**.
+- Internal Linux virtualke uporabljajo **Ubuntu Desktop 26.04**.
 
 - Internal Windows virtualke uporabljajo **Windows 10**.
 
-- IPv6-only Linux virtualke uporabljajo **Ubuntu Server 26.04**.
+- IPv6-only Linux virtualke uporabljajo **Ubuntu Desktop 26.04**.
 
 - IPv6-only Windows virtualke uporabljajo **Windows 10**.
 
@@ -78,7 +85,7 @@ Ime virtualke se vedno začne z `sk11` (naša skupina), nato sledi segment, oper
 
 ## Uporabniška imena
 
-Uporabniki na linux `dmz` virtualkah so vsi poimenovani `zanzan0X`, kjer je X številka virtualke (npr sk11-dmz-linux-04). Na `internal` in `ipv6only` odjemalcih je uporabnik vedno samo `zanzann`.
+Uporabniki na linux `dmz` virtualkah so vsi poimenovani `zanzan0X`, kjer je X številka virtualke (npr sk11-dmz-linux-04). Na `internal` in `ipv6only` odjemalcih je lokalni uporabnik vedno samo `zanzan`, drugi uporabniki so pridobljeni od AD.
 
 ## Splošno geslo
 
@@ -102,10 +109,10 @@ RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 338
 | RDP | vsi GUI gostitelji | 3389 (tcp) | Ne | vsi notranji in ipv6only gostitelji ter AD strežnik |
 | SSH | vsi DMZ gostitelji + vyos | 22 (tcp) | samo vyos | Storitev SSH je prisotna na vseh DMZ strežnikih; WAN SSH je dovoljen samo na vyos |
 | Cilj SNMP (VyOS) | vyos | 161 (udp) | Ne | SNMP na VyOS; exporter zajema ta cilj |
-| REST storitev (scriptum) | rest | 8080 (tcp) | Da | Obstaja javni DNAT |
 | scriptum zaledje | rest | 4443 (tcp) | Da | Javno zaledno vozlišče |
-| Library API (HTTP) | rest | 3000 (tcp) | Ne | Notranji HTTP API |
-| Library API (HTTPS) | rest | 3443 (tcp) | Da | Javno HTTPS vozlišče |
+| scriptum frontend | rest | 8080 (tcp) | Da | Javno frontend vozlišče |
+| Library API (HTTP) | rest | 3000 (tcp) | Ne | HTTP API |
+| Library API (HTTPS) | rest | 3443 (tcp) | Da | HTTPS API |
 | Library API (GraphQL) | rest | 30080, 30443 (tcp) | Ne | Notranji GraphQL vmesnik |
 | DMZ DNS | dns-srv | 53 (udp/tcp) | Ne | Notranji DNS za odjemalce v DMZ |
 | WireGuard strežnik | wg | 51820 (udp) | Da | PiVPN, uporablja lasten NAT/masquerade |
@@ -147,13 +154,19 @@ RDP je nastavljen na vseh napravah katere imajo GUI. Uporablja privzeti port 338
 
 RA (oglasi usmerjevalnika) po vmesnikih in stanju SLAAC:
 
-| **Vmesnik** | **Oglaševana predpona** | **RA zastavice** | **SLAAC omogočen?** |
-|:---|:---|:---|:---|
-| eth1 (DMZ) | 2001:1470:fffd:a9::/64 | managed, no-autonomous | Ne (prednost ima DHCPv6) |
-| eth2 (INTERNAL) | 2001:1470:fffd:aa::/64 | autonomous | Da (SLAAC) |
-| eth3 (IPV6ONLY) | fd11:11:11::/64 | managed, no-autonomous | Ne (prednost ima DHCPv6) |
+| **Vmesnik**     | **Oglaševana predpona** | **RA zastavice**       | **SLAAC** |
+|:----------------|:------------------------|:-----------------------|:----------|
+| eth1 (DMZ)      | 2001:1470:fffd:a9::/64  | managed, no-autonomous | Ne        |
+| eth2 (INTERNAL) | 2001:1470:fffd:aa::/64  | autonomous             | Da        |
+| eth3 (IPV6ONLY) | fd11:11:11::/64         | managed, no-autonomous | Ne        |
 
-Opombe: - Za IPv4 uporabljamo DHCP s statičnimi DHCPv4 mape za strežnike in pomembne gostitelje (ujemanje po MAC naslovu). - Za IPv6 je na INTERNAL omogočen SLAAC; IPV6ONLY uporablja DHCPv6, odjemalci pa naslove pridobijo prek DHCPv6, razen če je oglašen avtonomen predpon. Statične DHCPv6 mape uporabljamo samo za gostitelje, ki potrebujejo stalni, administrativno dodeljen naslov (strežniki, krmilniki). - Če vmesnik oglašuje tako `managed` kot `no-autonomous`, je SLAAC dejansko onemogočen in gostitelji morajo naslov pridobiti prek DHCPv6.
+Opombe:
+
+- Za IPv4 uporabljamo DHCP s statičnimi DHCPv4 mape za strežnike in pomembne gostitelje (ujemanje po MAC naslovu).
+
+- Za IPv6 je na INTERNAL omogočen SLAAC; IPV6ONLY in DMZ uporablja DHCPv6, odjemalci pa naslove pridobijo prek DHCPv6, razen če je oglašen avtonomen predpon.
+
+- Če vmesnik oglašuje tako `managed` kot `no-autonomous`, je SLAAC dejansko onemogočen in gostitelji morajo naslov pridobiti prek DHCPv6.
 
 ## NTP
 
@@ -243,26 +256,21 @@ AD privzeto generira DNS zapise potrebne za njegovo delovanje, spodnja tabela pa
 | raft2 | 192.168.11.102 | 2001:1470:fffd:a9::102 | raft vozlišče |
 | raft3 | 192.168.11.103 | 2001:1470:fffd:a9::103 | raft vozlišče |
 | rest | 192.168.11.104 | 2001:1470:fffd:a9::104 | REST / web storitev |
-| dns | 192.168.11.105 | \- | stari DNS zapis za Linux, trenutno ni v uporabi |
+| dns | 192.168.11.105 | \- | stari Linux DNS strežnik, trenutno ni v uporabi |
 | wg | 192.168.11.106 | 2001:1470:fffd:a9::106 | WireGuard gostitelj |
 | snmp | 192.168.11.107 | 2001:1470:fffd:a9::107 | monitoring gostitelj |
-| wg2 | 192.168.11.108 | 2001:1470:fffd:a9::108 | nov WireGuard gostitelj |
+| wg2 | 192.168.11.108 | 2001:1470:fffd:a9::108 | 2\. (neuporabljen) WireGuard gostitelj |
 | ad | 192.168.11.201 | 2001:1470:fffd:a9::201 | dodatno ime AD strežnika |
 
 ## Opomba o upravljanju DNS
 
-Ukazi za administracijo AD DNS strežnika so zbrani v ločeni datoteki `ad-dns-upravljanje.md`.
+Ukazi za administracijo AD DNS strežnika so zbrani v repozitoriju v datoteki `ad-dns-upravljanje.md`.
 
 # DHCP
 
 ## DHCPv4
 
-DHCP server ima dve skupini: **SERVERS** (192.168.11.0/24) z navedenimi statičnimi mapami in **USERS** (10.11.0.0/24) za uporabniške naprave z avtomatskim razponom.
-
-| **Skupina** | **Subnet / opomba**                            |
-|:------------|:-----------------------------------------------|
-| SERVERS     | 192.168.11.0/24 (statične mape)                |
-| USERS       | 10.11.0.0/24 (dinamični range 10.11.0.100-200) |
+DHCP server ima dve skupini: **SERVERS** (192.168.11.0/24) in **USERS** (10.11.0.0/24). Obe skupini uporabljata statične DHCP mape, nedodeljeni uporabniki pa dobijo naslov avtomatsko.
 
 ## DHCPv4 - statične mape
 
@@ -286,11 +294,11 @@ Statične DHCP mape so konfigurirane v DHCP strežniku na VyOS in ujemajo IP nas
 
 Uporaba DHCPv6 in SLAAC:
 
-- DMZ: DHCPv6 uporabljamo za strežnike (razpon `2001:1470:fffd:a9::100`–`::1ff`), za pomembne gostitelje pa so nastavljene statične DHCPv6 mape.
+- DMZ: DHCPv6 uporabljamo za strežnike (razpon `2001:1470:fffd:a9::100`–`::1ff`)
 
-- INTERNAL: SLAAC je privzeta izbira za odjemalce na `2001:1470:fffd:aa::/64`; statične DHCPv6 mape uporabljamo le za strežnike, ki potrebujejo fiksni IPv6 naslov.
+- INTERNAL: SLAAC je privzeta izbira za odjemalce na `2001:1470:fffd:aa::/64`
 
-- IPV6ONLY: za `fd11:11:11::/64` uporabljamo DHCPv6; gostitelji naslove pridobijo prek DHCPv6, statične mape pa dodamo le tam, kjer je to potrebno.
+- IPV6ONLY: za `fd11:11:11::/64` uporabljamo DHCPv6 statične mape da bi uporabniki lahko dostopali do oddaljenega omizja
 
 #### Statične DHCPv6 mape
 
@@ -317,7 +325,7 @@ Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporablja
 
 NAT je uporabljen za tri stvari: DNAT za izbrane javne IPv4 storitve, SNAT/masquerade za odhodni promet in NAT66 (NPTv6) za IPv6-only segment. Za IPv6 javne storitve uporabljamo izključno firewall pravila, ne pa port forwarding. Hairpin pravila omogočajo dostop do javnih storitev tudi iz notranjega in DMZ omrežja.
 
-## Opombe in primeri
+## Opombe
 
 - DNAT velja samo za izbrane porte in ciljne gostitelje.
 
@@ -327,27 +335,25 @@ NAT je uporabljen za tri stvari: DNAT za izbrane javne IPv4 storitve, SNAT/masqu
 
 ## IPv4 – DNAT
 
-| **Pravilo** | **Opis** | **In** | **Destination** | **Port** | **Proto/Notes** | **Prevod / cilj** |
+| **Pravilo** | **Opis** | **In** | **Destination** | **Port** | **Prot** | **Prevod / cilj** |
 |:---|:---|:---|:---|:---|:---|:---|
-| **Pravilo** | **Opis** | **In** | **Destination** | **Port** | **Proto/Notes** | **Prevod / cilj** |
+| **Pravilo** | **Opis** | **In** | **Destination** | **Port** | **Proto** | **Prevod / cilj** |
 | 110 | wan-to-wg0-51820-dnat | eth0 |  | 51820 | udp | 192.168.11.106:51820 (WireGuard) |
 | 130 | wan-to-scriptum-8080-dnat | eth0 |  | 8080 | tcp | 192.168.11.104:8080 (scriptum) |
 | 135 | wan-to-scriptum-4443-dnat | eth0 |  | 4443 | tcp | 192.168.11.104:4443 (scriptum TLS) |
 | 140 | wan-to-library-https-3443-dnat | eth0 |  | 3443 | tcp | 192.168.11.104:3443 (library HTTPS) |
-| 210 | hairpin-internal-to-public-services-dnat | eth2 | 88.200.24.241 | 8080 | tcp | 192.168.11.104:8080 |
-| 211 | hairpin-dmz-to-public-services-dnat | eth1 | 88.200.24.241 | 4443, 3443 | tcp | 192.168.11.104:4443,3443 |
-
-Za IPv6 javne storitve ni predviden DNAT; dostop je urejen z vhodnimi in forward firewall pravili.
+| 210 | hairpin-internal-to-public-services-dnat | eth2 | 88.200.24.241 | 8080,4443,3443 | tcp | 192.168.11.104:8080,4443,3443 |
+| 211 | hairpin-dmz-to-public-services-dnat | eth1 | 88.200.24.241 | 8080,4443,3443 | tcp | 192.168.11.104:8080,4443,3443 |
 
 ## IPv4 – SNAT
 
-| **Pravilo** | **Opis** | **Out** | **Source** | **Proto/Notes** | **Prevod / opomba** |
-|:---|:---|:---|:---|:---|:---|
-| **Pravilo** | **Opis** | **Out** | **Source** | **Proto/Notes** | **Prevod / opomba** |
-| 100 | snat-internal-to-internet | eth0 | 10.11.0.0/24 | masquerade | internet egress |
-| 110 | snat-dmz-to-internet | eth0 | 192.168.11.0/24 | masquerade | internet egress |
-| 120 | hairpin-internal-to-public-snat | eth1 | 10.11.0.0/24, dst 192.168.11.104 | tcp | 192.168.11.1 (return path) |
-| 121 | hairpin-dmz-to-public-snat | eth1 | 192.168.11.0/24, dst 192.168.11.104 | tcp | 192.168.11.1 (return path) |
+| **Pravilo** | **Opis** | **Out** | **Source** | **Destination** | **Proto/Notes** | **Prevod / opomba** |
+|:---|:---|:---|:---|:---|:---|:---|
+| **Pravilo** | **Opis** | **Out** | **Source** | **Destination** | **Proto/Notes** | **Prevod / opomba** |
+| 100 | snat-internal-to-internet | eth0 | 10.11.0.0/24 |  | masquerade | internet egress |
+| 110 | snat-dmz-to-internet | eth0 | 192.168.11.0/24 |  | masquerade | internet egress |
+| 120 | hairpin-internal-to-public-snat | eth1 | 10.11.0.0/24 | 192.168.11.104 | tcp | 192.168.11.1 (return path) |
+| 121 | hairpin-dmz-to-public-snat | eth1 | 192.168.11.0/24 | 192.168.11.104 | tcp | 192.168.11.1 (return path) |
 
 ## IPv6 – NAT66
 
@@ -360,17 +366,15 @@ Za IPv6 javne storitve ni predviden DNAT; dostop je urejen z vhodnimi in forward
 
 ## Kratek povzetek
 
-- **Model:** privzeto-zavrni (default-deny) — vse povezave niso dovoljene, razen izrecno dovoljenih.
+- **Model:** privzeto-zavrni (default-deny) — vse povezave so privzeto prepovedane, razen če so izrecno dovoljene.
 
-- **Kaj je dovoljeno:** odjemalci v notranji mreži (INTERNAL) in DMZ lahko dostopajo do interneta; iz interne in DMZ mreže so izrecno dovoljeni dostopi do DMZ storitev (DNS, web, monitoring, AD), WireGuard gostom so dovoljeni upravljalni dostopi; ICMP/ICMPv6 za diagnostične potrebe je omejeno, a omogočeno tam, kjer je potrebno.
+- **Kaj je dovoljeno:** vse naprave lahko dostopajo do interneta in vseh DMZ storitev (DNS, web, monitoring, AD). ICMP/ICMPv6 za diagnostične potrebe je povsod dovoljen.
 
 - **Kaj je blokirano:** naključni vhodni promet z interneta je privzeto zavrnjen, medsegmentni dostopi so blokirani, razen če obstaja specifično pravilo (npr. upravljanje, AD, monitoring).
 
-- **Hairpin NAT:** notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT za izbrane storitve.
+- **Hairpin NAT:** notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT.
 
-- **IPv6:** obstaja vzporedna zbirka pravil za IPv6; javne storitve na WAN so odprte z forward pravili do DMZ gostiteljev, za IPv6-only odjemalce pa so posebej omogočena pravila in NAT66 (NPTv6) za izhod v internet.
-
-Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘. Tabela uporablja `longtable` za lep izpis večstranskih tabel.
+Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘.
 
 ## IPv4 – Forward
 
@@ -413,10 +417,10 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘. Tabel
 | 252 | accept | internal-to-snmp-exporter-9116 | eth2 | eth1 |  | 192.168.11.107 | 9116 | tcp |
 | 260 | accept | internal-to-ad-dns-udp53 | eth2 | eth1 |  | 192.168.11.201 | 53 | udp |
 | 261 | accept | internal-to-ad-dns-tcp53 | eth2 | eth1 |  | 192.168.11.201 | 53 | tcp |
-| 262 | accept | internal-to-ad-kerberos | eth2 | eth1 |  | 192.168.11.201 | 88 | tcp_udp |
-| 263 | accept | internal-to-ad-ldap | eth2 | eth1 |  | 192.168.11.201 | 389 | tcp_udp |
+| 262 | accept | internal-to-ad-kerberos | eth2 | eth1 |  | 192.168.11.201 | 88 | tcp/udp |
+| 263 | accept | internal-to-ad-ldap | eth2 | eth1 |  | 192.168.11.201 | 389 | tcp/udp |
 | 264 | accept | internal-to-ad-global-catalog | eth2 | eth1 |  | 192.168.11.201 | 3268, 3269 | tcp |
-| 265 | accept | internal-to-ad-smb-rpc-time | eth2 | eth1 |  | 192.168.11.201 | 135, 123, 445, 464 | tcp_udp |
+| 265 | accept | internal-to-ad-smb-rpc-time | eth2 | eth1 |  | 192.168.11.201 | 135, 123, 445, 464 | tcp/udp |
 | 266 | accept | internal-to-ad-dynamic-rpc | eth2 | eth1 |  | 192.168.11.201 | 49152-65535 | tcp |
 
 ### IPv4 – Forward (300–399)
@@ -428,38 +432,36 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘. Tabel
 | 311 | accept | wg-host-to-internal-mgmt | eth1 | eth2 | 192.168.11.106 | 10.11.0.0/24 | 22, 3389 | tcp |
 | 312 | accept | internal-to-dmz-mgmt | eth2 | eth1 | 10.11.0.0/24 | 192.168.11.0/24 | 22, 3389 | tcp |
 | 315 | accept | dmz-peers-to-scriptum-services | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.104 | 8080, 3000, 3443, 4443, 30080, 30443 | tcp |
-| 316 | accept | dmz-peers-to-dmz-dns | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.105 | 53 | tcp_udp |
+| 316 | accept | dmz-peers-to-dmz-dns | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.105 | 53 | tcp/udp |
 | 317 | accept | dmz-peers-to-wg-portal | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.106 | 8888 | tcp |
 | 318 | accept | dmz-peers-to-monitoring | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.107 | 3000, 9090, 9116 | tcp |
-| 319 | accept | dmz-peers-to-ad-services | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.201 | 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 | tcp_udp |
+| 319 | accept | dmz-peers-to-ad-services | eth1 | eth1 | 192.168.11.0/24 | 192.168.11.201 | 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 | tcp/udp |
 | 320 | accept | snmp-exporter-to-vyos-snmp | eth1 | eth1 | 192.168.11.107 | 192.168.11.1 | 161 | udp |
 | 330 | accept | wg-host-to-internal-ssh | eth1 | eth2 | 192.168.11.106 | 10.11.0.0/24 | 22 | tcp |
 
 ## IPv4 – Input
 
-| **Rule** | **Action** | **In** | **Source** | **Destination** | **Port** | **Proto/Notes** |
-|:---|:---|:---|:---|:---|:---|:---|
-| **Rule** | **Action** | **In** | **Source** | **Destination** | **Port** | **Proto/Notes** |
-| 1 | accept |  |  |  |  | state established,related |
-| 10 | accept | eth0 |  |  | 22 | tcp |
-| 12 | accept | eth2 |  | 88.200.24.241 | 22 | tcp |
-| 13 | accept | eth1 |  | 88.200.24.241 | 22 | tcp |
-| 20 | accept | eth1 |  |  | 53 | tcp_udp |
-| 21 | accept | eth2 |  |  | 53 | tcp_udp |
-| 30 | accept | eth1 |  |  | 67 | udp |
-| 31 | accept | eth2 |  |  | 67 | udp |
-| 40 | accept | eth1 | 192.168.11.107 |  | 161 | udp |
-| 41 | accept | eth1 |  |  |  | icmp |
-| 42 | accept | eth2 |  |  |  | icmp |
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 1 | accept | stateful-return |  |  |  |  |  | state established,related |
+| 10 | accept | wan-ssh-to-vyos | eth0 |  |  |  | 22 | tcp |
+| 12 | accept | ssh-to-vyos-via-wan-ip-from-internal | eth2 |  |  | 88.200.24.241 | 22 | tcp |
+| 13 | accept | ssh-to-vyos-via-wan-ip-from-dmz | eth1 |  |  | 88.200.24.241 | 22 | tcp |
+| 20 | accept | dns-from-dmz | eth1 |  |  |  | 53 | tcp/udp |
+| 21 | accept | dns-from-internal | eth2 |  |  |  | 53 | tcp/udp |
+| 30 | accept | dhcpv4-from-dmz | eth1 |  |  |  | 67 | udp |
+| 31 | accept | dhcpv4-from-internal | eth2 |  |  |  | 67 | udp |
+| 40 | accept | snmp-to-vyos-from-monitoring | eth1 |  | 192.168.11.107 |  | 161 | udp |
+| 41 | accept | icmp-to-vyos-from-dmz | eth1 |  |  |  |  | icmp |
+| 42 | accept | icmp-to-vyos-from-internal | eth2 |  |  |  |  | icmp |
 
 ## IPv4 – Output
 
-| **Rule** | **Action** | **Destination** | **Port** | **Proto/Notes**            |
-|:---------|:-----------|:----------------|:---------|:---------------------------|
-| **Rule** | **Action** | **Destination** | **Port** | **Proto/Notes**            |
-| 1        | accept     |                 |          | state established,related  |
-| 10       | accept     |                 |          | state established,related  |
-| 20       | accept     | 192.168.11.201  | 53       | tcp_udp / DNS to AD server |
+| **Rule** | **Action** | **Opis** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Opis** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 10 | accept | dns-from-dmz | eth0 |  |  | 192.168.11.201 | 53 | tcp/udp |
 
 ## IPv6 – Forward
 
@@ -507,10 +509,10 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘. Tabel
 | 252 | accept | internal6-to-snmp-exporter-9116 | eth2 | eth1 |  | 2001:1470:fffd:a9::107 | 9116 | tcp |
 | 260 | accept | internal6-to-ad-dns-udp53 | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 53 | udp |
 | 261 | accept | internal6-to-ad-dns-tcp53 | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 53 | tcp |
-| 262 | accept | internal6-to-ad-kerberos | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 88 | tcp_udp |
-| 263 | accept | internal6-to-ad-ldap | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 389 | tcp_udp |
+| 262 | accept | internal6-to-ad-kerberos | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 88 | tcp/udp |
+| 263 | accept | internal6-to-ad-ldap | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 389 | tcp/udp |
 | 264 | accept | internal6-to-ad-global-catalog | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 3268, 3269 | tcp |
-| 265 | accept | internal6-to-ad-smb-rpc-time | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 135, 123, 445, 464 | tcp_udp |
+| 265 | accept | internal6-to-ad-smb-rpc-time | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 135, 123, 445, 464 | tcp/udp |
 | 266 | accept | internal6-to-ad-dynamic-rpc | eth2 | eth1 |  | 2001:1470:fffd:a9::201 | 49152-65535 | tcp |
 
 ### IPv6 – Forward (300–399)
@@ -524,10 +526,10 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘. Tabel
 | 313 | accept | internal6-to-dmz-mgmt | eth2 | eth1 | 2001:1470:fffd:aa::/64 | 2001:1470:fffd:a9::/64 | 22, 3389 | tcp |
 | 314 | accept | ipv6only-to-dmz-mgmt | eth3 | eth1 | fd11:11:11::/64 | 2001:1470:fffd:a9::/64 | 22, 3389 | tcp |
 | 315 | accept | dmz6-peers-to-scriptum-services | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::104 | 8080, 3000, 3443, 4443, 30080, 30443 | tcp |
-| 316 | accept | dmz6-peers-to-dmz-dns | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::105 | 53 | tcp_udp |
+| 316 | accept | dmz6-peers-to-dmz-dns | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::105 | 53 | tcp/udp |
 | 317 | accept | dmz6-peers-to-wg-portal | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::106 | 8888 | tcp |
 | 318 | accept | dmz6-peers-to-monitoring | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::107 | 3000, 9090, 9116 | tcp |
-| 319 | accept | dmz6-peers-to-ad-services | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::201 | 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 | tcp_udp |
+| 319 | accept | dmz6-peers-to-ad-services | eth1 | eth1 | 2001:1470:fffd:a9::/64 | 2001:1470:fffd:a9::201 | 53, 88, 389, 3268, 3269, 135, 123, 445, 464, 49152-65535 | tcp/udp |
 | 320 | accept | snmp-exporter6-to-vyos-snmp | eth1 | eth1 | 2001:1470:fffd:a9::107 | 2001:1470:fffd:a9::1 | 161 | udp |
 | 321 | accept | internal6-to-ipv6only-mgmt | eth2 | eth3 | 2001:1470:fffd:aa::/64 | fd11:11:11::/64 | 22, 3389 | tcp |
 | 322 | accept | dmz6-to-ipv6only-mgmt | eth1 | eth3 | 2001:1470:fffd:a9::/64 | fd11:11:11::/64 | 22, 3389 | tcp |
@@ -550,31 +552,38 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘. Tabel
 | 452 | accept | ipv6only-to-snmp-exporter-9116 | eth3 | eth1 |  | 2001:1470:fffd:a9::107 | 9116 | tcp |
 | 460 | accept | ipv6only-to-ad-dns-udp53 | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 53 | udp |
 | 461 | accept | ipv6only-to-ad-dns-tcp53 | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 53 | tcp |
-| 462 | accept | ipv6only-to-ad-kerberos | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 88 | tcp_udp |
-| 463 | accept | ipv6only-to-ad-ldap | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 389 | tcp_udp |
+| 462 | accept | ipv6only-to-ad-kerberos | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 88 | tcp/udp |
+| 463 | accept | ipv6only-to-ad-ldap | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 389 | tcp/udp |
 | 464 | accept | ipv6only-to-ad-global-catalog | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 3268, 3269 | tcp |
-| 465 | accept | ipv6only-to-ad-smb-rpc-time | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 135, 123, 445, 464 | tcp_udp |
+| 465 | accept | ipv6only-to-ad-smb-rpc-time | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 135, 123, 445, 464 | tcp/udp |
 | 466 | accept | ipv6only-to-ad-dynamic-rpc | eth3 | eth1 |  | 2001:1470:fffd:a9::201 | 49152-65535 | tcp |
 
 ## IPv6 – Input
 
-| **Rule** | **Action** | **In** | **Source** | **Destination** | **Port** | **Proto/Notes** |
-|:---|:---|:---|:---|:---|:---|:---|
-| **Rule** | **Action** | **In** | **Source** | **Destination** | **Port** | **Proto/Notes** |
-| 1 | accept |  |  |  |  | state established,related |
-| 10 | accept | eth0 |  |  | 22 | tcp |
-| 11 | accept | eth0 |  |  |  | icmpv6 |
-| 12 | accept | eth2 |  | 2001:1470:fffd:a8::2 | 22 | tcp |
-| 13 | accept | eth1 |  | 2001:1470:fffd:a8::2 | 22 | tcp |
-| 14 | accept | eth3 |  | 2001:1470:fffd:a8::2 | 22 | tcp |
-| 20 | accept | eth1 |  |  | 53 | tcp_udp |
-| 21 | accept | eth2 |  |  | 53 | tcp_udp |
-| 22 | accept | eth3 |  |  | 53 | tcp_udp |
-| 30 | accept | eth1 |  |  | 547 | udp |
-| 31 | accept | eth3 |  |  | 547 | udp |
-| 40 | accept | eth1 |  |  |  | icmpv6 |
-| 41 | accept | eth2 |  |  |  | icmpv6 |
-| 42 | accept | eth3 |  |  |  | icmpv6 |
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Description** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 1 | accept | wan6-ssh-to-vyos | eth0 |  |  |  | 22 | tcp |
+| 11 | accept | icmpv6-from-wan | eth0 |  |  |  |  | icmpv6 |
+| 12 | accept | ssh6-to-vyos-via-wan-ip-from-internal | eth2 |  |  | 2001:1470:fffd:a8::2 | 22 | tcp |
+| 13 | accept | ssh6-to-vyos-via-wan-ip-from-dmz | eth1 |  |  | 2001:1470:fffd:a8::2 | 22 | tcp |
+| 14 | accept | ssh6-to-vyos-via-wan-ip-from-ipv6only | eth3 |  |  | 2001:1470:fffd:a8::2 | 22 | tcp |
+| 20 | accept | dns6-from-dmz | eth1 |  |  |  | 53 | tcp/udp |
+| 21 | accept | dns6-from-internal | eth2 |  |  |  | 53 | tcp/udp |
+| 22 | accept | dns6-from-ipv6only | eth3 |  |  |  | 53 | tcp/udp |
+| 30 | accept | dhcpv6-server-on-dmz | eth1 |  |  |  | 547 | udp |
+| 31 | accept | dhcpv6-server-on-ipv6only | eth2 |  |  |  | 547 | udp |
+| 40 | accept | icmpv6-from-dmz | eth1 |  | 192.168.11.107 |  | 161 | udp |
+| 41 | accept | icmpv6-from-internal | eth2 |  |  |  |  | icmp |
+| 42 | accept | icmpv6-from-ipv6only | eth3 |  |  |  |  | icmp |
+
+## IPv6 – Output
+
+| **Rule** | **Action** | **Opis** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **Rule** | **Action** | **Opis** | **In** | **Out** | **Source** | **Destination** | **Port** | **Proto/Notes** |
+| 10 | accept | allow-router-icmpv6-output | eth0 |  |  |  | 22 | icmpv6 |
+| 20 | accept | dns-from-dmz | eth1 |  |  | 2001:1470:fffd:a9::201 | 53 | tcp/udp |
 
 </div>
 
@@ -590,7 +599,7 @@ WireGuard VPN teče na napravi z notranjim naslovom `192.168.11.106` v DMZ omre�
 
 - **Javni port:** UDP 51820
 
-- **Storitev:** aktivna in dostopna iz javnega interneta prek obstoječe NAT nastavitve
+- **Javni dostop:** 88.200.24.241 prek obstoječe DNAT nastavitve
 
 ## Upravljanje VPN uporabnikov
 
@@ -650,7 +659,7 @@ Privzete lokacije in nastavitve (trenutna postavitev):
 `wg-portal` je nameščen na lokaciji `/opt/wg-portal/`. Privzeta shrmba je SQLite podatkovna baza na `data/sqlite.db`. Moramo dobro poskrbiti da proces ki poganja wg-portal ima adekvatne pravice. V praksi smo morali ustvariti sistemskega uporabnika `wgportal` in nastaviti tega uporabnika kot lastnika vseh datotek v `/opt/wg-portal`, saj so sicer nastajale napake s pravicami ob zagonu aplikacije. Spodaj so primeri ukazov, ki smo jih uporabili (izvedite kot `root` ali z `sudo`):
 
     # Ustvari sistemskega uporabnika brez prijave in z domaco mapo na /opt/wg-portal
-    useradd --system --no-create-home --shell /usr/sbin/nologin --home-dir /opt/wg-portal wgportal
+    useradd --system --no-create-home --shell /usr/sbin/nologin wgportal
 
     # Nastavi lastnistvo in varne pravice za podatkovno mapo
     chown -R wgportal:wgportal /opt/wg-portal
@@ -663,8 +672,6 @@ Za povezavo z AD je običajno potrebno konfigurirati bind uporabnika, base DN in
 - **LDAP URL:** ldap://192.168.11.201:389 (ali ldaps://... z ustreznimi certifikati)
 
 - **Bind DN:** CN=wgportal_bind,OU=ServiceAccounts,DC=startup11,DC=local
-
-- **Bind password:** (varno shranjen v konfiguraciji ali vault)
 
 - **User search base:** OU=Users,DC=startup11,DC=local
 
@@ -690,7 +697,7 @@ Spodaj so osnovni primeri za ustvarjanje bind uporabnika in dodajanje v administ
 
 # Monitoring in SNMP
 
-Monitoring v tej zasnovi je namenjen predvsem nadzoru omrežnega stanja, ne operativnemu upravljanju storitev. Osrednji vir metrik je VyOS prek SNMP v2c, iz katerega se berejo osnovni podatki o vmesnikih, dosegljivosti, prometa in sistemskem stanju. Te metrike se nato pretvorijo v Prometheus format, zberejo v Prometheusu in vizualizirajo v Grafani. Monitoring stack je nameščen prek Dockerja (Docker Compose) na gostitelju za nadzor.
+Monitoring v tej zasnovi je namenjen predvsem nadzoru omrežnega stanja, ne operativnemu upravljanju storitev. Trenutno edini vir metrik je VyOS usmerjevalnik prek SNMP, iz katerega se berejo osnovni podatki o vmesnikih, dosegljivosti, prometa in sistemskem stanju. Te metrike se nato pretvorijo v Prometheus format, zberejo v Prometheusu in vizualizirajo v Grafani. Monitoring stack je nameščen prek Dockerja (Docker Compose) na gostitelju za nadzor.
 
 ## Arhitektura spremljanja
 
@@ -712,7 +719,8 @@ Monitoring zajema metrike, ki jih bere `snmp_exporter` iz VyOS preko SNMP in jih
 
 - **Vmesniki in identifikacija (IF-MIB)**: `ifNumber` (`1.3.6.1.2.1.2.1`), `ifIndex`, `ifDescr` (`1.3.6.1.2.1.2.2.1.2`) — seznam in poimenovanje vmesnikov.
 
-- **Konfiguracijski atributi (IF-MIB)**: `ifMtu` (`1.3.6.1.2.1.2.2.1.4`), `ifSpeed` (`1.3.6.1.2.1.2.2.1.5`), `ifPhysAddress`.
+- **Konfiguracijski atributi (IF-MIB)**: `ifMtu` (`1.3.6.1.2.1.2.2.1.4`),\
+  `ifSpeed` (`1.3.6.1.2.1.2.2.1.5`), `ifPhysAddress`.
 
 - **Stanje vmesnikov**: `ifAdminStatus` / `ifOperStatus` (operativna/administrativna stanja).
 
@@ -720,7 +728,8 @@ Monitoring zajema metrike, ki jih bere `snmp_exporter` iz VyOS preko SNMP in jih
 
 - **Napake in odmetki (IF-MIB)**: `ifInErrors`, `ifInDiscards`, `ifOutErrors` — signalizacija degradacij linka.
 
-- **Dodatni prometni števci (IFX)**: multicast/broadcast števci in `ifHighSpeed` (`1.3.6.1.2.1.31.1.1.1.15`).
+- **Dodatni prometni števci (IFX)**: multicast/broadcast števci in\
+  `ifHighSpeed` (`1.3.6.1.2.1.31.1.1.1.15`).
 
 - **IP/TCP/UDP statistike (po potrebi)**: zbirne statistike iz IP/TCP/UDP-MIB-ov (retransmisije, portne agregacije ipd.) — vključimo le ob potrebi za specifične istrage.
 
@@ -790,9 +799,9 @@ Opomba: celoten, natančen seznam metrik in podrobne preslikave so v `snmp_stack
 
 ## Osnovne informacije
 
-Active Directory domena je nastavljena na strežniku **sk11-dmz-windows**. Strežnik deluje kot primarni Domain Controller (PDC) za domeno `startup11.local`.
+Active Directory domena je nastavljena na strežniku **sk11-dmz-windows-ad**. Strežnik deluje kot primarni Domain Controller (PDC) za domeno `startup11.local`.
 
-- **Ime strežnika:** sk11-dmz-windows
+- **Ime strežnika:** sk11-dmz-windows-ad
 
 - **Domena:** startup11.local
 
