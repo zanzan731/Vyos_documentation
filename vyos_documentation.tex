@@ -13,8 +13,6 @@
 
 \geometry{margin=1in}
 
-\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-
 \lstset{
 backgroundcolor=\color{gray!10},
 basicstyle=\ttfamily\small,
@@ -60,7 +58,7 @@ V tej dokumentaciji opišemo nalogo podjetja in predlagano omrežno zasnovo. Pod
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.9\textwidth]{serverlist.png}
-  \caption{Screenshot of VM names (serverlist.png)}
+  \caption{Posnetek imen virtualk}
 \end{figure}
 
 \subsection{Konvencija poimenovanja virtualk}
@@ -132,37 +130,37 @@ saj za RDP uporablja različno geslo ki je privzeto avtogenerirano.
 
 \begin{longtable}{|p{4.1cm}|p{2cm}|p{2.5cm}|p{1.3cm}|p{5.0cm}|}
 \hline
-\textbf{Service} & \textbf{Host} & \textbf{Port (proto)} & \textbf{Public?} & \textbf{Notes} \\
+\textbf{Storitev} & \textbf{Gostitelj} & \textbf{Port (proto)} & \textbf{Javno?} & \textbf{Opombe} \\
 \hline
-RDP & all GUI & 3389 (tcp) & No & all internal and ipv6only, AD server \\
+RDP & vsi GUI gostitelji & 3389 (tcp) & Ne & vsi notranji in ipv6only gostitelji ter AD strežnik \\
 \hline
-SSH & all dmz + vyos & 22 (tcp) & only vyos & SSH service present on all dmz servers; WAN SSH allowed only on vyos \\
+SSH & vsi DMZ gostitelji + vyos & 22 (tcp) & samo vyos & Storitev SSH je prisotna na vseh DMZ strežnikih; WAN SSH je dovoljen samo na vyos \\
 \hline
-SNMP target (VyOS) & vyos & 161 (udp) & No & SNMP on VyOS; exporter scrapes this target \\
+Cilj SNMP (VyOS) & vyos & 161 (udp) & Ne & SNMP na VyOS; exporter zajema ta cilj \\
 \hline
-REST service (scriptum) & rest & 8080 (tcp) & Yes & Public DNAT exists \\
+REST storitev (scriptum) & rest & 8080 (tcp) & Da & Obstaja javni DNAT \\
 \hline
-scriptum backend & rest & 4443 (tcp) & Yes & Public backend endpoint \\
+scriptum zaledje & rest & 4443 (tcp) & Da & Javno zaledno vozlišče \\
 \hline
-Library API (HTTP) & rest & 3000 (tcp) & No & Internal HTTP API \\
+Library API (HTTP) & rest & 3000 (tcp) & Ne & Notranji HTTP API \\
 \hline
-Library API (HTTPS) & rest & 3443 (tcp) & Yes & Public HTTPS endpoint \\
+Library API (HTTPS) & rest & 3443 (tcp) & Da & Javno HTTPS vozlišče \\
 \hline
-Library API (GraphQL) & rest & 30080, 30443 (tcp) & No & Internal GraphQL endpoint \\
+Library API (GraphQL) & rest & 30080, 30443 (tcp) & Ne & Notranji GraphQL vmesnik \\
 \hline
-DMZ DNS & dns-srv & 53 (udp/tcp) & No & Internal DNS for DMZ clients \\
+DMZ DNS & dns-srv & 53 (udp/tcp) & Ne & Notranji DNS za odjemalce v DMZ \\
 \hline
-WireGuard server & wg & 51820 (udp) & Yes & PiVPN, uses its own NAT/masquerade \\
+WireGuard strežnik & wg & 51820 (udp) & Da & PiVPN, uporablja lasten NAT/masquerade \\
 \hline
-wg-portal UI & wg & 8888 (tcp) & No & Local portal UI (internal only) \\
+wg-portal vmesnik & wg & 8888 (tcp) & Ne & Lokalni portalni vmesnik (samo interno) \\
 \hline
-Prometheus & snmp & 9090 (tcp) & No & Prometheus scrape UI/service \\
+Prometheus & snmp & 9090 (tcp) & Ne & Uporabniški vmesnik/storitev Prometheusa \\
 \hline
-\texttt{snmp\_exporter} & snmp & 9116 (tcp) & No & Exporter endpoint for Prometheus \\
+\texttt{snmp\_exporter} & snmp & 9116 (tcp) & Ne & Končna točka exporterja za Prometheus \\
 \hline
-Grafana & snmp & 3000 (tcp) & No & Grafana UI for dashboards \\
+Grafana & snmp & 3000 (tcp) & Ne & Uporabniški vmesnik Grafane za nadzorne plošče \\
 \hline
-AD services (DNS/Kerberos/LDAP/etc.) & AD & 53, 88, 389, 3268, 135, 123, 445, 464, 49152-65535 & No & Active Directory services (internal only) \\
+AD storitve (DNS/Kerberos/LDAP/itd.) & AD & 53, 88, 389, 3268, 135, 123, 445, 464, 49152-65535 & Ne & Storitve Active Directory (samo interno) \\
 \hline
 \end{longtable}
 
@@ -202,22 +200,22 @@ eth3 & IPv6-only & - & fd11:11:11::1/64 \\
 \hline
 \end{longtable}
 
-\subsection{Router Advertisements (RA)}
-RA (Router Advertisements) per interface and SLAAC status:
+\subsection{Oglasi usmerjevalnika (RA)}
+RA (oglasi usmerjevalnika) po vmesnikih in stanju SLAAC:
 \begin{longtable}{|l|l|l|l|}
 \hline
-\textbf{Interface} & \textbf{Announced prefix} & \textbf{RA flags} & \textbf{SLAAC enabled?} \\
+\textbf{Vmesnik} & \textbf{Oglaševana predpona} & \textbf{RA zastavice} & \textbf{SLAAC omogočen?} \\
 \hline
-eth1 (DMZ) & 2001:1470:fffd:a9::/64 & managed, no-autonomous & No (DHCPv6 preferred) \\
-eth2 (INTERNAL) & 2001:1470:fffd:aa::/64 & autonomous & Yes (SLAAC) \\
-eth3 (IPV6ONLY) & fd11:11:11::/64 & autonomous & Yes (SLAAC) \\
+eth1 (DMZ) & 2001:1470:fffd:a9::/64 & managed, no-autonomous & Ne (prednost ima DHCPv6) \\
+eth2 (INTERNAL) & 2001:1470:fffd:aa::/64 & autonomous & Da (SLAAC) \\
+eth3 (IPV6ONLY) & fd11:11:11::/64 & managed, no-autonomous & Ne (prednost ima DHCPv6) \\
 \hline
 \end{longtable}
 
-Notes:
-- For IPv4 we use DHCP with static DHCPv4 maps for servers and important hosts (match by MAC address).
-- For IPv6 SLAAC is enabled on INTERNAL and IPV6ONLY so clients auto-configure addresses from the announced prefix. Use DHCPv6 static maps only for hosts that require a stable, administratively assigned address (servers, controllers).
-- If an interface advertises both \texttt{managed} and \texttt{no-autonomous}, SLAAC is effectively disabled and hosts must obtain an address via DHCPv6.
+Opombe:
+- Za IPv4 uporabljamo DHCP s statičnimi DHCPv4 mape za strežnike in pomembne gostitelje (ujemanje po MAC naslovu).
+- Za IPv6 je na INTERNAL omogočen SLAAC; IPV6ONLY uporablja DHCPv6, odjemalci pa naslove pridobijo prek DHCPv6, razen če je oglašen avtonomen predpon. Statične DHCPv6 mape uporabljamo samo za gostitelje, ki potrebujejo stalni, administrativno dodeljen naslov (strežniki, krmilniki).
+- Če vmesnik oglašuje tako \texttt{managed} kot \texttt{no-autonomous}, je SLAAC dejansko onemogočen in gostitelji morajo naslov pridobiti prek DHCPv6.
 
 \subsection{NTP}
 NTP sinhronizacija uporablja naslednje strežnike:
@@ -320,10 +318,10 @@ raft1 & 192.168.11.101 & 2001:1470:fffd:a9::101 & raft vozlišče \\
 raft2 & 192.168.11.102 & 2001:1470:fffd:a9::102 & raft vozlišče \\
 raft3 & 192.168.11.103 & 2001:1470:fffd:a9::103 & raft vozlišče \\
 rest & 192.168.11.104 & 2001:1470:fffd:a9::104 & REST / web storitev \\
-dns-srv & 192.168.11.105 & - & legacy Linux DNS host record, trenutno ni v uporabi \\
+dns & 192.168.11.105 & - & stari DNS zapis za Linux, trenutno ni v uporabi \\
 wg & 192.168.11.106 & 2001:1470:fffd:a9::106 & WireGuard gostitelj \\
 snmp & 192.168.11.107 & 2001:1470:fffd:a9::107 & monitoring gostitelj \\
-new-wg & 192.168.11.108 & 2001:1470:fffd:a9::108 & nov WireGuard gostitelj \\
+wg2 & 192.168.11.108 & 2001:1470:fffd:a9::108 & nov WireGuard gostitelj \\
 ad & 192.168.11.201 & 2001:1470:fffd:a9::201 & dodatno ime AD strežnika \\
 \hline
 \end{longtable}
@@ -360,40 +358,36 @@ raft3 & 00:0c:29:a2:5c:63 & 192.168.11.103 \\
 \hline
 rest & 00:0c:29:17:1a:72 & 192.168.11.104 \\
 \hline
-dns-srv & 00:0c:29:4a:b1:99 & 192.168.11.105 \\
+dns & 00:0c:29:4a:b1:99 & 192.168.11.105 \\
 \hline
-wireguard & 00:0c:29:c4:d1:52 & 192.168.11.106 \\
+wg & 00:0c:29:c4:d1:52 & 192.168.11.106 \\
 \hline
 snmp & 00:0c:29:69:75:09 & 192.168.11.107 \\
 \hline
-new\_wg & 00:0c:29:f9:2a:a8 & 192.168.11.108 \\
+wg2 & 00:0c:29:f9:2a:a8 & 192.168.11.108 \\
 \hline
-AD (dmz windows 1) & 00:0c:29:07:cf:1c & 192.168.11.201 \\
+ad & 00:0c:29:07:cf:1c & 192.168.11.201 \\
 \hline
 internal-linux-01 & 00:0c:29:aa:aa:01 & 10.11.0.101 \\
 \hline
 internal-win-01 & 00:0c:29:bb:bb:01 & 10.11.0.201 \\
 \hline
-internal-monitor & 00:0c:29:cc:cc:01 & 10.11.0.107 \\
-\hline
 \end{longtable}
 
 \subsection{DHCPv6}
-DHCPv6 in SLAAC usage:
+Uporaba DHCPv6 in SLAAC:
 \begin{itemize}
-  \item DMZ: DHCPv6 is used for servers (range \texttt{2001:1470:fffd:a9::100}--\texttt{::1ff}) and static DHCPv6 maps are configured for important hosts.
-  \item INTERNAL: SLAAC is the default for clients on \texttt{2001:1470:fffd:aa::/64}; use DHCPv6 static maps only for servers that require a fixed IPv6 address.
-  \item IPV6ONLY: SLAAC is the default on \texttt{fd11:11:11::/64}; these hosts autoconfigure addresses and do not normally require DHCPv6 static mappings.
+  \item DMZ: DHCPv6 uporabljamo za strežnike (razpon \texttt{2001:1470:fffd:a9::100}--\texttt{::1ff}), za pomembne gostitelje pa so nastavljene statične DHCPv6 mape.
+  \item INTERNAL: SLAAC je privzeta izbira za odjemalce na \texttt{2001:1470:fffd:aa::/64}; statične DHCPv6 mape uporabljamo le za strežnike, ki potrebujejo fiksni IPv6 naslov.
+  \item IPV6ONLY: za \texttt{fd11:11:11::/64} uporabljamo DHCPv6; gostitelji naslove pridobijo prek DHCPv6, statične mape pa dodamo le tam, kjer je to potrebno.
 \end{itemize}
-
-The DHCPv6 server address for DMZ static allocations remains \texttt{2001:1470:fffd:a9::1}.
 
 \paragraph{Statične DHCPv6 mape}
 Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporabljajo v konfiguraciji VyOS.
 Spet je konvencija da je zadnja številka v naslovu 1XX za linux in 2XX za windows naprave.
 \begin{longtable}{|l|l|l|}
 \hline
-\textbf{Host} & \textbf{DHCPv6 naslov} & \textbf{DUID / identifier} \\
+\textbf{Gostitelj} & \textbf{DHCPv6 naslov} & \textbf{DUID / identifikator} \\
 \hline
 dmz-windows-AD & 2001:1470:fffd:a9::201 & 00:01:00:01:31:86:a4:b0:00:0c:29:07:cf:26 \\
 \hline
@@ -409,7 +403,11 @@ snmp & 2001:1470:fffd:a9::107 & 00:02:00:00:ab:11:b8:b7:97:e3:eb:3c:a5:52 \\
 \hline
 wg & 2001:1470:fffd:a9::106 & 00:02:00:00:ab:11:80:f9:48:e8:e6:e2:12:59 \\
 \hline
-new\_wg & 2001:1470:fffd:a9::108 & 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 \\
+wg2 & 2001:1470:fffd:a9::108 & 00:02:00:00:ab:11:dd:e2:8d:62:21:b3:d9:00 \\
+\hline
+ipv6only-linux & fd11:11:11::101 & 00:04:db:bb:16:07:aa:ea:2b:a4:bb:02:58:b1:00:55:16:8b \\
+\hline
+ipv6only-windows & fd11:11:11::201 & 00:01:00:01:31:8e:75:9d:00:0c:29:05:57:f5 \\
 \hline
 \end{longtable}
 
@@ -428,7 +426,7 @@ NAT je uporabljen za tri stvari: DNAT za izbrane javne storitve, SNAT/masquerade
 \end{itemize}
 
 \subsection{IPv4 -- DNAT}
-\begin{longtable}{|l|l|l|l|L{2.2cm}|l|l|}
+\begin{longtable}{|l|l|l|l|p{2.2cm}|l|l|}
 \hline
 \textbf{Pravilo} & \textbf{Opis} & \textbf{In} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} & \textbf{Prevod / cilj} \\
 \hline
@@ -485,14 +483,14 @@ NAT je uporabljen za tri stvari: DNAT za izbrane javne storitve, SNAT/masquerade
   \item \textbf{Model:} privzeto-zavrni (default-deny) — vse povezave niso dovoljene, razen izrecno dovoljenih.
   \item \textbf{Kaj je dovoljeno:} odjemalci v notranji mreži (INTERNAL) in DMZ lahko dostopajo do interneta; iz interne in DMZ mreže so izrecno dovoljeni dostopi do DMZ storitev (DNS, web, monitoring, AD), WireGuard gostom so dovoljeni upravljalni dostopi; ICMP/ICMPv6 za diagnostične potrebe je omejeno, a omogočeno tam, kjer je potrebno.
   \item \textbf{Kaj je blokirano:} naključni vhodni promet z interneta je privzeto zavrnjen, medsegmentni dostopi so blokirani, razen če obstaja specifično pravilo (npr. upravljanje, AD, monitoring).
-  \item \textbf{Hairpin NAT:} notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT za izbrane services.
+  \item \textbf{Hairpin NAT:} notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT za izbrane storitve.
   \item \textbf{IPv6:} obstaja vzporedna zbirka pravil za IPv6; za IPv6-only odjemalce so posebej omogočena pravila in NAT66 (NPTv6) za izhod v internet.
 \end{itemize}
-Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela uporablja \texttt{longtable} za lep izpis večstranskih tabel.
+Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.15.conf`. Tabela uporablja \texttt{longtable} za lep izpis večstranskih tabel.
 
 \subsection{IPv4 -- Forward}
 \subsubsection{IPv4 -- Forward (1--99)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -510,7 +508,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsubsection{IPv4 -- Forward (100--199)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -527,7 +525,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsubsection{IPv4 -- Forward (200--299)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -558,7 +556,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsubsection{IPv4 -- Forward (300--399)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -581,7 +579,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsection{IPv4 -- Input}
-\begin{longtable}{|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -605,7 +603,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsection{IPv4 -- Output}
-\begin{longtable}{|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -622,7 +620,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 
 \subsection{IPv6 -- Forward}
 \subsubsection{IPv6 -- Forward (1--99)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -645,7 +643,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsubsection{IPv6 -- Forward (100--199)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -662,7 +660,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsubsection{IPv6 -- Forward (200--299)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -693,7 +691,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsubsection{IPv6 -- Forward (300--399)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -719,7 +717,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsubsection{IPv6 -- Forward (400--499)}
-\begin{longtable}{|l|l|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{Description} & \textbf{In} & \textbf{Out} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline
@@ -750,7 +748,7 @@ Spodaj so tabelarični izvlečki pravil in NAT pravil iz `v5.10.conf`. Tabela up
 \end{longtable}
 
 \subsection{IPv6 -- Input}
-\begin{longtable}{|l|l|l|l|l|L{2.2cm}|l|}
+\begin{longtable}{|l|l|l|l|l|p{2.2cm}|l|}
 \hline
 \textbf{Rule} & \textbf{Action} & \textbf{In} & \textbf{Source} & \textbf{Destination} & \textbf{Port} & \textbf{Proto/Notes} \\
 \hline

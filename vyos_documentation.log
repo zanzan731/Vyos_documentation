@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  1 JUN 2026 00:14
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  1 JUN 2026 02:12
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -309,24 +309,24 @@ File: l3backend-pdftex.def 2025-06-09 L3 backend support: PDF output (pdfTeX)
 ) (./vyos_documentation.aux)
 \openout1 = `vyos_documentation.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 31.
-LaTeX Font Info:    ... okay on input line 31.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -382,7 +382,7 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 48
  (c:/texlive/2025/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-Package hyperref Info: Link coloring OFF on input line 31.
+Package hyperref Info: Link coloring OFF on input line 29.
  (./vyos_documentation.out) (./vyos_documentation.out)
 \@outlinefile=\write3
 \openout3 = `vyos_documentation.out'.
@@ -398,7 +398,7 @@ Package hyperref Info: Link coloring OFF on input line 31.
 \openout4 = `vyos_documentation.toc'.
 
 
-Overfull \hbox (3.50854pt too wide) in paragraph at lines 42--43
+Overfull \hbox (3.50854pt too wide) in paragraph at lines 40--41
 []\T1/cmr/m/n/10.95 Postaviti om-reºje z lo£en-imi seg-menti za \T1/cmr/bx/n/10.95 uporab-nike \T1/cmr/m/n/10.95 in \T1/cmr/bx/n/10.95 streºnike \T1/cmr/m/n/10.95 (strogo lo£eno prometno
  []
 
@@ -408,125 +408,138 @@ Overfull \hbox (3.50854pt too wide) in paragraph at lines 42--43
 <serverlist.png, id=559, 602.25pt x 289.08pt>
 File: serverlist.png Graphic file (type png)
 <use serverlist.png>
-Package pdftex.def Info: serverlist.png  used on input line 62.
+Package pdftex.def Info: serverlist.png  used on input line 60.
 (pdftex.def)             Requested size: 407.66833pt x 195.68959pt.
 
-Overfull \hbox (14.08081pt too wide) in alignment at lines 83--105
+Overfull \hbox (14.08081pt too wide) in alignment at lines 81--103
  [] [] [] [] 
  []
 
 
 
 [4 <./serverlist.png>]
-Overfull \hbox (3.61922pt too wide) in paragraph at lines 122--123
+Overfull \hbox (3.61922pt too wide) in paragraph at lines 120--121
 []\T1/cmr/bx/n/10.95 zanzan\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 AAAAC3NzaC1lZDI1NTE5AAAAIIGRVCofZkoaEaAcW0LquGsYgpRyHZ4Dg0fqVlssZUIL 
  []
 
 
-Overfull \hbox (12.35431pt too wide) in paragraph at lines 124--125
+Overfull \hbox (12.35431pt too wide) in paragraph at lines 122--123
 [][]\T1/cmtt/m/n/10.95 /etc/ssh/sshd_config.d/50-cloud-init.conf []\T1/cmr/m/n/10.95 in nas-tavite \T1/cmtt/m/n/10.95 PasswordAuthentication yes\T1/cmr/m/n/10.95 , nato
  []
 
 
-Overfull \hbox (3.87303pt too wide) in paragraph at lines 135--135
-[]|\T1/cmr/bx/n/10.95 Public?| 
+Overfull \hbox (0.91852pt too wide) in paragraph at lines 133--133
+[]|\T1/cmr/bx/n/10.95 Javno?| 
  []
 
 
-Underfull \hbox (badness 1924) in paragraph at lines 139--139
-[]|\T1/cmr/m/n/10.95 all dmz +
+Underfull \hbox (badness 10000) in paragraph at lines 135--135
+[]|\T1/cmr/m/n/10.95 vsi GUI
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 139--139
-[]|\T1/cmr/m/n/10.95 only
+Underfull \hbox (badness 10000) in paragraph at lines 137--137
+[]|\T1/cmr/m/n/10.95 vsi DMZ
  []
 
 
-Underfull \hbox (badness 1194) in paragraph at lines 139--140
-\T1/cmr/m/n/10.95 servers; WAN SSH al-lowed
+Underfull \hbox (badness 10000) in paragraph at lines 137--137
+[]|\T1/cmr/m/n/10.95 samo
  []
 
 
-Underfull \hbox (badness 3514) in paragraph at lines 141--142
-[]|\T1/cmr/m/n/10.95 SNMP on VyOS; ex-porter
+Underfull \hbox (badness 5388) in paragraph at lines 141--141
+[]|\T1/cmr/m/n/10.95 REST storitev (scrip-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 151--151
+Underfull \hbox (badness 10000) in paragraph at lines 149--149
 []|\T1/cmr/m/n/10.95 30080, 30443
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 161--162
-[]|\T1/cmr/m/n/10.95 Exporter end-point for
+Underfull \hbox (badness 10000) in paragraph at lines 153--154
+[]|\T1/cmr/m/n/10.95 PiVPN, uporablja las-ten
  []
 
 
-Underfull \hbox (badness 4981) in paragraph at lines 165--165
+Underfull \hbox (badness 10000) in paragraph at lines 155--156
+[]|\T1/cmr/m/n/10.95 Lokalni por-talni vmes-nik
+ []
+
+
+Underfull \hbox (badness 4981) in paragraph at lines 163--163
 []|\T1/cmr/m/n/10.95 53, 88, 389,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 165--165
+Underfull \hbox (badness 10000) in paragraph at lines 163--163
 \T1/cmr/m/n/10.95 3268, 135,
  []
 
 
-Overfull \hbox (33.37836pt too wide) in alignment at lines 133--167
+Underfull \hbox (badness 10000) in paragraph at lines 163--164
+[]|\T1/cmr/m/n/10.95 Storitve Ac-tive Di-rec-tory
+ []
+
+
+Overfull \hbox (33.37836pt too wide) in alignment at lines 131--165
  [] [] [] [] [] 
  []
 
-[5]
-Overfull \hbox (26.38646pt too wide) in alignment at lines 207--215
+[5] [6]
+Overfull \hbox (60.24014pt too wide) in alignment at lines 205--213
  [] [] [] [] 
  []
 
 
 
-[6]
-
 [7]
-Overfull \hbox (73.5775pt too wide) in paragraph at lines 296--298
+Overfull \hbox (73.5775pt too wide) in paragraph at lines 294--296
 []\T1/cmr/m/n/10.95 VyOS poslu²a DNS na naslovih \T1/cmtt/m/n/10.95 10.11.0.1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 192.168.11.1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 2001:1470:fffd:aa::1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 2001:1470:fffd:a9::1
  []
 
 
-Overfull \hbox (15.83528pt too wide) in paragraph at lines 296--298
+Overfull \hbox (15.83528pt too wide) in paragraph at lines 294--296
 \T1/cmr/m/n/10.95 in \T1/cmtt/m/n/10.95 fd11:11:11::1\T1/cmr/m/n/10.95 . Poizvedbe so spre-jete le iz nasled-njih om-reºij: \T1/cmtt/m/n/10.95 10.11.0.0/24\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 192.168.11.0/24\T1/cmr/m/n/10.95 ,
  []
 
 
-Overfull \hbox (22.18845pt too wide) in paragraph at lines 302--303
+Overfull \hbox (22.18845pt too wide) in paragraph at lines 300--301
 []\T1/cmr/m/n/10.95 VyOS za domeno \T1/cmtt/m/n/10.95 startup11.local \T1/cmr/m/n/10.95 uporablja con-di-tional for-ward na AD DNS \T1/cmtt/m/n/10.95 192.168.11.201
  []
 
 
-Underfull \hbox (badness 4072) in paragraph at lines 323--324
-\T1/cmr/m/n/10.95 record, trenutno ni v
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 327--328
+Underfull \hbox (badness 10000) in paragraph at lines 325--326
 []|\T1/cmr/m/n/10.95 dodatno ime AD
  []
 
 [8]
+Overfull \hbox (1.48886pt too wide) in paragraph at lines 381--382
+[]\T1/cmr/m/n/10.95 INTERNAL: SLAAC je privzeta izbira za odje-malce na \T1/cmtt/m/n/10.95 2001:1470:fffd:aa::/64\T1/cmr/m/n/10.95 ; stati£ne
+ []
+
+
 
 [9]
+Overfull \hbox (22.66689pt too wide) in alignment at lines 388--412
+ [] [] [] 
+ []
+
+
 
 [10]
-Overfull \hbox (5.26265pt too wide) in alignment at lines 431--435
+Overfull \hbox (5.26265pt too wide) in alignment at lines 429--433
  [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (5.26265pt too wide) in alignment at lines 435--439
+Overfull \hbox (5.26265pt too wide) in alignment at lines 433--437
  [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (5.26265pt too wide) in alignment at lines 439--447
+Overfull \hbox (5.26265pt too wide) in alignment at lines 437--445
  [] [] [] [] [] [] [] 
  []
 
@@ -537,46 +550,121 @@ Overfull \hbox (5.26265pt too wide) in alignment at lines 439--447
 ]
 
 [12]
+Underfull \hbox (badness 10000) in paragraph at lines 553--553
+[]|\T1/cmr/m/n/10.95 135, 123,
+ []
+
+
+Underfull \hbox (badness 7030) in paragraph at lines 571--571
+[]|\T1/cmr/m/n/10.95 8080, 3000,
+ []
+
+
+Underfull \hbox (badness 7030) in paragraph at lines 571--571
+\T1/cmr/m/n/10.95 3443, 4443,
+ []
+
+
+Underfull \hbox (badness 7030) in paragraph at lines 574--574
+[]|\T1/cmr/m/n/10.95 3000, 9090,
+ []
+
+
+Underfull \hbox (badness 7030) in paragraph at lines 575--575
+\T1/cmr/m/n/10.95 3268, 3269,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 575--575
+\T1/cmr/m/n/10.95 135, 123,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 575--575
+\T1/cmr/m/n/10.95 445, 464,
+ []
+
+
 
 [13] [14]
 
 [15]
-Overfull \hbox (1.74489pt too wide) in alignment at lines 696--700
+Underfull \hbox (badness 10000) in paragraph at lines 688--688
+[]|\T1/cmr/m/n/10.95 135, 123,
+ []
+
+
+Overfull \hbox (1.74489pt too wide) in alignment at lines 694--698
  [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (1.74489pt too wide) in alignment at lines 700--704
+Overfull \hbox (1.74489pt too wide) in alignment at lines 698--702
  [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (1.74489pt too wide) in alignment at lines 704--719
+Underfull \hbox (badness 7030) in paragraph at lines 708--708
+[]|\T1/cmr/m/n/10.95 8080, 3000,
+ []
+
+
+Underfull \hbox (badness 7030) in paragraph at lines 708--708
+\T1/cmr/m/n/10.95 3443, 4443,
+ []
+
+
+Underfull \hbox (badness 7030) in paragraph at lines 711--711
+[]|\T1/cmr/m/n/10.95 3000, 9090,
+ []
+
+
+Underfull \hbox (badness 7030) in paragraph at lines 712--712
+\T1/cmr/m/n/10.95 3268, 3269,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 712--712
+\T1/cmr/m/n/10.95 135, 123,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 712--712
+\T1/cmr/m/n/10.95 445, 464,
+ []
+
+
+Overfull \hbox (1.74489pt too wide) in alignment at lines 702--717
  [] [] [] [] [] [] [] [] [] 
  []
 
 
 
-[16] [17]
+[16]
+Underfull \hbox (badness 10000) in paragraph at lines 745--745
+[]|\T1/cmr/m/n/10.95 135, 123,
+ []
+
+[17]
 
 [18]
 
 [19
 
 ]
-Overfull \hbox (1.6853pt too wide) in paragraph at lines 844--845
+Overfull \hbox (1.6853pt too wide) in paragraph at lines 842--843
 \T1/cmr/m/n/10.95 Za povezavo z AD je obi£a-jno potrebno kon-fig-uri-rati bind uporab-nika, base DN in fil-tre. Primerne
  []
 
 
 
 [20]
-Overfull \hbox (40.41162pt too wide) in paragraph at lines 877--879
+Overfull \hbox (40.41162pt too wide) in paragraph at lines 875--877
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Overfull \hbox (30.82823pt too wide) in paragraph at lines 888--889
+Overfull \hbox (30.82823pt too wide) in paragraph at lines 886--887
 []\T1/cmr/m/n/10.95 ƒe uporab-niki ne vidijo kon-fig-u-racij ali niso v pravil-nih skupinah, pre-verite fil-tre v \T1/cmtt/m/n/10.95 wgportal.yaml
  []
 
@@ -590,13 +678,13 @@ File: lstlang1.sty 2024/09/23 1.10c listings language file
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 1007.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 1005.
 
 
 [23]
 
 [24]
-Overfull \hbox (11.98859pt too wide) in paragraph at lines 1100--1101
+Overfull \hbox (11.98859pt too wide) in paragraph at lines 1098--1099
 \T1/cmr/m/n/10.95 Ukazi za up-ravl-janje AD DNS streºnika so pre-makn-jeni v lo£eno da-toteko \T1/cmtt/m/n/10.95 ad-dns-upravljanje.md\T1/cmr/m/n/10.95 .
  []
 
@@ -607,17 +695,17 @@ Overfull \hbox (11.98859pt too wide) in paragraph at lines 1100--1101
 [26]
 
 [27]
-Overfull \hbox (19.41675pt too wide) in paragraph at lines 1252--1254
+Overfull \hbox (19.41675pt too wide) in paragraph at lines 1250--1252
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Overfull \hbox (66.65521pt too wide) in paragraph at lines 1254--1255
+Overfull \hbox (66.65521pt too wide) in paragraph at lines 1252--1253
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Overfull \hbox (66.65521pt too wide) in paragraph at lines 1269--1271
+Overfull \hbox (66.65521pt too wide) in paragraph at lines 1267--1269
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
@@ -637,18 +725,18 @@ LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-09-02>
  ***********
 Package rerunfilecheck Info: File `vyos_documentation.out' has not changed.
-(rerunfilecheck)             Checksum: EFFC5AA8AE888B1043E8B37BFB429643;17247.
+(rerunfilecheck)             Checksum: 610782118DD17CC15E096906A85A879B;17247.
  ) 
 Here is how much of TeX's memory you used:
- 13293 strings out of 467748
- 195877 string characters out of 5431137
- 904109 words of memory out of 5000000
- 41397 multiletter control sequences out of 15000+600000
+ 13291 strings out of 467748
+ 195856 string characters out of 5431137
+ 904080 words of memory out of 5000000
+ 41395 multiletter control sequences out of 15000+600000
  642250 words of font info for 72 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,6n,79p,501b,1956s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb>
-Output written on vyos_documentation.pdf (31 pages, 420944 bytes).
+Output written on vyos_documentation.pdf (31 pages, 420838 bytes).
 PDF statistics:
  1127 PDF objects out of 1200 (max. 8388607)
  1062 compressed objects within 11 object streams
