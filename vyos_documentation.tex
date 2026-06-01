@@ -298,8 +298,9 @@ Cloudflare & 1.1.1.1 & 2606:4700:4700::1111 \\
 \hline
 \end{longtable}
 
-VyOS posluša DNS na naslovih \texttt{10.11.0.1}, \texttt{192.168.11.1}, \texttt{2001:1470:fffd:aa::1}, \texttt{2001:1470:fffd:a9::1} in \texttt{fd11:11:11::1}. 
-Poizvedbe so sprejete le iz naslednjih omrežij: \texttt{10.11.0.0/24}, \texttt{192.168.11.0/24}, \texttt{2001:1470:fffd:aa::/64}, \texttt{2001:1470:fffd:a9::/64} in \texttt{fd11:11:11::/64}. 
+VyOS posluša DNS na naslovih \texttt{10.11.0.1}, \texttt{192.168.11.1}, \texttt{2001:1470:fffd:aa::1}, \\
+\texttt{2001:1470:fffd:a9::1} in \texttt{fd11:11:11::1}. 
+Poizvedbe so sprejete le iz naslednjih omrežij: \texttt{10.11.0.0/24}, \texttt{192.168.11.0/24}, \texttt{2001:1470:fffd:aa::/64}, \texttt{2001:1470:fffd:a9::/64} in\\ \texttt{fd11:11:11::/64}. 
 
 \subsection{Split DNS}
 Split DNS je nastavljen tako, da se poizvedbe za \texttt{startup11.local} ne pošiljajo na javne resolverje, ampak na notranji AD DNS strežnik. To pomeni:
@@ -1025,6 +1026,12 @@ New-ADGroup -Name "Group name" -GroupScope Global -GroupCategory Security
 Add-ADGroupMember -Identity "Group name" -Members "account name"
 \end{lstlisting}
 
+\textbf{Odkrivanje grup uporabnika:}
+\begin{lstlisting}
+Get-ADUser username -Properties MemberOf | Select-Object -ExpandProperty MemberOf
+\end{lstlisting} 
+
+
 \textbf{Onemogočanje uporabniškega računa:}
 \begin{lstlisting}[language=bash, breaklines=true]
 Disable-ADAccount -Identity "ime"
@@ -1340,12 +1347,6 @@ Za pregled članov in stanja clustra uporabimo \texttt{etcdctl}:
 \begin{lstlisting}
 etcdctl member list --endpoints=http://localhost:2379
 etcdctl endpoint status --cluster -w table
-\end{lstlisting}
-
-Oddaljen pregled na node1:
-\begin{lstlisting}
-ssh zanzan01@192.168.11.101 "etcdctl member list --endpoints=http://localhost:2379"
-ssh zanzan01@192.168.11.101 "etcdctl endpoint status --cluster -w table"
 \end{lstlisting}
 
 \subsection{Testiranje sinhronizacije}
