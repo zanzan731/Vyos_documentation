@@ -1,1 +1,8 @@
 vyos-doc-cache/
+vyos_documentation.aux 
+vyos_documentation.fdb_latexmk
+vyos_documentation.fls 
+vyos_documentation.log 
+vyos_documentation.out 
+vyos_documentation.synctex.gz 
+vyos_documentation.toc
