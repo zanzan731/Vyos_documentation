@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  1 JUN 2026 03:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  1 JUN 2026 10:45
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -405,7 +405,7 @@ Overfull \hbox (3.50854pt too wide) in paragraph at lines 40--41
 
 
 [3{c:/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}]
-<serverlist.png, id=549, 602.25pt x 289.08pt>
+<serverlist.png, id=554, 602.25pt x 289.08pt>
 File: serverlist.png Graphic file (type png)
 <use serverlist.png>
 Package pdftex.def Info: serverlist.png  used on input line 60.
@@ -538,6 +538,16 @@ Overfull \hbox (5.26265pt too wide) in alignment at lines 433--437
  []
 
 
+Overfull \hbox (8.7835pt too wide) in paragraph at lines 442--442
+[]|\T1/cmr/m/n/10.95 8080,4443,3443| 
+ []
+
+
+Overfull \hbox (8.7835pt too wide) in paragraph at lines 443--443
+[]|\T1/cmr/m/n/10.95 8080,4443,3443| 
+ []
+
+
 Overfull \hbox (5.26265pt too wide) in alignment at lines 437--445
  [] [] [] [] [] [] [] 
  []
@@ -579,6 +589,21 @@ Underfull \hbox (badness 10000) in paragraph at lines 576--576
 
 Underfull \hbox (badness 10000) in paragraph at lines 576--576
 \T1/cmr/m/n/10.95 445, 464,
+ []
+
+
+Overfull \hbox (1.67783pt too wide) in alignment at lines 585--589
+ [] [] [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (1.67783pt too wide) in alignment at lines 589--593
+ [] [] [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (1.67783pt too wide) in alignment at lines 593--606
+ [] [] [] [] [] [] [] [] [] 
  []
 
 [14]
@@ -640,63 +665,65 @@ Underfull \hbox (badness 10000) in paragraph at lines 746--746
 []|\T1/cmr/m/n/10.95 135, 123,
  []
 
-[17] [18]
+[17]
+
+[18]
 
 [19]
 
 [20
 
 ]
-Overfull \hbox (40.41162pt too wide) in paragraph at lines 849--851
+Overfull \hbox (40.41162pt too wide) in paragraph at lines 863--865
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Overfull \hbox (1.6853pt too wide) in paragraph at lines 857--858
+Overfull \hbox (1.6853pt too wide) in paragraph at lines 871--872
 \T1/cmr/m/n/10.95 Za povezavo z AD je obi£a-jno potrebno kon-fig-uri-rati bind uporab-nika, base DN in fil-tre. Primerne
  []
 
 
 
 [21]
-Overfull \hbox (14.40996pt too wide) in paragraph at lines 892--893
+Overfull \hbox (14.40996pt too wide) in paragraph at lines 906--907
 []\T1/cmr/bx/n/10.95 snmp_exporter\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 192.168.11.107:9116/tcp \T1/cmr/m/n/10.95 kot pretvornik SNMP po-datkov v Prometheus
  []
 
 
-Overfull \hbox (1.06189pt too wide) in paragraph at lines 901--902
+Overfull \hbox (1.06189pt too wide) in paragraph at lines 915--916
 []\T1/cmr/bx/n/10.95 Vmesniki in iden-ti-fikacija (IF-MIB)\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 ifNumber \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.1\T1/cmr/m/n/10.95 ), \T1/cmtt/m/n/10.95 ifIndex\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 ifDescr
  []
 
 
-Overfull \hbox (74.35997pt too wide) in paragraph at lines 902--903
+Overfull \hbox (74.35997pt too wide) in paragraph at lines 916--917
 []\T1/cmr/bx/n/10.95 Konfiguracijski atributi (IF-MIB)\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 ifMtu \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.4\T1/cmr/m/n/10.95 ), \T1/cmtt/m/n/10.95 ifSpeed \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.5\T1/cmr/m/n/10.95 ),
  []
 
 
-Overfull \hbox (4.38962pt too wide) in paragraph at lines 903--904
+Overfull \hbox (4.38962pt too wide) in paragraph at lines 917--918
 []\T1/cmr/bx/n/10.95 Stanje vmes-nikov\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 ifAdminStatus \T1/cmr/m/n/10.95 / \T1/cmtt/m/n/10.95 ifOperStatus \T1/cmr/m/n/10.95 (op-er-a-tiv-na/ad-min-is-tra-tivna stanja). 
  []
 
 
-Overfull \hbox (18.57771pt too wide) in paragraph at lines 904--905
+Overfull \hbox (18.57771pt too wide) in paragraph at lines 918--919
 []\T1/cmr/bx/n/10.95 Prometni ²tevci (IF-MIB / IFX)\T1/cmr/m/n/10.95 : ba-jti in paketi ^^V \T1/cmtt/m/n/10.95 ifInOctets \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.10\T1/cmr/m/n/10.95 ),
  []
 
 
-Overfull \hbox (22.55331pt too wide) in paragraph at lines 904--905
+Overfull \hbox (22.55331pt too wide) in paragraph at lines 918--919
 \T1/cmtt/m/n/10.95 ifOutOctets \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.16\T1/cmr/m/n/10.95 ), ter 64-bit HC ²tevcem \T1/cmtt/m/n/10.95 ifHCInOctets \T1/cmr/m/n/10.95 / \T1/cmtt/m/n/10.95 ifHCOutOctets
  []
 
 
-Overfull \hbox (89.70181pt too wide) in paragraph at lines 906--907
+Overfull \hbox (89.70181pt too wide) in paragraph at lines 920--921
 []\T1/cmr/bx/n/10.95 Dodatni prometni ²tevci (IFX)\T1/cmr/m/n/10.95 : mul-ti-cas-t/broad-cast ²tevci in \T1/cmtt/m/n/10.95 ifHighSpeed \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.31.1.1.1.15\T1/cmr/m/n/10.95 ). 
  []
 
 
 
 [22]
-Overfull \hbox (4.83002pt too wide) in paragraph at lines 912--913
+Overfull \hbox (4.83002pt too wide) in paragraph at lines 926--927
 []\T1/cmr/m/n/10.95 Opomba: celoten, natan£en sez-nam metrik in po-drobne pres-likave so v \T1/cmtt/m/n/10.95 snmp_stack/snmp.yml\T1/cmr/m/n/10.95 .
  []
 
@@ -708,13 +735,13 @@ File: lstlang1.sty 2024/09/23 1.10c listings language file
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 996.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 1010.
 
 
 [24]
 
 [25]
-Overfull \hbox (11.98859pt too wide) in paragraph at lines 1089--1090
+Overfull \hbox (11.98859pt too wide) in paragraph at lines 1103--1104
 \T1/cmr/m/n/10.95 Ukazi za up-ravl-janje AD DNS streºnika so pre-makn-jeni v lo£eno da-toteko \T1/cmtt/m/n/10.95 ad-dns-upravljanje.md\T1/cmr/m/n/10.95 .
  []
 
@@ -725,17 +752,17 @@ Overfull \hbox (11.98859pt too wide) in paragraph at lines 1089--1090
 [27]
 
 [28]
-Overfull \hbox (19.41675pt too wide) in paragraph at lines 1241--1243
+Overfull \hbox (19.41675pt too wide) in paragraph at lines 1255--1257
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Overfull \hbox (66.65521pt too wide) in paragraph at lines 1243--1244
+Overfull \hbox (66.65521pt too wide) in paragraph at lines 1257--1258
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Overfull \hbox (66.65521pt too wide) in paragraph at lines 1258--1260
+Overfull \hbox (66.65521pt too wide) in paragraph at lines 1272--1274
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
@@ -755,21 +782,21 @@ LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-09-02>
  ***********
 Package rerunfilecheck Info: File `vyos_documentation.out' has not changed.
-(rerunfilecheck)             Checksum: 99420AA93E0555D0AE5B312747CB2346;16722.
+(rerunfilecheck)             Checksum: FBB72184F2435A67662BE29CB884C7CA;16855.
  ) 
 Here is how much of TeX's memory you used:
- 13281 strings out of 467748
- 195657 string characters out of 5431137
- 907060 words of memory out of 5000000
- 41393 multiletter control sequences out of 15000+600000
+ 13285 strings out of 467748
+ 195703 string characters out of 5431137
+ 907629 words of memory out of 5000000
+ 41395 multiletter control sequences out of 15000+600000
  642250 words of font info for 72 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,6n,79p,526b,1956s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb>
-Output written on vyos_documentation.pdf (32 pages, 421022 bytes).
+Output written on vyos_documentation.pdf (32 pages, 422011 bytes).
 PDF statistics:
- 1112 PDF objects out of 1200 (max. 8388607)
- 1046 compressed objects within 11 object streams
- 429 named destinations out of 1000 (max. 500000)
- 838 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1118 PDF objects out of 1200 (max. 8388607)
+ 1052 compressed objects within 11 object streams
+ 431 named destinations out of 1000 (max. 500000)
+ 846 words of extra memory for PDF output out of 10000 (max. 10000000)
 
