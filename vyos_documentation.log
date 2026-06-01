@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  1 JUN 2026 02:12
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2025.10.10)  1 JUN 2026 03:22
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -405,7 +405,7 @@ Overfull \hbox (3.50854pt too wide) in paragraph at lines 40--41
 
 
 [3{c:/texlive/2025/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}]
-<serverlist.png, id=559, 602.25pt x 289.08pt>
+<serverlist.png, id=549, 602.25pt x 289.08pt>
 File: serverlist.png Graphic file (type png)
 <use serverlist.png>
 Package pdftex.def Info: serverlist.png  used on input line 60.
@@ -495,51 +495,53 @@ Overfull \hbox (60.24014pt too wide) in alignment at lines 205--213
 
 
 [7]
-Overfull \hbox (73.5775pt too wide) in paragraph at lines 294--296
+Overfull \hbox (73.5775pt too wide) in paragraph at lines 298--300
 []\T1/cmr/m/n/10.95 VyOS poslu²a DNS na naslovih \T1/cmtt/m/n/10.95 10.11.0.1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 192.168.11.1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 2001:1470:fffd:aa::1\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 2001:1470:fffd:a9::1
  []
 
 
-Overfull \hbox (15.83528pt too wide) in paragraph at lines 294--296
+Overfull \hbox (15.83528pt too wide) in paragraph at lines 298--300
 \T1/cmr/m/n/10.95 in \T1/cmtt/m/n/10.95 fd11:11:11::1\T1/cmr/m/n/10.95 . Poizvedbe so spre-jete le iz nasled-njih om-reºij: \T1/cmtt/m/n/10.95 10.11.0.0/24\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 192.168.11.0/24\T1/cmr/m/n/10.95 ,
  []
 
 
-Overfull \hbox (22.18845pt too wide) in paragraph at lines 300--301
+Overfull \hbox (22.18845pt too wide) in paragraph at lines 304--305
 []\T1/cmr/m/n/10.95 VyOS za domeno \T1/cmtt/m/n/10.95 startup11.local \T1/cmr/m/n/10.95 uporablja con-di-tional for-ward na AD DNS \T1/cmtt/m/n/10.95 192.168.11.201
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 325--326
+Underfull \hbox (badness 10000) in paragraph at lines 329--330
 []|\T1/cmr/m/n/10.95 dodatno ime AD
  []
 
+
+
 [8]
-Overfull \hbox (1.48886pt too wide) in paragraph at lines 381--382
+Overfull \hbox (1.48886pt too wide) in paragraph at lines 385--386
 []\T1/cmr/m/n/10.95 INTERNAL: SLAAC je privzeta izbira za odje-malce na \T1/cmtt/m/n/10.95 2001:1470:fffd:aa::/64\T1/cmr/m/n/10.95 ; stati£ne
  []
 
 
 
 [9]
-Overfull \hbox (22.66689pt too wide) in alignment at lines 388--412
+Overfull \hbox (22.66689pt too wide) in alignment at lines 392--416
  [] [] [] 
  []
 
 
 
 [10]
-Overfull \hbox (5.26265pt too wide) in alignment at lines 429--433
- [] [] [] [] [] [] [] 
- []
-
-
 Overfull \hbox (5.26265pt too wide) in alignment at lines 433--437
  [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (5.26265pt too wide) in alignment at lines 437--445
+Overfull \hbox (5.26265pt too wide) in alignment at lines 437--441
+ [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (5.26265pt too wide) in alignment at lines 441--449
  [] [] [] [] [] [] [] 
  []
 
@@ -547,199 +549,230 @@ Overfull \hbox (5.26265pt too wide) in alignment at lines 437--445
 
 [11
 
-]
-
-[12]
-Underfull \hbox (badness 10000) in paragraph at lines 553--553
+] [12]
+Underfull \hbox (badness 10000) in paragraph at lines 558--558
 []|\T1/cmr/m/n/10.95 135, 123,
  []
 
-
-Underfull \hbox (badness 7030) in paragraph at lines 571--571
+[13]
+Underfull \hbox (badness 7030) in paragraph at lines 576--576
 []|\T1/cmr/m/n/10.95 8080, 3000,
  []
 
 
-Underfull \hbox (badness 7030) in paragraph at lines 571--571
+Underfull \hbox (badness 7030) in paragraph at lines 576--576
 \T1/cmr/m/n/10.95 3443, 4443,
  []
 
 
-Underfull \hbox (badness 7030) in paragraph at lines 574--574
+Underfull \hbox (badness 7030) in paragraph at lines 579--579
 []|\T1/cmr/m/n/10.95 3000, 9090,
  []
 
 
-Underfull \hbox (badness 7030) in paragraph at lines 575--575
+Underfull \hbox (badness 7030) in paragraph at lines 580--580
 \T1/cmr/m/n/10.95 3268, 3269,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 575--575
+Underfull \hbox (badness 10000) in paragraph at lines 580--580
 \T1/cmr/m/n/10.95 135, 123,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 575--575
+Underfull \hbox (badness 10000) in paragraph at lines 580--580
 \T1/cmr/m/n/10.95 445, 464,
  []
 
-
-
-[13] [14]
+[14]
 
 [15]
-Underfull \hbox (badness 10000) in paragraph at lines 688--688
+Underfull \hbox (badness 10000) in paragraph at lines 693--693
 []|\T1/cmr/m/n/10.95 135, 123,
  []
 
 
-Overfull \hbox (1.74489pt too wide) in alignment at lines 694--698
+Overfull \hbox (1.74489pt too wide) in alignment at lines 699--703
  [] [] [] [] [] [] [] [] [] 
  []
 
 
-Overfull \hbox (1.74489pt too wide) in alignment at lines 698--702
+Overfull \hbox (1.74489pt too wide) in alignment at lines 703--707
  [] [] [] [] [] [] [] [] [] 
  []
 
 
-Underfull \hbox (badness 7030) in paragraph at lines 708--708
+Underfull \hbox (badness 7030) in paragraph at lines 713--713
 []|\T1/cmr/m/n/10.95 8080, 3000,
  []
 
 
-Underfull \hbox (badness 7030) in paragraph at lines 708--708
+Underfull \hbox (badness 7030) in paragraph at lines 713--713
 \T1/cmr/m/n/10.95 3443, 4443,
  []
 
 
-Underfull \hbox (badness 7030) in paragraph at lines 711--711
+Underfull \hbox (badness 7030) in paragraph at lines 716--716
 []|\T1/cmr/m/n/10.95 3000, 9090,
  []
 
 
-Underfull \hbox (badness 7030) in paragraph at lines 712--712
+Underfull \hbox (badness 7030) in paragraph at lines 717--717
 \T1/cmr/m/n/10.95 3268, 3269,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 712--712
+Underfull \hbox (badness 10000) in paragraph at lines 717--717
 \T1/cmr/m/n/10.95 135, 123,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 712--712
+Underfull \hbox (badness 10000) in paragraph at lines 717--717
 \T1/cmr/m/n/10.95 445, 464,
  []
 
 
-Overfull \hbox (1.74489pt too wide) in alignment at lines 702--717
+Overfull \hbox (1.74489pt too wide) in alignment at lines 707--722
  [] [] [] [] [] [] [] [] [] 
  []
 
 
 
 [16]
-Underfull \hbox (badness 10000) in paragraph at lines 745--745
+Underfull \hbox (badness 10000) in paragraph at lines 750--750
 []|\T1/cmr/m/n/10.95 135, 123,
  []
 
-[17]
+[17] [18]
 
-[18]
+[19]
 
-[19
+[20
 
 ]
-Overfull \hbox (1.6853pt too wide) in paragraph at lines 842--843
+Overfull \hbox (40.41162pt too wide) in paragraph at lines 853--855
+[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+
+Overfull \hbox (1.6853pt too wide) in paragraph at lines 861--862
 \T1/cmr/m/n/10.95 Za povezavo z AD je obi£a-jno potrebno kon-fig-uri-rati bind uporab-nika, base DN in fil-tre. Primerne
  []
 
 
 
-[20]
-Overfull \hbox (40.41162pt too wide) in paragraph at lines 875--877
-[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
- []
-
-
-Overfull \hbox (30.82823pt too wide) in paragraph at lines 886--887
-[]\T1/cmr/m/n/10.95 ƒe uporab-niki ne vidijo kon-fig-u-racij ali niso v pravil-nih skupinah, pre-verite fil-tre v \T1/cmtt/m/n/10.95 wgportal.yaml
- []
-
-
-
 [21]
+Overfull \hbox (14.40996pt too wide) in paragraph at lines 896--897
+[]\T1/cmr/bx/n/10.95 snmp_exporter\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 192.168.11.107:9116/tcp \T1/cmr/m/n/10.95 kot pretvornik SNMP po-datkov v Prometheus
+ []
 
-[22] (c:/texlive/2025/texmf-dist/tex/latex/listings/lstlang1.sty
+
+Overfull \hbox (1.06189pt too wide) in paragraph at lines 905--906
+[]\T1/cmr/bx/n/10.95 Vmesniki in iden-ti-fikacija (IF-MIB)\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 ifNumber \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.1\T1/cmr/m/n/10.95 ), \T1/cmtt/m/n/10.95 ifIndex\T1/cmr/m/n/10.95 , \T1/cmtt/m/n/10.95 ifDescr
+ []
+
+
+Overfull \hbox (74.35997pt too wide) in paragraph at lines 906--907
+[]\T1/cmr/bx/n/10.95 Konfiguracijski atributi (IF-MIB)\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 ifMtu \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.4\T1/cmr/m/n/10.95 ), \T1/cmtt/m/n/10.95 ifSpeed \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.5\T1/cmr/m/n/10.95 ),
+ []
+
+
+Overfull \hbox (4.38962pt too wide) in paragraph at lines 907--908
+[]\T1/cmr/bx/n/10.95 Stanje vmes-nikov\T1/cmr/m/n/10.95 : \T1/cmtt/m/n/10.95 ifAdminStatus \T1/cmr/m/n/10.95 / \T1/cmtt/m/n/10.95 ifOperStatus \T1/cmr/m/n/10.95 (op-er-a-tiv-na/ad-min-is-tra-tivna stanja). 
+ []
+
+
+Overfull \hbox (18.57771pt too wide) in paragraph at lines 908--909
+[]\T1/cmr/bx/n/10.95 Prometni ²tevci (IF-MIB / IFX)\T1/cmr/m/n/10.95 : ba-jti in paketi ^^V \T1/cmtt/m/n/10.95 ifInOctets \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.10\T1/cmr/m/n/10.95 ),
+ []
+
+
+Overfull \hbox (22.55331pt too wide) in paragraph at lines 908--909
+\T1/cmtt/m/n/10.95 ifOutOctets \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.2.2.1.16\T1/cmr/m/n/10.95 ), ter 64-bit HC ²tevcem \T1/cmtt/m/n/10.95 ifHCInOctets \T1/cmr/m/n/10.95 / \T1/cmtt/m/n/10.95 ifHCOutOctets
+ []
+
+
+Overfull \hbox (89.70181pt too wide) in paragraph at lines 910--911
+[]\T1/cmr/bx/n/10.95 Dodatni prometni ²tevci (IFX)\T1/cmr/m/n/10.95 : mul-ti-cas-t/broad-cast ²tevci in \T1/cmtt/m/n/10.95 ifHighSpeed \T1/cmr/m/n/10.95 (\T1/cmtt/m/n/10.95 1.3.6.1.2.1.31.1.1.1.15\T1/cmr/m/n/10.95 ). 
+ []
+
+
+
+[22]
+Overfull \hbox (4.83002pt too wide) in paragraph at lines 916--917
+[]\T1/cmr/m/n/10.95 Opomba: celoten, natan£en sez-nam metrik in po-drobne pres-likave so v \T1/cmtt/m/n/10.95 snmp_stack/snmp.yml\T1/cmr/m/n/10.95 .
+ []
+
+
+
+[23] (c:/texlive/2025/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 ) (c:/texlive/2025/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 1005.
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 1000.
 
-
-[23]
 
 [24]
-Overfull \hbox (11.98859pt too wide) in paragraph at lines 1098--1099
+
+[25]
+Overfull \hbox (11.98859pt too wide) in paragraph at lines 1093--1094
 \T1/cmr/m/n/10.95 Ukazi za up-ravl-janje AD DNS streºnika so pre-makn-jeni v lo£eno da-toteko \T1/cmtt/m/n/10.95 ad-dns-upravljanje.md\T1/cmr/m/n/10.95 .
  []
 
 
 
-[25]
-
 [26]
 
 [27]
-Overfull \hbox (19.41675pt too wide) in paragraph at lines 1250--1252
+
+[28]
+Overfull \hbox (19.41675pt too wide) in paragraph at lines 1245--1247
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Overfull \hbox (66.65521pt too wide) in paragraph at lines 1252--1253
+Overfull \hbox (66.65521pt too wide) in paragraph at lines 1247--1248
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
-Overfull \hbox (66.65521pt too wide) in paragraph at lines 1267--1269
+Overfull \hbox (66.65521pt too wide) in paragraph at lines 1262--1264
 [][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 
 
-[28] (c:/texlive/2025/texmf-dist/tex/latex/listings/lstlang1.sty
+[29] (c:/texlive/2025/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2024/09/23 1.10c listings language file
 )
 
-[29]
-
 [30]
 
-[31] (./vyos_documentation.aux)
+[31]
+
+[32] (./vyos_documentation.aux)
  ***********
 LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-09-02>
  ***********
 Package rerunfilecheck Info: File `vyos_documentation.out' has not changed.
-(rerunfilecheck)             Checksum: 610782118DD17CC15E096906A85A879B;17247.
+(rerunfilecheck)             Checksum: 99420AA93E0555D0AE5B312747CB2346;16722.
  ) 
 Here is how much of TeX's memory you used:
- 13291 strings out of 467748
- 195856 string characters out of 5431137
- 904080 words of memory out of 5000000
- 41395 multiletter control sequences out of 15000+600000
+ 13281 strings out of 467748
+ 195657 string characters out of 5431137
+ 907060 words of memory out of 5000000
+ 41393 multiletter control sequences out of 15000+600000
  642250 words of font info for 72 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,6n,79p,501b,1956s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,6n,79p,526b,1956s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb>
-Output written on vyos_documentation.pdf (31 pages, 420838 bytes).
+Output written on vyos_documentation.pdf (32 pages, 422394 bytes).
 PDF statistics:
- 1127 PDF objects out of 1200 (max. 8388607)
- 1062 compressed objects within 11 object streams
- 437 named destinations out of 1000 (max. 500000)
- 854 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1112 PDF objects out of 1200 (max. 8388607)
+ 1046 compressed objects within 11 object streams
+ 429 named destinations out of 1000 (max. 500000)
+ 838 words of extra memory for PDF output out of 10000 (max. 10000000)
 

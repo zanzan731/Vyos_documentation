@@ -50,59 +50,57 @@
 \contentsline {subsection}{\numberline {9.4}IPv4 -- Output}{15}{subsection.9.4}%
 \contentsline {subsection}{\numberline {9.5}IPv6 -- Forward}{15}{subsection.9.5}%
 \contentsline {subsubsection}{\numberline {9.5.1}IPv6 -- Forward (1--99)}{15}{subsubsection.9.5.1}%
-\contentsline {subsubsection}{\numberline {9.5.2}IPv6 -- Forward (100--199)}{15}{subsubsection.9.5.2}%
+\contentsline {subsubsection}{\numberline {9.5.2}IPv6 -- Forward (100--199)}{16}{subsubsection.9.5.2}%
 \contentsline {subsubsection}{\numberline {9.5.3}IPv6 -- Forward (200--299)}{16}{subsubsection.9.5.3}%
-\contentsline {subsubsection}{\numberline {9.5.4}IPv6 -- Forward (300--399)}{16}{subsubsection.9.5.4}%
+\contentsline {subsubsection}{\numberline {9.5.4}IPv6 -- Forward (300--399)}{17}{subsubsection.9.5.4}%
 \contentsline {subsubsection}{\numberline {9.5.5}IPv6 -- Forward (400--499)}{17}{subsubsection.9.5.5}%
 \contentsline {subsection}{\numberline {9.6}IPv6 -- Input}{18}{subsection.9.6}%
-\contentsline {section}{\numberline {10}WireGuard}{19}{section.10}%
-\contentsline {subsection}{\numberline {10.1}Splošne informacije}{19}{subsection.10.1}%
-\contentsline {subsection}{\numberline {10.2}Dostop in port}{19}{subsection.10.2}%
-\contentsline {subsection}{\numberline {10.3}Upravljanje VPN uporabnikov}{19}{subsection.10.3}%
-\contentsline {subsection}{\numberline {10.4}Konfiguracija in nastavitve}{19}{subsection.10.4}%
-\contentsline {subsection}{\numberline {10.5}Odpravljanje težav}{19}{subsection.10.5}%
-\contentsline {subsection}{\numberline {10.6}wg-portal (WireGuard portal) in integracija z Active Directory}{20}{subsection.10.6}%
-\contentsline {subsubsection}{\numberline {10.6.1}Kaj počne}{20}{subsubsection.10.6.1}%
-\contentsline {subsubsection}{\numberline {10.6.2}LDAP / AD nastavitve (osnutek)}{20}{subsubsection.10.6.2}%
-\contentsline {subsubsection}{\numberline {10.6.3}Praktični PowerShell primeri}{20}{subsubsection.10.6.3}%
-\contentsline {subsubsection}{\numberline {10.6.4}Podatkovna baza in pravice}{21}{subsubsection.10.6.4}%
-\contentsline {subsubsection}{\numberline {10.6.5}Preizkusi in dnevniški pregledi}{21}{subsubsection.10.6.5}%
-\contentsline {subsubsection}{\numberline {10.6.6}Varnostne opombe}{21}{subsubsection.10.6.6}%
-\contentsline {section}{\numberline {11}Monitoring in SNMP}{21}{section.11}%
-\contentsline {subsection}{\numberline {11.1}Komponente in porti}{21}{subsection.11.1}%
-\contentsline {subsection}{\numberline {11.2}VyOS SNMP (primer)}{22}{subsection.11.2}%
-\contentsline {subsection}{\numberline {11.3}Docker Compose primer (snmp\_exporter + Prometheus + Grafana)}{22}{subsection.11.3}%
-\contentsline {subsection}{\numberline {11.4}Konfiguracija Prometheusa (primer scrape job)}{22}{subsection.11.4}%
-\contentsline {subsection}{\numberline {11.5}Generator in snmp.yml}{23}{subsection.11.5}%
-\contentsline {subsection}{\numberline {11.6}Testiranje}{23}{subsection.11.6}%
-\contentsline {section}{\numberline {12}Active Directory (Windows Server)}{23}{section.12}%
-\contentsline {subsection}{\numberline {12.1}Osnovne informacije}{23}{subsection.12.1}%
-\contentsline {subsection}{\numberline {12.2}Ustvarjanje uporabnikov v Active Directory}{23}{subsection.12.2}%
-\contentsline {subsection}{\numberline {12.3}Upravljanje uporabnikov}{24}{subsection.12.3}%
-\contentsline {subsection}{\numberline {12.4}Priključitev računalnikov v domeno}{24}{subsection.12.4}%
-\contentsline {subsubsection}{\numberline {12.4.1}Linux}{24}{subsubsection.12.4.1}%
-\contentsline {subsubsection}{\numberline {12.4.2}Windows}{24}{subsubsection.12.4.2}%
-\contentsline {subsection}{\numberline {12.5}Prijava v domeno}{25}{subsection.12.5}%
-\contentsline {subsection}{\numberline {12.6}Dodatne informacije}{25}{subsection.12.6}%
-\contentsline {subsection}{\numberline {12.7}Upravljanje AD DNS streznika}{25}{subsection.12.7}%
-\contentsline {section}{\numberline {13}REST}{25}{section.13}%
-\contentsline {subsection}{\numberline {13.1}Arhitektura storitve}{25}{subsection.13.1}%
-\contentsline {subsection}{\numberline {13.2}Konfiguracija}{26}{subsection.13.2}%
-\contentsline {subsection}{\numberline {13.3}Zagon in persistenca}{26}{subsection.13.3}%
-\contentsline {subsection}{\numberline {13.4}Preverjanje delovanja}{26}{subsection.13.4}%
-\contentsline {subsubsection}{\numberline {13.4.1}Osnovni testi}{27}{subsubsection.13.4.1}%
-\contentsline {subsubsection}{\numberline {13.4.2}Vsebinsko pogajanje}{27}{subsubsection.13.4.2}%
-\contentsline {subsubsection}{\numberline {13.4.3}Glavne poti}{27}{subsubsection.13.4.3}%
-\contentsline {subsubsection}{\numberline {13.4.4}LDAP avtorizacija}{27}{subsubsection.13.4.4}%
-\contentsline {subsubsection}{\numberline {13.4.5}TLS certifikat}{28}{subsubsection.13.4.5}%
-\contentsline {subsubsection}{\numberline {13.4.6}GraphQL}{28}{subsubsection.13.4.6}%
-\contentsline {subsubsection}{\numberline {13.4.7}Scriptum\_kp}{28}{subsubsection.13.4.7}%
-\contentsline {section}{\numberline {14}Raft sinhronizacija}{29}{section.14}%
-\contentsline {subsection}{\numberline {14.1}Ključne datoteke}{29}{subsection.14.1}%
-\contentsline {subsection}{\numberline {14.2}Kaj mora biti zagnano}{29}{subsection.14.2}%
-\contentsline {subsection}{\numberline {14.3}Pregled baze}{29}{subsection.14.3}%
-\contentsline {subsection}{\numberline {14.4}Preverjanje clustra}{30}{subsection.14.4}%
-\contentsline {subsection}{\numberline {14.5}Testiranje sinhronizacije}{30}{subsection.14.5}%
-\contentsline {subsection}{\numberline {14.6}Priporočeni potek}{30}{subsection.14.6}%
-\contentsline {subsection}{\numberline {14.7}Popravki kode}{30}{subsection.14.7}%
-\contentsline {section}{\numberline {15}Pretvorba med Markdown in LaTeX}{31}{section.15}%
+\contentsline {section}{\numberline {10}WireGuard}{20}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Splošne informacije}{20}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Dostop in port}{20}{subsection.10.2}%
+\contentsline {subsection}{\numberline {10.3}Upravljanje VPN uporabnikov}{20}{subsection.10.3}%
+\contentsline {subsection}{\numberline {10.4}Konfiguracija in nastavitve}{20}{subsection.10.4}%
+\contentsline {subsection}{\numberline {10.5}Odpravljanje težav}{20}{subsection.10.5}%
+\contentsline {subsection}{\numberline {10.6}wg-portal (WireGuard portal) in integracija z Active Directory}{21}{subsection.10.6}%
+\contentsline {subsubsection}{\numberline {10.6.1}Kaj počne}{21}{subsubsection.10.6.1}%
+\contentsline {subsubsection}{\numberline {10.6.2}Podatkovna baza in pravice}{21}{subsubsection.10.6.2}%
+\contentsline {subsubsection}{\numberline {10.6.3}LDAP / AD nastavitve (osnutek)}{21}{subsubsection.10.6.3}%
+\contentsline {subsubsection}{\numberline {10.6.4}Praktični PowerShell primeri}{21}{subsubsection.10.6.4}%
+\contentsline {section}{\numberline {11}Monitoring in SNMP}{22}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Arhitektura spremljanja}{22}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Kaj spremljamo (metrike in uporabljeni MIB-i)}{22}{subsection.11.2}%
+\contentsline {subsection}{\numberline {11.3}Docker Compose konfiguraicja}{23}{subsection.11.3}%
+\contentsline {subsection}{\numberline {11.4}Konfiguracija Prometheus-a}{23}{subsection.11.4}%
+\contentsline {subsection}{\numberline {11.5}Generator in snmp.yml}{24}{subsection.11.5}%
+\contentsline {subsection}{\numberline {11.6}Testiranje}{24}{subsection.11.6}%
+\contentsline {section}{\numberline {12}Active Directory (Windows Server)}{24}{section.12}%
+\contentsline {subsection}{\numberline {12.1}Osnovne informacije}{24}{subsection.12.1}%
+\contentsline {subsection}{\numberline {12.2}Ustvarjanje uporabnikov v Active Directory}{24}{subsection.12.2}%
+\contentsline {subsection}{\numberline {12.3}Upravljanje uporabnikov}{25}{subsection.12.3}%
+\contentsline {subsection}{\numberline {12.4}Priključitev računalnikov v domeno}{25}{subsection.12.4}%
+\contentsline {subsubsection}{\numberline {12.4.1}Linux}{25}{subsubsection.12.4.1}%
+\contentsline {subsubsection}{\numberline {12.4.2}Windows}{25}{subsubsection.12.4.2}%
+\contentsline {subsection}{\numberline {12.5}Prijava v domeno}{26}{subsection.12.5}%
+\contentsline {subsection}{\numberline {12.6}Dodatne informacije}{26}{subsection.12.6}%
+\contentsline {subsection}{\numberline {12.7}Upravljanje AD DNS streznika}{26}{subsection.12.7}%
+\contentsline {section}{\numberline {13}REST}{26}{section.13}%
+\contentsline {subsection}{\numberline {13.1}Arhitektura storitve}{26}{subsection.13.1}%
+\contentsline {subsection}{\numberline {13.2}Konfiguracija}{27}{subsection.13.2}%
+\contentsline {subsection}{\numberline {13.3}Zagon in persistenca}{27}{subsection.13.3}%
+\contentsline {subsection}{\numberline {13.4}Preverjanje delovanja}{27}{subsection.13.4}%
+\contentsline {subsubsection}{\numberline {13.4.1}Osnovni testi}{28}{subsubsection.13.4.1}%
+\contentsline {subsubsection}{\numberline {13.4.2}Vsebinsko pogajanje}{28}{subsubsection.13.4.2}%
+\contentsline {subsubsection}{\numberline {13.4.3}Glavne poti}{28}{subsubsection.13.4.3}%
+\contentsline {subsubsection}{\numberline {13.4.4}LDAP avtorizacija}{28}{subsubsection.13.4.4}%
+\contentsline {subsubsection}{\numberline {13.4.5}TLS certifikat}{29}{subsubsection.13.4.5}%
+\contentsline {subsubsection}{\numberline {13.4.6}GraphQL}{29}{subsubsection.13.4.6}%
+\contentsline {subsubsection}{\numberline {13.4.7}Scriptum\_kp}{29}{subsubsection.13.4.7}%
+\contentsline {section}{\numberline {14}Raft sinhronizacija}{30}{section.14}%
+\contentsline {subsection}{\numberline {14.1}Ključne datoteke}{30}{subsection.14.1}%
+\contentsline {subsection}{\numberline {14.2}Kaj mora biti zagnano}{30}{subsection.14.2}%
+\contentsline {subsection}{\numberline {14.3}Pregled baze}{30}{subsection.14.3}%
+\contentsline {subsection}{\numberline {14.4}Preverjanje clustra}{31}{subsection.14.4}%
+\contentsline {subsection}{\numberline {14.5}Testiranje sinhronizacije}{31}{subsection.14.5}%
+\contentsline {subsection}{\numberline {14.6}Priporočeni potek}{31}{subsection.14.6}%
+\contentsline {subsection}{\numberline {14.7}Popravki kode}{31}{subsection.14.7}%
+\contentsline {section}{\numberline {15}Pretvorba med Markdown in LaTeX}{32}{section.15}%

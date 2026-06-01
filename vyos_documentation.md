@@ -208,6 +208,8 @@ NTP sinhronizacija uporablja naslednje strežnike:
     save
     exit
 
+**OPOMBA:** niso vsi ukazi idempotentni! Za nekatere ukaze set v resnici pomeni add... npr če bi na ta način aplicirali celoten config, boste gotovo dobili podvojene omrežne vmesnike ali kakšne napake. Zato je boljše to uporabljati kot način da aplicirate neki blok novih ukazov, ne spreminjati obstoječo konfiguracijo.
+
 # DNS
 
 DNS resolver je nameščen neposredno na VyOS in se odjemalcem oglašuje prek DHCP kot privzeti notranji resolver. Notranji odjemalci zato najprej uporabljajo VyOS DNS, zunanje poizvedbe pa se iz VyOS posredujejo proti upstream resolverjem.
@@ -319,7 +321,7 @@ Spodaj so navedene statične DHCPv6 mape z DUID/identifikatorji, ki se uporablja
 
 #### Namen
 
-NAT je uporabljen za tri stvari: DNAT za izbrane javne storitve, SNAT/masquerade za odhodni promet in NAT66 (NPTv6) za IPv6-only segment. Hairpin pravila omogočajo dostop do javnih storitev tudi iz notranjega in DMZ omrežja.
+NAT je uporabljen za tri stvari: DNAT za izbrane javne IPv4 storitve, SNAT/masquerade za odhodni promet in NAT66 (NPTv6) za IPv6-only segment. Za IPv6 javne storitve uporabljamo izključno firewall pravila, ne pa port forwarding. Hairpin pravila omogočajo dostop do javnih storitev tudi iz notranjega in DMZ omrežja.
 
 ## Opombe in primeri
 
@@ -340,6 +342,8 @@ NAT je uporabljen za tri stvari: DNAT za izbrane javne storitve, SNAT/masquerade
 | 140 | wan-to-library-https-3443-dnat | eth0 |  | 3443 | tcp | 192.168.11.104:3443 (library HTTPS) |
 | 210 | hairpin-internal-to-public-services-dnat | eth2 | 88.200.24.241 | 8080 | tcp | 192.168.11.104:8080 |
 | 211 | hairpin-dmz-to-public-services-dnat | eth1 | 88.200.24.241 | 4443, 3443 | tcp | 192.168.11.104:4443,3443 |
+
+Za IPv6 javne storitve ni predviden DNAT; dostop je urejen z vhodnimi in forward firewall pravili.
 
 ## IPv4 – SNAT
 
@@ -370,7 +374,7 @@ NAT je uporabljen za tri stvari: DNAT za izbrane javne storitve, SNAT/masquerade
 
 - **Hairpin NAT:** notranji in DMZ odjemalci lahko dosežejo javne IPv4 storitve preko hairpin DNAT/SNAT za izbrane storitve.
 
-- **IPv6:** obstaja vzporedna zbirka pravil za IPv6; za IPv6-only odjemalce so posebej omogočena pravila in NAT66 (NPTv6) za izhod v internet.
+- **IPv6:** obstaja vzporedna zbirka pravil za IPv6; javne storitve na WAN so odprte z forward pravili do DMZ gostiteljev, za IPv6-only odjemalce pa so posebej omogočena pravila in NAT66 (NPTv6) za izhod v internet.
 
 Spodaj so tabelarični izvlečki pravil in NAT pravil iz ‘v5.15.conf‘. Tabela uporablja `longtable` za lep izpis večstranskih tabel.
 
@@ -590,7 +594,7 @@ WireGuard VPN teče na napravi z notranjim naslovom `192.168.11.106` v DMZ omre�
 
 - **Notranji naslov:** 192.168.11.106
 
-- **Javni port:** UDP 51820 (preusmerjen z DNAT na `192.168.11.106`)
+- **Javni port:** UDP 51820
 
 - **Storitev:** aktivna in dostopna iz javnega interneta prek obstoječe NAT nastavitve
 
@@ -647,6 +651,17 @@ Privzete lokacije in nastavitve (trenutna postavitev):
 
 - Upravni vmesnik ne nadomešča same PiVPN postavitve; deluje kot nadgradnja/upravljanje nad obstoječim strežnikom.
 
+### Podatkovna baza in pravice
+
+`wg-portal` je nameščen na lokaciji `/opt/wg-portal/`. Privzeta shrmba je SQLite podatkovna baza na `data/sqlite.db`. Moramo dobro poskrbiti da proces ki poganja wg-portal ima adekvatne pravice. V praksi smo morali ustvariti sistemskega uporabnika `wgportal` in nastaviti tega uporabnika kot lastnika vseh datotek v `/opt/wg-portal`, saj so sicer nastajale napake s pravicami ob zagonu aplikacije. Spodaj so primeri ukazov, ki smo jih uporabili (izvedite kot `root` ali z `sudo`):
+
+    # Ustvari sistemskega uporabnika brez prijave in z domaco mapo na /opt/wg-portal
+    useradd --system --no-create-home --shell /usr/sbin/nologin --home-dir /opt/wg-portal wgportal
+
+    # Nastavi lastnistvo in varne pravice za podatkovno mapo
+    chown -R wgportal:wgportal /opt/wg-portal
+    chmod -R 750 /opt/wg-portal
+
 ### LDAP / AD nastavitve (osnutek)
 
 Za povezavo z AD je običajno potrebno konfigurirati bind uporabnika, base DN in filtre. Primerne nastavitve v `wgportal.yaml`:
@@ -679,62 +694,49 @@ Spodaj so osnovni primeri za ustvarjanje bind uporabnika in dodajanje v administ
     # Dodaj bind account v administratorsko skupino za aplikacijo (po potrebi)
     Add-ADGroupMember -Identity 'Admin' -Members 'wgportal_bind'
 
-### Podatkovna baza in pravice
-
-`wg-portal` je nameščen na lokaciji `/opt/wg-portal/`. Privzeta shrmba je SQLite podatkovna baza na `data/sqlite.db`. Moramo dobro poskrbiti da proces ki poganja wg-portal ima adekvatne pravice. V praksi smo morali ustvariti sistemskega uporabnika `wgportal` in nastaviti tega uporabnika kot lastnika vseh datotek v `/opt/wg-portal`, saj so sicer nastajale napake s pravicami ob zagonu aplikacije. Spodaj so primeri ukazov, ki smo jih uporabili (izvedite kot `root` ali z `sudo`):
-
-    # Ustvari sistemskega uporabnika brez prijave in z domaco mapo na /opt/wg-portal
-    useradd --system --no-create-home --shell /usr/sbin/nologin --home-dir /opt/wg-portal wgportal
-
-    # Nastavi lastnistvo in varne pravice za podatkovno mapo
-    chown -R wgportal:wgportal /opt/wg-portal
-    chmod -R 750 /opt/wg-portal
-
-### Preizkusi in dnevniški pregledi
-
-- Testirajte LDAP poizvedbe z orodjem `ldapsearch` ali z uporabo PowerShell `Get-ADUser` za preverjanje bind/a in iskanja.
-
-- Preverite dnevniške zapise aplikacije za napake pri bindanju ali pomanjkanju pravic.
-
-- Če uporabniki ne vidijo konfiguracij ali niso v pravilnih skupinah, preverite filtre v `wgportal.yaml` in članstva v AD.
-
-### Varnostne opombe
-
-- Shrani bind geslo varno (uporabi secrets manager ali datoteko z omejenimi pravicami).
-
-- Če omogočite LDAP preko TLS (LDAPS), poskrbite za verodostojne certifikate in ustrezne revizijske postopke.
-
-- Redno preverjajte dnevnike in omejite dostop do upravnega vmesnika z dodatnimi omejitvami (npr. firewall, reverse proxy z avtentikacijo).
-
 # Monitoring in SNMP
 
-Za spremljanje metrik v DMZ uporabljamo preprost monitoring stack: Prometheus (scrape in shranjevanje), `snmp_exporter` (pretvornik SNMP→Prometheus) in Grafana (vizualizacija). `snmp_exporter` pobira metrike z naprave VyOS prek SNMP v2c in jih izpostavi na svojem HTTP vmesniku, ki ga nato pobira Prometheus.
+Monitoring v tej zasnovi je namenjen predvsem nadzoru omrežnega stanja, ne operativnemu upravljanju storitev. Osrednji vir metrik je VyOS prek SNMP v2c, iz katerega se berejo osnovni podatki o vmesnikih, dosegljivosti, prometa in sistemskem stanju. Te metrike se nato pretvorijo v Prometheus format, zberejo v Prometheusu in vizualizirajo v Grafani. Monitoring stack je nameščen prek Dockerja (Docker Compose) na gostitelju za nadzor.
 
-## Komponente in porti
+## Arhitektura spremljanja
 
-- **snmp_exporter**: 192.168.11.107:9116 (TCP) - endpoint exporterja, npr.\
-  `http://192.168.11.107:9116/snmp`
+Monitoring gostitelj je `192.168.11.107`, kjer tečejo tri komponente:
 
-- **Prometheus**: 192.168.11.107:9090 (TCP) - scrape cilj in uporabniški vmesnik
+- **VyOS SNMP**: `192.168.11.1:161/udp` kot vir podatkov;
 
-- **Grafana**: 192.168.11.107:3000 (TCP) - nadzorne plošče in vizualizacija
+- **snmp_exporter**: `192.168.11.107:9116/tcp` kot pretvornik SNMP podatkov v Prometheus metrike;
 
-- **VyOS SNMP**: 192.168.11.1:161 (UDP) - SNMP agent na usmerjevalniku (v2c community)
+- **Prometheus**: `192.168.11.107:9090/tcp` kot zbiralnik in časovna baza metrik;
 
-## VyOS SNMP (primer)
+- **Grafana**: `192.168.11.107:3000/tcp` kot vizualizacijski sloj za nadzorne plošče.
 
-Omogočite SNMP na VyOS in ga vežite na DMZ naslov:
+## Kaj spremljamo (metrike in uporabljeni MIB-i)
 
-    set service snmp community startup11 authorization 'ro'
-    set service snmp contact 'pd43760@student.uni-lj.si'
-    set service snmp listen-address 192.168.11.1
-    set service snmp location 'FRI'
-    commit
-    save
+Monitoring zajema metrike, ki jih bere `snmp_exporter` iz VyOS preko SNMP in jih Prometheus zbira ter agregira za vizualizacijo in alarmiranje. Spodaj je skrbno izbran nabor pomembnih metrik z označenimi MIB-i in osnovnimi OID-i (izvleček iz `snmp_stack/snmp.yml`):
 
-## Docker Compose primer (snmp_exporter + Prometheus + Grafana)
+- **Sistemske metrike (SNMPv2-MIB)**: `sysUpTime` — `1.3.6.1.2.1.1.3` (dosegljivost, reboot detection).
 
-Namestite to na monitoring gostitelja (192.168.11.107) in prilagodite poti/volumne po potrebi.
+- **Vmesniki in identifikacija (IF-MIB)**: `ifNumber` (`1.3.6.1.2.1.2.1`), `ifIndex`, `ifDescr` (`1.3.6.1.2.1.2.2.1.2`) — seznam in poimenovanje vmesnikov.
+
+- **Konfiguracijski atributi (IF-MIB)**: `ifMtu` (`1.3.6.1.2.1.2.2.1.4`), `ifSpeed` (`1.3.6.1.2.1.2.2.1.5`), `ifPhysAddress`.
+
+- **Stanje vmesnikov**: `ifAdminStatus` / `ifOperStatus` (operativna/administrativna stanja).
+
+- **Prometni števci (IF-MIB / IFX)**: bajti in paketi — `ifInOctets` (`1.3.6.1.2.1.2.2.1.10`), `ifOutOctets` (`1.3.6.1.2.1.2.2.1.16`), ter 64-bit HC števcem `ifHCInOctets` / `ifHCOutOctets` (`1.3.6.1.2.1.31.1.1.1.6` / `1.3.6.1.2.1.31.1.1.1.10`) za visoke hitrosti.
+
+- **Napake in odmetki (IF-MIB)**: `ifInErrors`, `ifInDiscards`, `ifOutErrors` — signalizacija degradacij linka.
+
+- **Dodatni prometni števci (IFX)**: multicast/broadcast števci in `ifHighSpeed` (`1.3.6.1.2.1.31.1.1.1.15`).
+
+- **IP/TCP/UDP statistike (po potrebi)**: zbirne statistike iz IP/TCP/UDP-MIB-ov (retransmisije, portne agregacije ipd.) — vključimo le ob potrebi za specifične istrage.
+
+- **Agregacije in alarmiranje**: v Prometheusu izpeljane metrike (`rate()`, `increase()`), percentili in pragovna opozorila za latence, packet-loss in throughput.
+
+- **Zdravje zbiranja**: status `snmp_exporter` ter Prometheus job (cilj UP/DOWN, scrape errors) in metrika za zadnji uspešen scrape.
+
+Opomba: celoten, natančen seznam metrik in podrobne preslikave so v `snmp_stack/snmp.yml`. Za spremembe urejajte `snmp_stack/generator.yml` in ponovno zaženite generator (navodila v `snmp progress.md`).
+
+## Docker Compose konfiguraicja
 
     version: '3'
     services:
@@ -761,9 +763,7 @@ Namestite to na monitoring gostitelja (192.168.11.107) in prilagodite poti/volum
         depends_on:
           - prometheus
 
-## Konfiguracija Prometheusa (primer scrape job)
-
-Dodajte ‘scrape‘ nalogo, da Prometheus pobira metrike od exporterja (če ne uporabljate Docker Compose DNS, zamenjajte ‘snmp_exporter:9116‘ z ‘192.168.11.107:9116‘):
+## Konfiguracija Prometheus-a
 
     scrape_configs:
       - job_name: 'snmp'
@@ -783,16 +783,14 @@ Dodajte ‘scrape‘ nalogo, da Prometheus pobira metrike od exporterja (če ne 
 
 ## Generator in snmp.yml
 
-Uporabite uradni generator za ‘snmp_exporter‘, da ustvarite prilagojen ‘snmp.yml‘ za VyOS. Postopek v grobem:
-
-- Naredite ‘generator.yml‘ z ‘auth‘ sekcijo (community ‘startup11‘) in modulom ‘vyos‘, ki naredi ‘walk‘ za ‘1.3.6.1.2.1.1.3‘ (sysUpTime), ‘1.3.6.1.2.1.2‘ (ifTable) in ‘1.3.6.1.2.1.31.1.1‘ (ifXTable).
-
-- Zaženite generator (kot container ali binarko) in dobljeni ‘snmp.yml‘ kopirajte na exporter gostitelja v ‘/etc/snmp_exporter/snmp.yml‘.
+Če želite spremeniti snmp.yml konfiguracijo, uporabite [uradni generator za ‘snmp_exporter‘](https://github.com/prometheus/snmp_exporter/tree/main/generator), da ustvarite prilagojen ‘snmp.yml‘.
 
 ## Testiranje
 
     curl "http://192.168.11.107:9116/snmp?module=vyos&target=192.168.11.1"
     snmpwalk -v2c -c startup11 192.168.11.1 1.3.6.1.2.1.1.3.0
+
+Še bolj podrobna namestitev, konfiguracijski primeri in preizkusni koraki so opisani ločeno v datoteki `snmp progress.md`.
 
 # Active Directory (Windows Server)
 

@@ -122,11 +122,10 @@ vyatta:
         - labelname: ifOutOctets
 ```
 
-Tukaj sem ti pripravil **zelo podrobno Markdown dokumentacijo**, ki zajema celoten proces od začetka do konca — od konfiguracije SNMP na VyOS, postavitve Docker containerjev, dela z MIB‑i, generiranja `snmp.yml`, odpravljanja napak, do testiranja z `snmpwalk`. To lahko shraniš kot `SNMP_exporter_VyOS.md` v svoj GitHub repo.
 
 # SNMP Exporter Setup for VyOS + Prometheus
 
-## 🎯 Cilj
+## Cilj
 Vzpostaviti `snmp_exporter` konfiguracijo za **VyOS**, da Prometheus lahko bere interface metrike (sysUpTime, ifTable, ifXTable, HC counters, errors, discards, multicast/broadcast).
 
 ---
@@ -347,25 +346,3 @@ docker compose restart prometheus
 - Nasvet: če grafi ne prikazujejo vrednosti, preveri najprej v Prometheus UI (`http://<prometheus_host>:9090/targets`) da je cilj v statusu UP in da Grafana uporablja pravilen datasource URL.
 - Nasvet: če throughput deluje, ampak povzetek prikazuje `N/A`, je najpogosteje kriva napačno nastavljena spremenljivka `Job` v dashboardu ali neujemanje med imenom Prometheus joba in poizvedbami na dashboardu.
 
-
-## ✅ Povzetek
-
-- SNMP omogočen na VyOS (`startup11` community).  
-- Docker Compose stack za `snmp_exporter` + `prometheus`.  
-- `generator.yml` definira auth in modul `vyos`.  
-- MIB‑i nameščeni (`snmp-mibs-downloader`).  
-- `snmp.yml` generiran z `prom/snmp-generator`.  
-- Exporter testiran z curl.  
-- Prometheus scrape job dodan.  
-
-Rezultat: Prometheus zdaj bere SNMP metrike iz VyOS preko `snmp_exporter`.
-
-- Status test: neposreden klic na exporter brez `auth` vrne "Unknown auth 'public_v2'", vendar klic z eksplicitnim parametrom `&auth=vyos_auth` vrne metrike. Prometheus konfiguracija sedaj pošilja `auth: [vyos_auth]` in scrape deluje.
-
----
-
-## 🔮 Naslednji koraki
-
-- Razširiti `walk:` seznam v `generator.yml` za **HC counters, errors, discards, multicast/broadcast**.  
-- Dodati Grafana dashboard za vizualizacijo interface metrik.  
-- Integrirati centralizirano logiranje in alerting (Loki + Grafana + Alertmanager).
